@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Submission } from "../../types";
+import { Submission } from "../../types/index.ts";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { getStatusInfo, getBadgesForSubmission } from "../../data/mockData";

@@ -28,12 +28,12 @@ export interface Profile {
 // Submission type
 export interface Submission {
   id: string;
-  userId?: string;
+  userId: string;
   fullName: string;
   email: string;
   phone?: string;
   age?: number;
-  gender: string;
+  gender: "Male" | "Female" | "Other";
   region: string;
   clubAffiliation: string;
   pullUpCount: number;

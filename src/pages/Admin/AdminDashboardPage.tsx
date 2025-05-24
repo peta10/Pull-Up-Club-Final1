@@ -68,19 +68,19 @@ const AdminDashboardPage: React.FC = () => {
 
       const formattedSubmissions: Submission[] = (data as SubmissionData[]).map((submission) => {
         // Helper function to validate gender
-        const validateGender = (gender: string | undefined): "Male" | "Female" | "Other" | undefined => {
-          if (!gender) return undefined;
-          return ["Male", "Female", "Other"].includes(gender) ? gender as "Male" | "Female" | "Other" : undefined;
+        const validateGender = (gender: string | undefined): "Male" | "Female" | "Other" => {
+          if (!gender) return "Other"; // Default to "Other" or handle as an error
+          return ["Male", "Female", "Other"].includes(gender) ? gender as "Male" | "Female" | "Other" : "Other";
         };
 
         return {
           id: submission.id.toString(),
-          userId: submission.user_id,
-          fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown',
-          email: submission.email || 'Unknown',
-          age: submission.age,
+          userId: submission.user_id, // Assumed to be always present
+          fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
+          email: submission.email || 'unknown@example.com',
+          age: submission.age ?? 0,
           gender: validateGender(submission.gender),
-          region: submission.region,
+          region: submission.region || 'Unknown Region',
           clubAffiliation: submission.club_affiliation || 'None',
           pullUpCount: submission.pull_up_count,
           actualPullUpCount: submission.actual_pull_up_count ?? undefined,

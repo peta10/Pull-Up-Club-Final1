@@ -11,6 +11,7 @@ import SubscriptionStatus from "./SubscriptionStatus";
 import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 import { AlertTriangle } from "lucide-react";
+import { Submission } from "../../types";
 
 const ProfilePage: React.FC = () => {
   const { user, signOut, isFirstLogin, profile } = useAuth();
@@ -73,10 +74,10 @@ const ProfilePage: React.FC = () => {
     },
   ];
 
-  const highestSubmission = userSubmissions.reduce((highest, current) => {
+  const highestSubmission = userSubmissions.reduce((highest: Submission | null, current: Submission) => {
     const currentCount = current.actualPullUpCount ?? current.pullUpCount;
     const highestCount = highest
-      ? highest.actualPullUpCount ?? highest.pullUpCount
+      ? (highest.actualPullUpCount ?? highest.pullUpCount)
       : 0;
     return currentCount > highestCount ? current : highest;
   }, null);

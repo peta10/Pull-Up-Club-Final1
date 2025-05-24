@@ -34,20 +34,25 @@ const VideoSubmissionPage: React.FC = () => {
       if (error) throw error;
 
       if (data) {
-        const formattedSubmissions = data.map((submission) => ({
+        const formattedSubmissions: Submission[] = data.map((submission) => ({
           id: submission.id,
           userId: submission.user_id,
+          fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
+          email: submission.email || 'unknown@example.com',
           pullUpCount: submission.pull_up_count,
-          actualPullUpCount: submission.actual_pull_up_count,
+          actualPullUpCount: submission.actual_pull_up_count ?? undefined,
           videoLink: submission.video_url,
           status:
-            submission.status.charAt(0).toUpperCase() +
-            submission.status.slice(1), // Capitalize first letter
+            (submission.status.charAt(0).toUpperCase() +
+            submission.status.slice(1)) as "Pending" | "Approved" | "Rejected",
           submissionDate: submission.created_at,
-          notes: submission.notes,
-          gender: submission.gender || "Male",
-          clubAffiliation: submission.club_affiliation,
-          region: submission.region,
+          notes: submission.notes ?? undefined,
+          gender: (submission.gender as "Male" | "Female" | "Other") || "Other",
+          clubAffiliation: submission.club_affiliation || 'None',
+          region: submission.region || 'Unknown Region',
+          featured: submission.status === 'approved',
+          age: submission.age ?? 0,
+          phone: submission.phone ?? undefined,
         }));
 
         setSubmissions(formattedSubmissions);
