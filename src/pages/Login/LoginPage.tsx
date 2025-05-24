@@ -120,6 +120,9 @@ const LoginPage: React.FC = () => {
           <h2 className="text-2xl font-semibold text-[#9b9b6f] mb-6 text-center tracking-wider">
             BATTLE BUNKER
           </h2>
+          <p className="text-gray-400 text-sm mb-4 text-center">
+            New here? Sign up below to get started
+          </p>
 
           {isSignUp ? (
             <SignUpForm onToggleForm={handleToggleForm} />

@@ -64,14 +64,6 @@ const Footer: React.FC = () => {
                   Cookies Policy
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/admin-dashboard"
-                  className="text-gray-400 hover:text-white"
-                >
-                  Admin Login
-                </Link>
-              </li>
             </ul>
           </div>
 
