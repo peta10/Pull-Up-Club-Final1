@@ -151,7 +151,6 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
       {highestSubmission && (
         <BadgeProgress
           pullUps={highestPullUps}
-          gender={highestSubmission.gender || "Male"}
         />
       )}
 

@@ -28,6 +28,7 @@ export interface Profile {
 // Submission type
 export interface Submission {
   id: string;
+  userId?: string;
   fullName: string;
   email: string;
   phone?: string;
@@ -42,6 +43,7 @@ export interface Submission {
   status: 'Pending' | 'Approved' | 'Rejected';
   featured: boolean;
   socialHandle?: string;
+  notes?: string;
 }
 
 // Badge type

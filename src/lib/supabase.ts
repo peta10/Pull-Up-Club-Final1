@@ -1,19 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-// TypeScript definitions for import.meta.env
-interface ImportMetaEnv {
-  VITE_SUPABASE_URL: string;
-  VITE_SUPABASE_ANON_KEY: string;
-  MODE: string;
-}
-
-// Augment the ImportMeta interface using declare global
-declare global {
-  interface ImportMeta {
-    env: ImportMetaEnv;
-  }
-}
-
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
   throw new Error('Missing Supabase environment variables');
 }

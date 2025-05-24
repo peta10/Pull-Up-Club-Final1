@@ -11,7 +11,6 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onError }) =>
   const [subscription, setSubscription] = useState<any>(null);
   const [stripeSubscription, setStripeSubscription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,15 +117,15 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onError }) =>
 
       <button
         onClick={handleManageSubscription}
-        disabled={isPortalLoading}
+        disabled={isLoading}
         className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2.5 rounded-lg transition flex items-center justify-center"
       >
-        {isPortalLoading ? (
+        {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
         ) : (
           <Shield className="h-4 w-4 mr-2" />
         )}
-        {isPortalLoading ? 'Loading...' : 'Manage Subscription'}
+        {isLoading ? 'Loading...' : 'Manage Subscription'}
       </button>
 
       {error && (

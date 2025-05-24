@@ -1,19 +1,19 @@
 export interface Submission {
   id: string;
   userId: string;
-  fullName?: string;
-  email?: string;
+  fullName: string;
+  email: string;
   phone?: string;
   age?: number;
-  gender?: "Male" | "Female" | "Other";
-  region?: string;
-  clubAffiliation?: string;
+  gender: "Male" | "Female" | "Other";
+  region: string;
+  clubAffiliation: string;
   pullUpCount: number;
   actualPullUpCount?: number;
   videoLink: string;
   submissionDate: string;
   status: "Pending" | "Approved" | "Rejected";
-  featured?: boolean;
+  featured: boolean;
   socialHandle?: string;
   notes?: string;
 }
