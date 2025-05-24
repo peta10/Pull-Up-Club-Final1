@@ -1,8 +1,11 @@
 import postgres from 'postgres'
 import 'dotenv/config'
 
+// Get the database URL from environment variable or use a default for development
+const databaseUrl = process.env.DATABASE_URL || import.meta.env.VITE_DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/pullupclub'
+
 // Connection configuration
-const sql = postgres(process.env.DATABASE_URL!, {
+const sql = postgres(databaseUrl, {
   ssl: 'require',
   max: 10, // Max number of connections
   idle_timeout: 20, // Idle connection timeout in seconds

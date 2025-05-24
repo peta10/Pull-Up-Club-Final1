@@ -34,3 +34,9 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Deno files (kept in gitignore to prevent future issues)
+deno.json
+deno.lock
+.deno/
+deno-types.d.ts

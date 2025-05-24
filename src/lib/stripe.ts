@@ -1,5 +1,9 @@
 import { products } from "../services/stripe-config";
 import { supabase } from "./supabase";
+import { loadStripe } from '@stripe/stripe-js';
+
+// Initialize Stripe with publishable key
+export const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 // Function to fetch Stripe products from Edge Function
 export async function fetchStripeProducts() {
@@ -23,80 +27,83 @@ export async function fetchStripeProducts() {
 // Export existing product configuration
 export { products };
 
-export const createCheckoutSession = async (
-  subscriptionType: "monthly" | "annual",
-  email: string,
-  formData?: any
-) => {
-  // Store the email in localStorage to use it later for account creation if needed
-  localStorage.setItem("checkoutEmail", email);
-
-  // Determine the product based on subscription type
-  const product =
-    subscriptionType === "monthly"
-      ? products.pullUpClub
-      : products.pullUpClubAnnual;
-
-  // Debug logs
-  console.log("Creating checkout session with:", {
-    subscriptionType,
-    email,
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-    productId: product.id,
-    priceId: product.priceId,
-  });
-
+/**
+ * Creates a Stripe checkout session for subscription
+ * @param plan "monthly" or "annual"
+ * @param email User's email
+ * @param metadata Additional metadata to include with the checkout session
+ * @returns Checkout URL or null on error
+ */
+export async function createCheckoutSession(
+  plan: 'monthly' | 'annual' = 'monthly',
+  email?: string,
+  metadata: Record<string, string> = {}
+): Promise<string | null> {
   try {
-    // Get the current session if user is logged in
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    // Call Supabase Edge Function to create checkout session
+    const { data, error } = await supabase.functions.invoke('create-checkout', {
+      body: { plan, email, metadata },
+    });
 
-    // Set up request headers
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    // Add Authorization header if user is logged in
-    if (session?.access_token) {
-      headers["Authorization"] = `Bearer ${session.access_token}`;
-      console.log("Adding auth token to request");
-    } else {
-      console.log("No auth token available, making unauthenticated request");
+    if (error) {
+      console.error('Error creating checkout session:', error);
+      return null;
     }
 
-    // Make API request to our serverless function
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          priceId: product.priceId,
-          successUrl: `${window.location.origin}/success`,
-          cancelUrl: `${window.location.origin}/`,
-          customerEmail: email,
-          metadata: {
-            formData: formData ? JSON.stringify(formData) : null,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Checkout API error response:", errorData);
-      throw new Error(errorData.error || "Failed to create checkout session");
+    if (!data?.url) {
+      console.error('No checkout URL returned');
+      return null;
     }
 
-    const data = await response.json();
-    console.log("Checkout session created successfully:", data);
     return data.url;
-  } catch (error) {
-    console.error("Error creating checkout session:", error);
-    throw error;
+  } catch (err) {
+    console.error('Error in createCheckoutSession:', err);
+    return null;
   }
-};
+}
+
+/**
+ * Creates a payment intent for one-time payments
+ * @returns Payment intent client secret
+ */
+export async function createPaymentIntent(): Promise<{ clientSecret: string }> {
+  try {
+    // In a real app, you'd call a serverless function or API
+    // For this example, we'll mock the response
+    const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+      body: { amount: 999 }, // $9.99
+    });
+
+    if (error) throw error;
+    
+    return { clientSecret: data.clientSecret };
+  } catch (err) {
+    console.error('Error creating payment intent:', err);
+    throw new Error('Failed to create payment intent');
+  }
+}
+
+/**
+ * Creates a customer portal session for managing subscription
+ * @returns Portal URL
+ */
+export async function createCustomerPortalSession(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('customer-portal', {
+      body: {},
+    });
+
+    if (error) {
+      console.error('Error creating customer portal session:', error);
+      return null;
+    }
+
+    return data.url;
+  } catch (err) {
+    console.error('Error in createCustomerPortalSession:', err);
+    return null;
+  }
+}
 
 export const getActiveSubscription = async () => {
   try {
@@ -129,83 +136,6 @@ export const getActiveSubscription = async () => {
     return data;
   } catch (error) {
     console.error("Error getting subscription status:", error);
-    throw error;
-  }
-};
-
-export const createCustomerPortalSession = async (
-  returnUrl: string = `${window.location.origin}/profile`
-) => {
-  try {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      throw new Error("User not authenticated");
-    }
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/customer-portal`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          returnUrl,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.error || "Failed to create customer portal session"
-      );
-    }
-
-    const data = await response.json();
-    return data.url;
-  } catch (error) {
-    console.error("Error creating customer portal session:", error);
-    throw error;
-  }
-};
-
-export const createPaymentIntent = async () => {
-  try {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      throw new Error("User not authenticated");
-    }
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment-intent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to create payment intent");
-    }
-
-    const data = await response.json();
-    return { clientSecret: data.clientSecret };
-  } catch (error) {
-    console.error("Error creating payment intent:", error);
     throw error;
   }
 };

@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import ProtectedRoute from "./components/Layout/ProtectedRoute";
-import AdminRoute from "./components/Layout/AdminRoute";
-import Home from "./pages/Home/Home";
-import LeaderboardPage from "./pages/Leaderboard/LeaderboardPage";
-import AdminDashboardPage from "./pages/Admin/AdminDashboardPage";
-import NotFoundPage from "./pages/NotFound/NotFoundPage";
-import SuccessPage from "./pages/Success/SuccessPage";
-import LoginPage from "./pages/Login/LoginPage";
-import ProfilePage from "./pages/Profile/ProfilePage";
-import RulesPage from "./pages/Rules/RulesPage";
-import FAQPage from "./pages/FAQ/FAQPage";
-import PrivacyPolicyPage from "./pages/PrivacyPolicy/PrivacyPolicyPage";
-import CookiesPolicyPage from "./pages/CookiesPolicy/CookiesPolicyPage";
-import CreateAccountPage from "./pages/CreateAccount/CreateAccountPage";
-import ResetPasswordPage from "./pages/ResetPassword/ResetPasswordPage";
-import SubscriptionPage from "./pages/Subscription/SubscriptionPage";
-import VideoSubmissionPage from "./pages/VideoSubmission/VideoSubmissionPage";
-import AdminUserManagement from "./pages/AdminUserManagement";
-import { supabase } from "./lib/supabase";
+import { AuthProvider } from "./context/AuthContext.tsx";
+import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
+import AdminRoute from "./components/Layout/AdminRoute.tsx";
+import Home from "./pages/Home/Home.tsx";
+import LeaderboardPage from "./pages/Leaderboard/LeaderboardPage.tsx";
+import AdminDashboardPage from "./pages/Admin/AdminDashboardPage.tsx";
+import NotFoundPage from "./pages/NotFound/NotFoundPage.tsx";
+import SuccessPage from "./pages/Success/SuccessPage.tsx";
+import LoginPage from "./pages/Login/LoginPage.tsx";
+import ProfilePage from "./pages/Profile/ProfilePage.tsx";
+import RulesPage from "./pages/Rules/RulesPage.tsx";
+import FAQPage from "./pages/FAQ/FAQPage.tsx";
+import PrivacyPolicyPage from "./pages/PrivacyPolicy/PrivacyPolicyPage.tsx";
+import CookiesPolicyPage from "./pages/CookiesPolicy/CookiesPolicyPage.tsx";
+import CreateAccountPage from "./pages/CreateAccount/CreateAccountPage.tsx";
+import ResetPasswordPage from "./pages/ResetPassword/ResetPasswordPage.tsx";
+import SubscriptionPage from "./pages/Subscription/SubscriptionPage.tsx";
+import VideoSubmissionPage from "./pages/VideoSubmission/VideoSubmissionPage.tsx";
+import AdminUserManagement from "./pages/AdminUserManagement.tsx";
+import { supabase } from "./lib/supabase.ts";
 import Lenis from "lenis";
 
 function App() {
@@ -42,17 +42,23 @@ function App() {
   useEffect(() => {
     const lenis = new Lenis();
 
-    function raf(time: number) {
+    // Create a simple raf loop that works with Deno/TypeScript
+    let rafId: number;
+    const rafLoop = (time: number) => {
       lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
+      // Cast to any to bypass TypeScript error
+      rafId = (globalThis as any).requestAnimationFrame(rafLoop);
+    };
+    
+    // Cast to any to bypass TypeScript error
+    rafId = (globalThis as any).requestAnimationFrame(rafLoop);
 
     // Scroll to top on route change
     lenis.scrollTo(0, { immediate: true });
 
     return () => {
+      // Cancel animation frame on cleanup
+      (globalThis as any).cancelAnimationFrame(rafId);
       lenis.destroy();
     };
   }, [location]);

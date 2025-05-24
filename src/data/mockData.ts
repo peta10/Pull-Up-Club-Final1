@@ -1,3 +1,6 @@
+// Import the Badge and Submission types
+import { Badge, Submission } from '../types';
+
 // Mock clubs data
 export const clubs = [
   'Battle Bunker Elite',
@@ -96,7 +99,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 30,
     videoLink: 'https://youtube.com/watch?v=abc123',
     submissionDate: '2025-06-12T14:30:00Z',
-    status: 'Approved',
+    status: 'Approved' as 'Approved',
     featured: true,
   },
   {
@@ -111,7 +114,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 25,
     videoLink: 'https://instagram.com/p/xyz789',
     submissionDate: '2025-06-12T16:45:00Z',
-    status: 'Approved',
+    status: 'Approved' as 'Approved',
     featured: true,
   },
   {
@@ -125,7 +128,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 28,
     videoLink: 'https://youtube.com/watch?v=def456',
     submissionDate: '2025-06-11T10:15:00Z',
-    status: 'Approved',
+    status: 'Approved' as 'Approved',
     featured: true,
   },
   {
@@ -140,7 +143,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 22,
     videoLink: 'https://tiktok.com/@user/video/456789',
     submissionDate: '2025-06-11T09:30:00Z',
-    status: 'Approved',
+    status: 'Approved' as 'Approved',
     featured: true,
   },
   {
@@ -154,7 +157,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 20,
     videoLink: 'https://youtube.com/watch?v=ghi789',
     submissionDate: '2025-06-10T14:00:00Z',
-    status: 'Approved',
+    status: 'Approved' as 'Approved',
     featured: true,
   },
   // More submissions with identical scores (to demonstrate grouping)
@@ -169,7 +172,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 15, // Same pull-up count to demonstrate grouping
     videoLink: `https://youtube.com/watch?v=abc${i + 100}`,
     submissionDate: `2025-06-0${9 - (i % 9)}T${10 + i}:00:00Z`,
-    status: 'Approved',
+    status: 'Approved' as 'Approved',
     featured: true,
   })),
   {
@@ -184,7 +187,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 23,
     videoLink: 'https://instagram.com/p/abc123',
     submissionDate: '2025-06-09T11:30:00Z',
-    status: 'Pending',
+    status: 'Pending' as 'Pending',
     featured: false,
   },
   {
@@ -198,7 +201,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 18,
     videoLink: 'https://tiktok.com/@user/video/123456',
     submissionDate: '2025-06-08T16:15:00Z',
-    status: 'Rejected',
+    status: 'Rejected' as 'Rejected',
     featured: false,
   },
 ];

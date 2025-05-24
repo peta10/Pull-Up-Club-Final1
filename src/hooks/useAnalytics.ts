@@ -1,5 +1,6 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnalyticsEvent } from '../types';
 
 // Define types for gtag events
 interface GTagEvent {
@@ -13,9 +14,9 @@ interface GTagEvent {
 declare global {
   interface Window {
     gtag: (
-      command: 'event' | 'config' | 'set', 
+      command: string, 
       targetId: string, 
-      params?: Record<string, unknown> | GTagEvent
+      params?: Record<string, any>
     ) => void;
     dataLayer: any[];
   }
@@ -26,40 +27,41 @@ declare global {
  * Automatically tracks page views when location changes
  * Provides a function to track custom events
  */
-export const useAnalytics = () => {
+const useAnalytics = () => {
   const location = useLocation();
-  const gaTrackingId = import.meta.env.VITE_GA_MEASUREMENT_ID as string;
 
-  // Track page views whenever location changes
+  // Track page views
   useEffect(() => {
-    if (!gaTrackingId || typeof window.gtag !== 'function') {
-      // Skip tracking if GA ID is not set or gtag isn't loaded
-      return;
+    const pageName = location.pathname;
+    trackPageView(pageName);
+  }, [location]);
+
+  // Track page view
+  const trackPageView = useCallback((pageName: string) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('config', import.meta.env.VITE_GA_MEASUREMENT_ID || '', {
+        page_path: pageName,
+      });
+      console.log(`[Analytics] Page view: ${pageName}`);
     }
+  }, []);
 
-    // Send pageview event to Google Analytics
-    window.gtag('config', gaTrackingId, {
-      page_path: location.pathname + location.search,
-      page_location: window.location.href,
-    });
-  }, [location, gaTrackingId]);
-
-  // Function to track custom events
-  const trackEvent = useCallback((event: GTagEvent) => {
-    if (!gaTrackingId || typeof window.gtag !== 'function') {
-      // Skip tracking if GA ID is not set or gtag isn't loaded
-      return;
+  // Track custom events
+  const trackEvent = useCallback((event: AnalyticsEvent) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', event.action, {
+        event_category: event.category,
+        event_label: event.label,
+        value: event.value,
+      });
+      console.log(`[Analytics] Event: ${event.action} (${event.category})`);
     }
+  }, []);
 
-    // Send custom event to Google Analytics
-    window.gtag('event', event.action, {
-      event_category: event.category,
-      event_label: event.label,
-      value: event.value,
-    });
-  }, [gaTrackingId]);
-
-  return { trackEvent };
+  return {
+    trackPageView,
+    trackEvent,
+  };
 };
 
 export default useAnalytics;

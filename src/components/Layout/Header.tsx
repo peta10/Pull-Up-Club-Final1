@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from '../ui/Link';
-import { Button } from '../ui/Button';
-import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
+import { Button } from '../ui/Button.tsx';
+import { useAuth } from '../../context/AuthContext.tsx';
 import { User, Menu, X, CreditCard, Trophy, Home, ShoppingBag } from 'lucide-react';
 
 const Header: React.FC = () => {
@@ -16,7 +16,7 @@ const Header: React.FC = () => {
     <header className="sticky top-0 z-50 bg-black text-white shadow-md">
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-2 text-[#9b9b6f] hover:text-[#7a7a58] transition-colors">
+          <Link to="/" className="flex items-center space-x-2 text-[#9b9b6f] hover:text-[#7a7a58] transition-colors">
             <img 
               src={import.meta.env.VITE_LOGO_URL || "https://cdn.shopify.com/s/files/1/0567/5237/3945/files/png_bb_logo.png?v=1746303427"} 
               alt="Battle Bunker Logo" 
@@ -26,26 +26,29 @@ const Header: React.FC = () => {
           </Link>
           
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
+            <Link to="/" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
               <Home className="h-4 w-4 mr-1" />
               Home
             </Link>
-            <Link href="/leaderboard" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
+            <Link to="/leaderboard" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
               <Trophy className="h-4 w-4 mr-1" />
               Leaderboard
             </Link>
-            <Link href="https://shop.thebattlebunker.com/?srsltid=AfmBOooA1PK269tAblC8AjIUZIdGUa5gd65im0ovz5pqv5tcrV319AlX" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
+            <a href="https://shop.thebattlebunker.com/?srsltid=AfmBOooA1PK269tAblC8AjIUZIdGUa5gd65im0ovz5pqv5tcrV319AlX" 
+               className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
+               target="_blank"
+               rel="noopener noreferrer">
               <ShoppingBag className="h-4 w-4 mr-1" />
               Shop
-            </Link>
+            </a>
             {user ? (
               <div className="flex items-center space-x-4">
-                <Link href="/profile" className="flex items-center space-x-2 font-medium hover:text-[#9b9b6f] transition-colors">
+                <Link to="/profile" className="flex items-center space-x-2 font-medium hover:text-[#9b9b6f] transition-colors">
                   <User size={20} />
                   <span>Dashboard</span>
                 </Link>
                 {isAdmin && (
-                  <Link href="/admin-dashboard" className="font-medium hover:text-[#9b9b6f] transition-colors">
+                  <Link to="/admin-dashboard" className="font-medium hover:text-[#9b9b6f] transition-colors">
                     Admin
                   </Link>
                 )}
@@ -58,7 +61,7 @@ const Header: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <Link href="/login" className="font-medium hover:text-[#9b9b6f] transition-colors">Login</Link>
+              <Link to="/login" className="font-medium hover:text-[#9b9b6f] transition-colors">Login</Link>
             )}
           </nav>
           
@@ -80,7 +83,7 @@ const Header: React.FC = () => {
           <div className="md:hidden absolute top-full left-0 right-0 bg-black border-t border-gray-800 shadow-lg">
             <nav className="flex flex-col space-y-4 p-4">
               <Link 
-                href="/" 
+                to="/" 
                 className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -88,25 +91,26 @@ const Header: React.FC = () => {
                 Home
               </Link>
               <Link 
-                href="/leaderboard" 
+                to="/leaderboard" 
                 className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Trophy className="h-4 w-4 mr-1" />
                 Leaderboard
               </Link>
-              <Link 
-                href="https://shop.thebattlebunker.com/?srsltid=AfmBOooA1PK269tAblC8AjIUZIdGUa5gd65im0ovz5pqv5tcrV319AlX" 
-                className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
+              <a 
+                href="https://shop.thebattlebunker.com/?srsltid=AfmBOooA1PK269tAblC8AjIUZIdGUa5gd65im0ovz5pqv5tcrV319AlX"
+                className="font-medium hover:text-[#9b9b6f] transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <ShoppingBag className="h-4 w-4 mr-1" />
                 Shop
-              </Link>
+              </a>
               {user ? (
                 <>
                   <Link 
-                    href="/profile" 
+                    to="/profile" 
                     className="flex items-center space-x-2 font-medium hover:text-[#9b9b6f] transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -115,7 +119,7 @@ const Header: React.FC = () => {
                   </Link>
                   {isAdmin && (
                     <Link 
-                      href="/admin-dashboard" 
+                      to="/admin-dashboard" 
                       className="font-medium hover:text-[#9b9b6f] transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -135,7 +139,7 @@ const Header: React.FC = () => {
                 </>
               ) : (
                 <Link 
-                  href="/login" 
+                  to="/login" 
                   className="font-medium hover:text-[#9b9b6f] transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

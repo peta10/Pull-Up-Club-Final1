@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Button } from '../ui/Button';
+import { Button } from '../../components/ui/Button';
 import { AlertTriangle } from 'lucide-react';
 import { createPaymentIntent } from '../../lib/stripe';
 

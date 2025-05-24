@@ -10,7 +10,29 @@ interface User {
   role?: "user" | "admin";
 }
 
-interface Profile {
+interface ProfileSettings {
+  user_settings: any;
+  notification_preferences: {
+    email_notifications: boolean;
+    workout_reminders: boolean;
+    subscription_reminders: boolean;
+    achievement_notifications: boolean;
+    leaderboard_updates: boolean;
+  };
+  theme_preferences: {
+    theme: 'light' | 'dark';
+    color_scheme: string;
+    font_size: string;
+  };
+  privacy_settings: {
+    show_profile: boolean;
+    show_stats: boolean;
+    show_achievements: boolean;
+    show_activity: boolean;
+  };
+}
+
+interface Profile extends ProfileSettings {
   isProfileCompleted: boolean;
   socialMedia: string | null;
   streetAddress: string | null;
@@ -34,6 +56,7 @@ interface AuthContextType {
   isFirstLogin: boolean;
   isLoading: boolean;
   isAdmin: boolean;
+  updateProfileSettings: (settingType: keyof ProfileSettings, newValues: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -48,7 +71,30 @@ const AuthContext = createContext<AuthContextType>({
   isFirstLogin: false,
   isLoading: true,
   isAdmin: false,
+  updateProfileSettings: async () => {},
 });
+
+const defaultSettings: ProfileSettings = {
+  user_settings: {},
+  notification_preferences: {
+    email_notifications: true,
+    workout_reminders: true,
+    subscription_reminders: true,
+    achievement_notifications: true,
+    leaderboard_updates: true
+  },
+  theme_preferences: {
+    theme: 'light',
+    color_scheme: 'default',
+    font_size: 'medium'
+  },
+  privacy_settings: {
+    show_profile: true,
+    show_stats: true,
+    show_achievements: true,
+    show_activity: true
+  }
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -73,6 +119,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     setIsLoading(true);
     try {
+      // Store pending subscription in database instead of localStorage
+      const { error: pendingError } = await supabase.rpc('handle_pending_subscription', {
+        user_id: authedUser.id,
+        plan_data: { plan, timestamp: new Date().toISOString() }
+      });
+
+      if (pendingError) throw pendingError;
+
       console.log(
         `[AuthContext] User ${authedUser.email} proceeding to ${plan} subscription.`
       );
@@ -96,15 +150,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data: profileData, error } = await supabase
+      console.log("[AuthContext] Fetching profile for user:", userId);
+      
+      // First check if user has admin role
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      const isUserAdmin = !adminError && adminData !== null;
+      console.log("[AuthContext] Admin check result:", { isUserAdmin, adminData, adminError });
+      
+      // Set admin status immediately
+      setIsAdmin(isUserAdmin);
+
+      // Then fetch the full profile
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
-      if (error) {
-        if (error.code === "PGRST116") {
-          // No profile found
+      if (profileError) {
+        if (profileError.code === "PGRST116") {
           setIsFirstLogin(true);
           setTimeout(async () => {
             const { data: retryData } = await supabase
@@ -123,25 +192,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 state: null,
                 zipCode: null,
                 country: null,
-                role: "user",
+                role: isUserAdmin ? "admin" : "user",
+                ...defaultSettings
               });
             }
           }, 1500);
           return;
         }
-        console.error("Error fetching profile:", error);
+        console.error("Error fetching profile:", profileError);
         return;
       }
 
-      // Check if user is admin
-      const { data: adminData } = await supabase
-        .from("admin_roles")
-        .select("user_id")
-        .eq("user_id", userId)
-        .single();
-
-      const isUserAdmin = !!adminData;
-      setIsAdmin(isUserAdmin);
+      console.log("[AuthContext] Profile data received:", profileData);
 
       setProfile({
         isProfileCompleted: profileData.is_profile_completed || false,
@@ -153,12 +215,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         zipCode: profileData.zip_code,
         country: profileData.country,
         role: isUserAdmin ? "admin" : "user",
+        user_settings: profileData.user_settings || defaultSettings.user_settings,
+        notification_preferences: profileData.notification_preferences || defaultSettings.notification_preferences,
+        theme_preferences: profileData.theme_preferences || defaultSettings.theme_preferences,
+        privacy_settings: profileData.privacy_settings || defaultSettings.privacy_settings
       });
       setIsFirstLogin(!profileData.is_profile_completed);
 
-      // Update user object with role
       if (user) {
-        setUser({ ...user, role: isUserAdmin ? "admin" : "user" });
+        // Update user with role information
+        const updatedUser: User = {
+          ...user,
+          role: isUserAdmin ? "admin" : "user"
+        };
+        console.log("[AuthContext] Updating user with role:", updatedUser);
+        setUser(updatedUser);
       }
     } catch (err) {
       console.error("Error in fetchProfile:", err);
@@ -170,44 +241,132 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       "[AuthContext] processPendingSubscription called for user:",
       currentUser.email
     );
-    const pendingPlan = localStorage.getItem("pendingSubscriptionPlan") as
-      | "monthly"
-      | "annual"
-      | null;
-    console.log("[AuthContext] Pending plan from localStorage:", pendingPlan);
+    
+    try {
+      // Get pending subscription from database instead of localStorage
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('pending_subscription_plan')
+        .eq('id', currentUser.id)
+        .single();
 
-    if (pendingPlan) {
-      localStorage.removeItem("pendingSubscriptionPlan");
-      await handlePostAuthSubscription(currentUser, pendingPlan);
-    } else {
-      console.log(
-        "[AuthContext] No pending plan in localStorage. Checking location.state for fallback."
-      );
-      const routeState = location.state as {
-        intendedAction?: string;
-        plan?: "monthly" | "annual";
-      } | null;
-      console.log("[AuthContext] Location state for fallback:", routeState);
-      if (routeState?.intendedAction === "subscribe" && routeState.plan) {
-        console.log(
-          "[AuthContext] Found pending plan in location.state (fallback):",
-          routeState.plan
-        );
-        await handlePostAuthSubscription(currentUser, routeState.plan);
-        navigate(location.pathname, { replace: true, state: {} });
+      if (profileError) throw profileError;
+
+      const pendingPlan = profileData?.pending_subscription_plan?.plan as "monthly" | "annual" | null;
+      
+      if (pendingPlan) {
+        // Clear pending subscription from database
+        await supabase.rpc('clear_pending_subscription', {
+          user_id: currentUser.id
+        });
+        
+        await handlePostAuthSubscription(currentUser, pendingPlan);
       } else {
-        console.log(
-          "[AuthContext] No pending subscription found in localStorage or location.state for fallback."
-        );
-        // Don't automatically redirect to profile page unless we're in the login flow
-        // This allows the home page to be viewed without login
-        const isAuthRoute =
-          location.pathname === "/login" ||
-          location.pathname === "/create-account";
-        if (isAuthRoute) {
-          navigate("/profile", { replace: true });
+        console.log("[AuthContext] No pending plan in database. Checking location.state for fallback.");
+        const routeState = location.state as {
+          intendedAction?: string;
+          plan?: "monthly" | "annual";
+        } | null;
+
+        if (routeState?.intendedAction === "subscribe" && routeState.plan) {
+          await handlePostAuthSubscription(currentUser, routeState.plan);
+          navigate(location.pathname, { replace: true, state: {} });
+        } else {
+          const isAuthRoute = location.pathname === "/login" || location.pathname === "/create-account";
+          if (isAuthRoute) {
+            navigate("/profile", { replace: true });
+          }
         }
       }
+    } catch (error) {
+      console.error("[AuthContext] Error processing pending subscription:", error);
+    }
+  };
+
+  const updateProfileSettings = async (settingType: keyof ProfileSettings, newValues: any) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.rpc('update_profile_settings', {
+        setting_type: settingType,
+        new_values: newValues
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      if (profile) {
+        setProfile({
+          ...profile,
+          [settingType]: { ...profile[settingType], ...newValues }
+        });
+      }
+
+      return data;
+    } catch (error) {
+      console.error(`Error updating ${settingType}:`, error);
+      throw error;
+    }
+  };
+
+  const handleAuthError = async (error: any) => {
+    console.error('[AuthContext] Auth error:', error);
+    
+    if (error.message.includes('Invalid Refresh Token')) {
+      // Clear invalid session
+      await supabase.auth.signOut();
+      
+      // Clear local storage
+      localStorage.clear();
+      
+      // Redirect to login
+      navigate('/login');
+    }
+  };
+
+  const recoverSession = async () => {
+    try {
+      // First try to get the current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) throw sessionError;
+      
+      if (session) {
+        console.log('[AuthContext] Active session found:', session.user.email);
+        return session;
+      }
+      
+      // If no session, don't try to refresh as it will cause an AuthSessionMissingError
+      console.log('[AuthContext] No active session found, skipping refresh attempt');
+      return null;
+    } catch (error) {
+      console.error('[AuthContext] Session recovery failed:', error);
+      // Clear any potentially corrupted session data
+      await supabase.auth.signOut();
+      localStorage.clear();
+      return null;
+    }
+  };
+
+  const checkSessionPersistence = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('[AuthContext] No active session found');
+        return false;
+      }
+
+      // Verify session expiry
+      if (new Date(session.expires_at!) < new Date()) {
+        console.log('[AuthContext] Session expired, attempting refresh...');
+        const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+        return !!refreshedSession;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('[AuthContext] Error checking session persistence:', error);
+      return false;
     }
   };
 
@@ -216,36 +375,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("[AuthContext] initAuth started.");
       setIsLoading(true);
       try {
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-        console.log(
-          "[AuthContext] getSession result - Session:",
-          session,
-          "Error:",
-          sessionError
-        );
-
-        if (session?.user) {
-          console.log(
-            "[AuthContext] User session found on init:",
-            session.user.email
-          );
+        // First try to recover any existing session
+        const recoveredSession = await recoverSession();
+        
+        if (recoveredSession?.user) {
+          console.log("[AuthContext] Recovered session for user:", recoveredSession.user.email);
           const currentUser = {
-            id: session.user.id,
-            email: session.user.email!,
+            id: recoveredSession.user.id,
+            email: recoveredSession.user.email!,
           };
           setUser(currentUser);
-          await fetchProfile(session.user.id);
+          await fetchProfile(recoveredSession.user.id);
           await processPendingSubscription(currentUser);
         } else {
-          console.log("[AuthContext] No active session on init.");
+          console.log("[AuthContext] No active session to recover.");
         }
 
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+        // Set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
           console.log(
             `[AuthContext] onAuthStateChange event: ${event}, User: ${session?.user?.email}, Session:`,
             session
@@ -260,9 +407,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setUser(currentUserFromSession);
             await fetchProfile(session.user.id);
 
+            // Check admin status after profile fetch is complete - using the updated isAdmin state
             if (isAdmin) {
-              console.log("[AuthContext] Admin user detected. Navigating to /admin-dashboard.");
-              navigate("/admin-dashboard", { replace: true });
+              console.log("[AuthContext] Admin user detected, navigating to admin dashboard");
+              if (event === "SIGNED_IN") {
+                navigate("/admin-dashboard");
+              }
               setIsLoading(false);
               return;
             }
@@ -274,26 +424,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               .single();
 
             const isProfileActuallyCompleted = profileData?.is_profile_completed || false;
-            console.log("[AuthContext] Profile data for non-admin:", profileData);
+            console.log("[AuthContext] Profile data for user:", profileData);
             console.log(
-              "[AuthContext] isProfileActuallyCompleted for non-admin:",
+              "[AuthContext] Profile completion status:",
               isProfileActuallyCompleted
             );
 
             if (event === "SIGNED_IN") {
-              console.log(
-                "[AuthContext] SIGNED_IN event processing for non-admin. isProfileActuallyCompleted:",
-                isProfileActuallyCompleted
-              );
               if (!isProfileActuallyCompleted) {
                 console.log(
-                  "[AuthContext] New non-admin user (profile not completed) signed in, redirecting to /subscription."
+                  "[AuthContext] New user (profile not completed) signed in, redirecting to /subscription"
                 );
                 localStorage.removeItem("pendingSubscriptionPlan");
                 navigate("/subscription", { replace: true });
               } else {
                 console.log(
-                  "[AuthContext] Existing non-admin user (profile completed) signed in. Processing pending subscription."
+                  "[AuthContext] Existing user (profile completed) signed in. Processing pending subscription."
                 );
                 await processPendingSubscription(currentUserFromSession);
               }
@@ -319,12 +465,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setIsLoading(false);
         });
 
+        // Verify session persistence
+        const hasPersistedSession = await checkSessionPersistence();
+        if (!hasPersistedSession) {
+          console.log('[AuthContext] No valid persisted session found');
+        }
+
         return () => {
           console.log("[AuthContext] Unsubscribing from onAuthStateChange.");
           subscription.unsubscribe();
         };
       } catch (error) {
-        console.error("[AuthContext] Error initializing auth:", error);
+        console.error("[AuthContext] Error in initAuth:", error);
+        await handleAuthError(error);
       } finally {
         console.log("[AuthContext] initAuth finished.");
         setIsLoading(false);
@@ -350,6 +503,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         zipCode: null,
         country: null,
         role: "user",
+        ...defaultSettings
       });
       setIsFirstLogin(true);
       console.log("[AuthContext] Dev signIn, processing pending subscription.");
@@ -385,6 +539,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         zipCode: null,
         country: null,
         role: "user",
+        ...defaultSettings
       });
       setIsFirstLogin(true);
       console.log("[AuthContext] Dev signUp, processing pending subscription.");
@@ -483,6 +638,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isFirstLogin,
         isLoading,
         isAdmin,
+        updateProfileSettings
       }}
     >
       {children}
@@ -490,10 +646,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-};
+}
