@@ -212,11 +212,35 @@ These must be set in the Supabase project dashboard under Settings > Environment
     *   Ensure your Supabase project (`yqnikgupiaghgjtsaypr`) is running.
     *   Apply database migrations if setting up locally or if new migrations are pulled: `npx supabase db push` (if using Supabase CLI and migrations are synced locally).
     *   Deploy Edge Functions: `npx supabase functions deploy --project-ref yqnikgupiaghgjtsaypr` (or deploy individual functions).
+    *   **Configure Redirect URLs for Auth:**
+        * In your Supabase Dashboard, go to Authentication > URL Configuration
+        * Set your Site URL to `https://pullupclub.netlify.app` (your production Netlify URL)
+        * Add the following additional redirect URLs for development and deployment previews:
+          ```
+          http://localhost:3000/**
+          https://**--pullupclub.netlify.app/**
+          ```
+        * These wildcard patterns will handle both local development and Netlify preview deployments
 5.  **Set up Deno for Supabase Edge Functions:**
     *   Run `npm run setup-deno` to check Deno installation and set up the environment.
     *   Install the Deno VS Code extension if using VS Code.
     *   The project includes Deno configuration files (`deno.json`, `deno-types.d.ts`) to help with TypeScript errors.
 6.  **Run the development server:** `npm run dev`
+
+## Deployment on Netlify
+
+1. **Connect your repository to Netlify**
+2. **Configure the build settings:**
+   * Build command: `npm run build`
+   * Publish directory: `dist`
+3. **Set environment variables:**
+   * `VITE_SUPABASE_URL`: Your Supabase project URL
+   * `VITE_SUPABASE_ANON_KEY`: Your Supabase project anonymous key
+   * `VITE_SITE_URL`: Set to your Netlify app domain (e.g., `https://pullupclub.netlify.app`)
+   * `VITE_STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key
+4. **Deploy the site**
+5. **Verify authentication flows:**
+   * Test sign-up, login, and password reset flows to ensure redirect URLs are working correctly
 
 ## Next Steps
 

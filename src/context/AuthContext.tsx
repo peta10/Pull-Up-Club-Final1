@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Provider, AuthChangeEvent, Session } from "@supabase/supabase-js";
-import { supabase, isDevelopment } from "../lib/supabase.ts";
+import { supabase, isDevelopment, getRedirectUrl } from "../lib/supabase.ts";
 import { createCheckoutSession } from "../lib/stripe.ts";
 
 interface User {
@@ -551,7 +551,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/profile`,
+        emailRedirectTo: `${getRedirectUrl()}profile`,
       },
     });
 
@@ -585,7 +585,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/profile`,
+        redirectTo: `${getRedirectUrl()}profile`,
       },
     });
 
@@ -594,7 +594,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${getRedirectUrl()}reset-password`,
     });
 
     if (error) throw error;

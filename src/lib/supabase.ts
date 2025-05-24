@@ -4,43 +4,43 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   throw new Error('Missing Supabase environment variables');
 }
 
-// Create a single instance of the Supabase client with proper session handling
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      storage: {
-        getItem: (key: string) => {
-          try {
-            const value = localStorage.getItem(key);
-            return value ? JSON.parse(value) : null;
-          } catch (error) {
-            console.error('Error reading from localStorage:', error);
-            return null;
-          }
-        },
-        setItem: (key: string, value: any) => {
-          try {
-            localStorage.setItem(key, JSON.stringify(value));
-          } catch (error) {
-            console.error('Error writing to localStorage:', error);
-          }
-        },
-        removeItem: (key: string) => {
-          try {
-            localStorage.removeItem(key);
-          } catch (error) {
-            console.error('Error removing from localStorage:', error);
-          }
-        }
-      }
-    }
+// Function to get the correct URL for authentication redirects
+export const getRedirectUrl = (): string => {
+  // Check if it's browser environment
+  if (typeof window !== 'undefined') {
+    const host = window.location.host;
+    // Ensure SSL is used
+    const protocol = window.location.protocol;
+    return `${protocol}//${host}/auth/callback`;
   }
-);
+  // Fallback for non-browser environments
+  return 'http://localhost:5173/auth/callback';
+};
+
+// Initialize the Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Create the Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    // Remove redirectTo property since it's not recognized
+    // redirectTo: getRedirectUrl()
+  },
+});
 
 // Development mode check
-export const isDevelopment = import.meta.env.MODE === 'development'; 
+export const isDevelopment = import.meta.env.MODE === 'development';
+
+// Helper function for handling auth redirects in components
+export const handleAuthRedirect = (customPath?: string) => {
+  const baseUrl = getRedirectUrl();
+  const redirectPath = customPath || '';
+  
+  // If custom path starts with '/', remove the trailing slash from baseUrl
+  return customPath?.startsWith('/') 
+    ? `${baseUrl.slice(0, -1)}${redirectPath}`
+    : `${baseUrl}${redirectPath}`;
+}; 

@@ -1,7 +1,7 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.29.0";
-import Stripe from "https://esm.sh/stripe@12.5.0";
+import { createClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
 
+// Initialize Supabase client with service role key for admin access
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -9,13 +9,15 @@ const supabaseAdmin = createClient(
 
 // Initialize Stripe
 const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
-const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? 'whsec_7BWt5Xhe0uzOFay2AyR2ns5q8PgTUMZU';
+const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
 const welcomeFunctionUrl = Deno.env.get('WELCOME_FUNCTION_URL') ?? '';
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2023-10-16',
-  httpClient: Stripe.createFetchHttpClient(),
+  apiVersion: '2024-11-20',
 });
+
+// This is needed in order to use the Web Crypto API in Deno
+const cryptoProvider = Stripe.createSubtleCryptoProvider();
 
 // Helper function to verify Stripe signature
 async function verifyStripeSignature(req: Request): Promise<{ valid: boolean; event?: Stripe.Event }> {
@@ -26,10 +28,13 @@ async function verifyStripeSignature(req: Request): Promise<{ valid: boolean; ev
     }
 
     const body = await req.text();
-    const event = stripe.webhooks.constructEvent(
+    
+    const event = await stripe.webhooks.constructEventAsync(
       body,
       signature,
-      stripeWebhookSecret
+      stripeWebhookSecret,
+      undefined,
+      cryptoProvider
     );
 
     return { valid: true, event };
@@ -79,7 +84,9 @@ async function triggerWelcomeFlow(userId: string) {
   }
 }
 
-serve(async (req) => {
+console.log('Stripe Webhook function initialized!');
+
+Deno.serve(async (req: Request) => {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -99,7 +106,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Stripe event received: ${event.type}`);
+    console.log(`🔔 Stripe event received: ${event.type} (${event.id})`);
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -116,25 +123,37 @@ serve(async (req) => {
           // If customer ID wasn't already saved, check metadata for user_id
           if (session.metadata?.user_id) {
             // Update profile with new customer ID
-            await supabaseAdmin
+            const { error: profileError } = await supabaseAdmin
               .from('profiles')
               .update({ 
                 stripe_customer_id: session.customer,
                 is_paid: true 
               })
               .eq('id', session.metadata.user_id);
+              
+            if (profileError) {
+              console.error('Error updating profile:', profileError);
+            }
             
             // Create subscription record
             if (session.subscription && typeof session.subscription === 'string') {
-              const subscription = await stripe.subscriptions.retrieve(session.subscription);
-              
-              await supabaseAdmin.from('subscriptions').insert({
-                user_id: session.metadata.user_id,
-                stripe_subscription_id: subscription.id,
-                status: subscription.status,
-                current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-                current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-              });
+              try {
+                const subscription = await stripe.subscriptions.retrieve(session.subscription);
+                
+                const { error: subscriptionError } = await supabaseAdmin.from('subscriptions').insert({
+                  user_id: session.metadata.user_id,
+                  stripe_subscription_id: subscription.id,
+                  status: subscription.status,
+                  current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                  current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                });
+                
+                if (subscriptionError) {
+                  console.error('Error creating subscription record:', subscriptionError);
+                }
+              } catch (stripeError) {
+                console.error('Error retrieving subscription from Stripe:', stripeError);
+              }
             }
             
             // Trigger welcome flow
@@ -144,22 +163,34 @@ serve(async (req) => {
           }
         } else {
           // User already has customer ID, just update subscription
-          await supabaseAdmin
+          const { error: profileError } = await supabaseAdmin
             .from('profiles')
             .update({ is_paid: true })
             .eq('id', user.id);
+            
+          if (profileError) {
+            console.error('Error updating profile payment status:', profileError);
+          }
           
           // Create subscription record
           if (session.subscription && typeof session.subscription === 'string') {
-            const subscription = await stripe.subscriptions.retrieve(session.subscription);
-            
-            await supabaseAdmin.from('subscriptions').insert({
-              user_id: user.id,
-              stripe_subscription_id: subscription.id,
-              status: subscription.status,
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            });
+            try {
+              const subscription = await stripe.subscriptions.retrieve(session.subscription);
+              
+              const { error: subscriptionError } = await supabaseAdmin.from('subscriptions').insert({
+                user_id: user.id,
+                stripe_subscription_id: subscription.id,
+                status: subscription.status,
+                current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              });
+              
+              if (subscriptionError) {
+                console.error('Error creating subscription record:', subscriptionError);
+              }
+            } catch (stripeError) {
+              console.error('Error retrieving subscription from Stripe:', stripeError);
+            }
           }
           
           // Trigger welcome flow
@@ -190,16 +221,24 @@ serve(async (req) => {
         }
         
         // Update subscription record
-        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-        
-        await supabaseAdmin
-          .from('subscriptions')
-          .update({
-            status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          })
-          .eq('stripe_subscription_id', subscription.id);
+        try {
+          const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+          
+          const { error: updateError } = await supabaseAdmin
+            .from('subscriptions')
+            .update({
+              status: subscription.status,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            })
+            .eq('stripe_subscription_id', subscription.id);
+            
+          if (updateError) {
+            console.error('Error updating subscription record:', updateError);
+          }
+        } catch (stripeError) {
+          console.error('Error retrieving subscription from Stripe:', stripeError);
+        }
         
         break;
       }
@@ -221,12 +260,16 @@ serve(async (req) => {
         }
         
         // Update subscription status
-        await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
           .from('subscriptions')
           .update({
             status: 'past_due',
           })
           .eq('stripe_subscription_id', invoice.subscription);
+          
+        if (updateError) {
+          console.error('Error updating subscription status:', updateError);
+        }
         
         // TODO: Send payment failed notification
         
@@ -237,7 +280,7 @@ serve(async (req) => {
         const subscription = event.data.object as Stripe.Subscription;
         
         // Update subscription in database
-        await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
           .from('subscriptions')
           .update({
             status: subscription.status,
@@ -245,6 +288,10 @@ serve(async (req) => {
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
           })
           .eq('stripe_subscription_id', subscription.id);
+          
+        if (updateError) {
+          console.error('Error updating subscription:', updateError);
+        }
         
         break;
       }
@@ -253,10 +300,14 @@ serve(async (req) => {
         const subscription = event.data.object as Stripe.Subscription;
         
         // Update subscription status
-        await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
           .from('subscriptions')
           .update({ status: 'canceled' })
           .eq('stripe_subscription_id', subscription.id);
+          
+        if (updateError) {
+          console.error('Error updating subscription status:', updateError);
+        }
         
         // Find the user and update their paid status
         if (subscription.customer && typeof subscription.customer === 'string') {
@@ -264,18 +315,26 @@ serve(async (req) => {
           
           if (user) {
             // Check if user has any other active subscriptions
-            const { data: activeSubscriptions } = await supabaseAdmin
+            const { data: activeSubscriptions, error: queryError } = await supabaseAdmin
               .from('subscriptions')
               .select('id')
               .eq('user_id', user.id)
               .eq('status', 'active');
+              
+            if (queryError) {
+              console.error('Error checking active subscriptions:', queryError);
+            }
             
             // If no other active subscriptions, mark user as not paid
             if (!activeSubscriptions || activeSubscriptions.length === 0) {
-              await supabaseAdmin
+              const { error: profileError } = await supabaseAdmin
                 .from('profiles')
                 .update({ is_paid: false })
                 .eq('id', user.id);
+                
+              if (profileError) {
+                console.error('Error updating profile payment status:', profileError);
+              }
             }
           }
         }
@@ -284,15 +343,17 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ received: true }), {
+    return new Response(JSON.stringify({ received: true, eventId: event.id }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error handling webhook:', error);
     
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
     return new Response(
-      JSON.stringify({ error: 'Webhook error', details: error.message }),
+      JSON.stringify({ error: 'Webhook error', details: errorMessage }),
       {
         status: 400,
         headers: { 'Content-Type': 'application/json' },

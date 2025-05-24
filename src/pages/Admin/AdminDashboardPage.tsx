@@ -3,9 +3,11 @@ import Layout from "../../components/Layout/Layout.tsx";
 import ReviewSubmission from "./ReviewSubmission.tsx";
 import { Submission } from "../../types/index.ts";
 import { Button } from "../../components/ui/Button.tsx";
-import { AlertTriangle, LogOut, Users } from "lucide-react";
+import { LogOut, Users } from "lucide-react";
 import { supabase } from "../../lib/supabase.ts";
 import { useNavigate } from "react-router-dom";
+import { adminApi } from "../../utils/edgeFunctions.ts";
+import { LoadingState, ErrorState, EmptyState } from "../../components/ui/LoadingState.tsx";
 
 type FilterStatus = "all" | "pending" | "approved" | "rejected";
 
@@ -25,25 +27,8 @@ const AdminDashboardPage: React.FC = () => {
       setIsLoading(true);
       setLoadingError(null);
 
-      // Get the session to ensure we have authentication
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        throw new Error('Authentication error: ' + sessionError.message);
-      }
-
-      if (!session) {
-        throw new Error('No active session found');
-      }
-
-      // Use the new RPC function with authentication
-      const { data, error } = await supabase
-        .rpc('get_submissions_with_users');
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
+      // Use our adminApi utility
+      const data = await adminApi.getSubmissions();
 
       interface SubmissionData {
         id: string;
@@ -64,6 +49,12 @@ const AdminDashboardPage: React.FC = () => {
         gender?: string;
         region?: string;
         club_affiliation?: string;
+      }
+
+      // Check if data is an array
+      if (!Array.isArray(data)) {
+        console.error("Expected array of submissions, got:", data);
+        throw new Error("Invalid response format from server");
       }
 
       const formattedSubmissions: Submission[] = (data as SubmissionData[]).map((submission) => {
@@ -94,6 +85,7 @@ const AdminDashboardPage: React.FC = () => {
 
       setSubmissions(formattedSubmissions);
     } catch (err) {
+      console.error("Error fetching submissions:", err);
       setLoadingError(
         err instanceof Error ? err.message : 'Failed to fetch submissions'
       );
@@ -102,50 +94,42 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate("/login");
   };
 
   const handleApproveSubmission = async (id: string, actualCount: number) => {
     try {
-      const { error } = await supabase
-        .from("submissions")
-        .update({
-          status: "approved",
-          actual_pull_up_count: actualCount,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
+      setIsLoading(true);
+      // Use our adminApi utility
+      await adminApi.approveSubmission(id, actualCount);
+      
       // Refresh submissions after update
       await fetchSubmissions();
     } catch (err) {
+      console.error("Error approving submission:", err);
       setLoadingError(
         err instanceof Error ? err.message : "Failed to approve submission"
       );
+      setIsLoading(false);
     }
   };
 
   const handleRejectSubmission = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("submissions")
-        .update({
-          status: "rejected",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
+      setIsLoading(true);
+      // Use our adminApi utility
+      await adminApi.rejectSubmission(id);
+      
       // Refresh submissions after update
       await fetchSubmissions();
     } catch (err) {
+      console.error("Error rejecting submission:", err);
       setLoadingError(
         err instanceof Error ? err.message : "Failed to reject submission"
       );
+      setIsLoading(false);
     }
   };
 
@@ -156,7 +140,7 @@ const AdminDashboardPage: React.FC = () => {
   // Filter submissions based on current filter
   const filteredSubmissions = submissions.filter((submission) => {
     if (currentFilter === "all") return true;
-    return submission.status.toLowerCase() === currentFilter;
+    return submission.status.toLowerCase() === currentFilter.toLowerCase();
   });
 
   // Count submissions by status
@@ -237,43 +221,52 @@ const AdminDashboardPage: React.FC = () => {
           </div>
 
           {loadingError && (
-            <div className="bg-red-900 border border-red-700 text-white p-4 rounded-lg mb-6 flex items-center">
-              <AlertTriangle size={20} className="mr-2" />
-              <span>{loadingError}</span>
-            </div>
+            <ErrorState 
+              message={loadingError}
+              className="mb-6"
+              onRetry={fetchSubmissions}
+            />
           )}
 
           {isLoading ? (
-            <div className="bg-gray-800 p-8 rounded-lg text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-              <p className="text-white">Loading submissions...</p>
-            </div>
+            <LoadingState message="Loading submissions..." />
           ) : (
             <>
-              {filteredSubmissions.map((submission) => (
-                <ReviewSubmission
-                  key={submission.id}
-                  submission={submission}
-                  onApprove={handleApproveSubmission}
-                  onReject={handleRejectSubmission}
-                />
-              ))}
-
-              {filteredSubmissions.length === 0 && (
-                <div className="bg-gray-800 p-8 rounded-lg text-center">
-                  <h3 className="text-white text-xl mb-2">
-                    No {currentFilter} submissions
-                  </h3>
-                  <p className="text-gray-400">
-                    {currentFilter === "pending"
+              {filteredSubmissions.length > 0 ? (
+                <>
+                  {filteredSubmissions.map((submission) => (
+                    <ReviewSubmission
+                      key={submission.id}
+                      submission={submission}
+                      onApprove={handleApproveSubmission}
+                      onReject={handleRejectSubmission}
+                    />
+                  ))}
+                  
+                  {/* Refresh button */}
+                  <div className="flex justify-center mt-8">
+                    <Button
+                      variant="secondary"
+                      onClick={fetchSubmissions}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Refreshing..." : "Refresh Data"}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <EmptyState
+                  title={`No ${currentFilter} submissions`}
+                  message={
+                    currentFilter === "pending"
                       ? "There are no submissions waiting for review."
                       : currentFilter === "approved"
                       ? "No submissions have been approved yet."
                       : currentFilter === "rejected"
                       ? "No submissions have been rejected."
-                      : "No submissions found."}
-                  </p>
-                </div>
+                      : "No submissions found."
+                  }
+                />
               )}
             </>
           )}

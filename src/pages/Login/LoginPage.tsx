@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Layout from "../../components/Layout/Layout";
-import { useAuth } from "../../context/AuthContext";
-import LoginForm from "./LoginForm";
-import SignUpForm from "./SignUpForm";
-import ResetPasswordForm from "./ResetPasswordForm";
-import ResetSentConfirmation from "./ResetSentConfirmation";
+import Layout from "../../components/Layout/Layout.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
+import LoginForm from "./LoginForm.tsx";
+import SignUpForm from "./SignUpForm.tsx";
+import ResetPasswordForm from "./ResetPasswordForm.tsx";
+import ResetSentConfirmation from "./ResetSentConfirmation.tsx";
 
 const LoginPage: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
