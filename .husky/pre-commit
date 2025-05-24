@@ -1,0 +1,17 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Check for sensitive data
+if grep -r "yqnikgupiaghgjtsaypr\|CP1QhB6uA7wWNQQp" ./src; then
+  echo "Error: Found sensitive data in files"
+  exit 1
+fi
+
+# Check for .env files
+if git diff --cached --name-only | grep -q "\.env$"; then
+  echo "Error: Attempting to commit .env file"
+  exit 1
+fi
+
+# Run other checks
+npm run lint 

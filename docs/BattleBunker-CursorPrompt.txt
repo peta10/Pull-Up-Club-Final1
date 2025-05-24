@@ -1,0 +1,115 @@
+Cursor Prompt – BattleBunker / Pull‑Up
+Club Frontend
+Goal: Generate a production‑ready Next.js (14, App Router) project—in
+TypeScript—with Tailwind CSS, shadcn/ui for pre‑styled components, motion.dev
+for micro‑interactions, and Lenis for global smooth‑scroll. The app must plug into
+Supabase Auth + DB and Stripe billing and implement the full user/admin flow
+outlined below.
+1. Project & tooling prerequisites
+● Framework: create-next-app@latest --typescript (App Router).
+● Styling: Tailwind CSS with tailwind.config.js already extended for shadcn tokens.
+● UI Library: Install & init shadcn/ui (npx shadcn-ui@latest init).
+● Animation: Install motion (npm i motion) and add helper fadeIn, slideUp,
+staggerChildren variants.
+● Smooth‑scroll: Install lenis (npm i @studio-freight/lenis) and initialise once
+in the root layout—apply data-lenis-prevent to modals.
+● State / Server: Add @supabase/supabase-js and a utility for server actions + RLS
+helpers.
+● Payments: Add @stripe/stripe-js + server‑side Stripe SDK; env vars
+STRIPE_SECRET_KEY, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.
+● ESLint, Prettier, Husky pre‑commit hooks.
+2. Top‑level routes & navigation
+Route Component Purpose Auth?
+/ Home Hero, product highlight, CTA → Sign Up public
+/signup SignUpForm Email + password → Supabase sign‑up guest
+/login LoginForm Standard + Magic Link guest
+/subscri
+be
+StripeCheckout Hosted checkout or embedded pricing user &&
+!paid
+/dashboa
+rd
+UserDashboard
+(tabs)
+Settings ▸ Submissions ▸ Leaderboard paid user
+/admin AdminDashboard Review queue, billing, metrics role=admin
+Use a fixed Header (shadcn/Navbar) containing Home • Leaderboard • Shop • Login (Sign Up
+merges into Login drop‑down once auth logic in place). Smooth‑scroll links on the Marketing
+pages via Lenis.
+3. User flows & components
+3.1 Sign‑Up → Subscription
+1. /signup → Supabase register.
+2. On success, router.push('/subscribe').
+3. Present PricingCard (shadcn/Card) + CheckoutButton (Stripe SDK).
+4. After checkout.session.completed webhook sets is_paid=true in Supabase →
+user redirected to /dashboard.
+3.2 Dashboard layout
+<Tabs> (shadcn/ui) with:
+● Settings – ProfileForm (shadcn/Form) fields: name, age, organisation, gender,
+contact number, address, billing info (Stripe portal link).
+● Submissions – SubmissionStepper (two‑page form):
+○ Page 1: basic details (auto‑filled from profile, editable).
+○ Page 2: file upload for pull‑up rep video (shadcn/FileUpload, client‑side
+motion fade).
+○ Validation via Zod; on submit, write row { status:'pending',
+submitted_at } then toast success and disable resubmit.
+● Leaderboard – LeaderboardTable (shadcn/Table) with rank, reps, organisation;
+motion stagger rows on load.
+3.3 Submission state logic
+● Pending → shown as awaiting review.
+● Rejected → immediate resubmit allowed (form unlocked).
+● Approved → disable form & show Next eligible in: {30‑days-countdown}
+(calculate diffInDays on client, server guard on action).
+3.4 Admin portal
+● /admin guarded by Supabase role=admin.
+● QueueList with cards for each pending submission (video preview, metadata).
+● Approve / Reject buttons trigger RPC to update status & approved_at.
+● On approve → send webhook to Zapier/Resend to fire email + SMS (out of scope for this
+prompt, just create server action placeholder).
+4. Reusable primitives
+TypeScript
+● Button, Card, Dialog, Toast, Tabs, Table, FileUpload, CountdownBadge, all
+generated via shadcn.
+● MotionDiv wrapper to abstract common animations (import from
+./components/motion).
+5. Motion & UX polish
+● Apply motion.div to hero headline (fadeIn & slideUp).
+● Buttons scale slightly on hover (spring).
+● Leaderboard rows stagger.
+● Form stepper transitions via cross‑fade.
+6. Lenis configuration
+'use client'
+import { useEffect } from 'react'
+import Lenis from '@studio-freight/lenis'
+export default function SmoothScrollProvider({ children }) {
+useEffect(() => {
+const lenis = new Lenis({ duration: 1.2, smooth: true })
+const raf = (time: number) => {
+lenis.raf(time)
+requestAnimationFrame(raf)
+}
+requestAnimationFrame(raf)
+return () => lenis.destroy()
+}, [])
+return children
+SQL
+}
+Wrap in root-layout.tsx.
+7. Supabase schema (edge‑ready SQL comments only)
+-- profiles
+id uuid primary key references auth.users on delete cascade,
+full_name text, age int, organisation text, gender text, phone
+text, address text, stripe_customer_id text, is_paid bool default
+false, role text default 'user'
+-- submissions
+id uuid primary key default uuid_generate_v4(), user_id uuid
+references profiles(id), video_url text, reps int, status text
+default 'pending', submitted_at timestamptz default now(),
+approved_at timestamptz
+Row‑level security enforced.
+8. Stripe webhooks (outline only)
+● checkout.session.completed → mark is_paid=true.
+● customer.subscription.updated|deleted → keep billing state in sync.
+Deliver code with sensible folder structure (components, lib, app/(marketing),
+app/(dashboard), app/(admin)), fully typed.
+Return only the generated codebase in a GitHub‑compatible format.

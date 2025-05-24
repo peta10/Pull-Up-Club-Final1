@@ -1,0 +1,18 @@
+/* /index.html 200
+
+# Security headers
+/* 
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self' https://*.supabase.co https://*.stripe.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://* blob:; connect-src 'self' https://*.supabase.co https://*.stripe.com wss://*.supabase.co; frame-src https://*.stripe.com https://*.youtube.com https://*.tiktok.com https://*.instagram.com;
+
+# Prevent access to sensitive paths
+/.env /index.html 404
+/.git/* /index.html 404
+/node_modules/* /index.html 404
+/supabase/* /index.html 404
+
+# Force HTTPS
+/* https://:splat 301!

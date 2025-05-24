@@ -1,0 +1,7 @@
+#9a9871 Main Word 
+#231f20
+#221f16
+
+Background Main: #000000
+
+Secondary Words Accent: #ededed

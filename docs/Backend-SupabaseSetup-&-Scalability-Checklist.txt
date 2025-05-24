@@ -1,0 +1,191 @@
+# Supabase Setup & Verification Checklist for Pull-Up Club
+
+## Project Configuration
+- [✓] Supabase Project
+  - [✓] Project created and accessible (Project ID: yqnikgupiaghgjtsaypr)
+  - [✓] Appropriate instance type selected for anticipated load
+  - [✓] Project URL and API keys securely stored
+  - [✓] Database connection settings verified
+
+## Authentication Setup
+- [✓] Email/Password Authentication
+  - [✓] Sign-up and login flows configured
+  - [✓] Email confirmation settings configured
+  - [✓] Password policies set appropriately
+- [✓] JWT Configuration
+  - [✓] JWT secret properly configured
+  - [✓] JWT expiry times set appropriately
+
+## Database Schema
+- [✓] profiles Table
+  - [✓] Schema includes: id, full_name, age, organisation, gender, phone, address, stripe_customer_id, is_paid, role, last_summon_at, email
+  - [✓] Foreign key relationship to auth.users established
+  - [✓] Default values set correctly
+  - [✓] Indexes created on frequently queried columns
+- [✓] subscriptions Table
+  - [✓] Schema includes all required fields for Stripe integration
+  - [✓] Foreign key relationship to profiles established
+  - [✓] Indexes on stripe_subscription_id and user_id
+- [✓] submissions Table
+  - [✓] Schema includes video_url, platform, pull_up_count, actual_pull_up_count, status fields
+  - [✓] Foreign key relationship to profiles established
+  - [✓] Timestamps for submitted_at and approved_at
+  - [✓] Indexes on status and user_id fields
+- [✓] Email/Notification Tables
+  - [✓] Tables for tracking email events (email_events, email_engagement, email_suppression)
+  - [✓] Notification queue system tables (notification_queue, notification_templates)
+
+## Row-Level Security (RLS)
+- [✓] profiles Table RLS
+  - [✓] Users can only read/write their own profile
+  - [✓] Admins can read/write all profiles
+- [✓] subscriptions Table RLS
+  - [✓] Users can only read their own subscription data
+  - [✓] Admins can read all subscription data
+- [✓] submissions Table RLS
+  - [✓] Users can read/create their own submissions
+  - [✓] Users can only update submissions if status='rejected'
+  - [✓] Admins can read/update all submissions
+- [✓] Email/Notification Tables RLS
+  - [✓] Appropriate access controls for notification data
+
+## Edge Functions
+- [✓] auth-trigger.ts
+  - [✓] Function creates profile on new user signup
+  - [✓] Error handling implemented
+  - [✓] Logging configured
+- [✓] Stripe Webhook Handler
+  - [✓] Function processes Stripe events (stripe-webhooks)
+  - [✓] Signature verification implemented
+  - [✓] Handles all required event types
+  - [✓] Updates subscription status appropriately
+- [✓] Email Notification Functions
+  - [✓] Welcome email function (welcome-flow)
+  - [✓] Submission review notification function
+  - [✓] Badge achievement notification function
+  - [✓] Billing reminder function (billing-reminders)
+- [✓] Subscription Management
+  - [✓] Create checkout session (create-checkout)
+  - [✓] Subscription status endpoint (subscription-status)
+  - [✓] Customer portal access (customer-portal)
+  - [✓] Get Stripe products (get-stripe-products)
+- [✓] Video Submission
+  - [✓] Video upload function
+  - [✓] Video submission validation
+  - [✓] Admin submission management
+
+## Database Webhooks
+- [✓] Auth User Creation Webhook
+  - [✓] Triggers auth-trigger function on auth.users INSERT
+  - [✓] Creates user profile automatically
+- [✓] Subscription Created Webhook
+  - [✓] Triggers welcome-flow function on subscriptions INSERT
+  - [✓] Sends welcome email to new subscribers
+- [✓] Submission Status Update Webhook
+  - [✓] Triggers send-email function on submissions UPDATE
+  - [✓] Notifies users of submission approval/rejection
+- [✓] Badge Assignment Webhook
+  - [✓] Triggers send-email function on user_badges INSERT
+  - [✓] Sends badge achievement notifications
+- [✓] Notification Queue Webhook
+  - [✓] Triggers send-email function on notification_queue INSERT
+  - [✓] Processes email notifications automatically
+
+## Scheduled Functions (CRON Jobs)
+- [✓] Email Processing CRON
+  - [✓] Batch processing configured (10 emails per run)
+  - [✓] Error handling and retries implemented
+  - [✓] Status tracking in place
+- [✓] Subscription Management CRON
+  - [✓] Identifies subscriptions requiring attention
+  - [✓] Processes subscription updates efficiently
+- [✓] Summon Flow CRON
+  - [✓] Identifies users due for workout summon
+  - [✓] Sends notifications with workout details
+
+## Database Optimization
+- [✓] Indexes
+  - [✓] Created on all frequently queried columns
+  - [✓] Index performance verified
+- [✓] Materialized Views
+  - [✓] Leaderboard materialized view created (leaderboard_internal)
+  - [✓] Badge statistics materialized view created (badge_statistics)
+  - [✓] Refresh triggers implemented
+- [✓] Query Optimization
+  - [✓] Complex queries reviewed and optimized
+  - [✓] EXPLAIN ANALYZE used to verify performance
+
+## Storage (If Using)
+- [✓] Storage Buckets
+  - [✓] Videos bucket created
+  - [✓] Access policies configured
+  - [✓] File size limits set
+
+## Monitoring & Logging
+- [✓] Database Logs
+  - [✓] Slow query logging enabled
+  - [✓] Error logging configured
+- [✓] Function Logs
+  - [✓] Log levels appropriately set
+  - [✓] Error tracking implemented
+- [✓] Performance Monitoring
+  - [✓] Performance logs table created
+  - [✓] System metrics tracking implemented
+  - [✓] Badge assignment metrics tracked
+
+## Security Verification
+- [✓] API Key Management
+  - [✓] Anon key permissions restricted appropriately
+  - [✓] Service role key secured
+- [✓] RLS Policies
+  - [✓] All tables have appropriate RLS policies
+  - [✓] No unintended public access
+- [✓] JWT Claims
+  - [✓] JWT claims used appropriately in RLS policies
+
+## Performance Testing
+- [✓] Query Performance
+  - [✓] Tested with representative data volumes
+  - [✓] Identified and resolved bottlenecks
+  - [✓] Query performance tracking system implemented
+- [✓] Function Performance
+  - [✓] Edge functions tested under load
+  - [✓] Cold start impacts minimized
+  - [✓] Function performance monitoring framework created
+
+## Backup & Recovery
+- [✓] Database Backups
+  - [✓] Backup schedule verified (daily backups with 7-day retention)
+  - [✓] Restore procedure documented and tested
+  - [✓] Comprehensive backup documentation created
+
+## Additional Supabase-Specific Items
+- [✓] Extensions
+  - [✓] Required PostgreSQL extensions enabled (pgcrypto, uuid-ossp, pg_stat_statements)
+  - [✓] Extension configurations verified
+- [✓] Webhooks
+  - [✓] Resend email webhook handler implemented
+  - [✓] Webhook signature verification implemented
+
+## Badge System
+- [✓] Badge Tables
+  - [✓] badges table with proper schema
+  - [✓] user_badges table for tracking assignments
+  - [✓] badge_assignment_metrics for performance monitoring
+- [✓] Badge Assignment Logic
+  - [✓] Badge rules defined
+  - [✓] Award badges function implemented
+  - [✓] Performance optimized
+
+## Dependency Management
+- [✓] Dependency Tracking
+  - [✓] dependencies table created
+  - [✓] dependency_updates table for tracking changes
+  - [✓] Monitoring function implemented
+  - [✓] Security vulnerability tracking
+
+## Testing Framework
+- [✓] Performance Testing Infrastructure
+  - [✓] Query performance test framework
+  - [✓] Edge function performance test framework
+  - [✓] Monitoring and metrics collection 

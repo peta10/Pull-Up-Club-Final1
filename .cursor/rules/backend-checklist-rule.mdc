@@ -1,0 +1,139 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Backend Setup & Scalability Checklist for Pull-Up Club
+I. Foundational Setup (Supabase, Stripe, Project Structure)
+[ ] Supabase Project: Confirm Supabase project is fully set up, accessible, and appropriate instance type selected for anticipated load.
+[ ] Stripe Account: Confirm Stripe account is active, accessible, and API keys (publishable and secret) are securely configured as environment variables.
+[ ] Backend Folder Structure: Implement the defined backend folder structure:
+/supabase/migrations/
+/supabase/functions/ (for auth-trigger.ts, welcome-flow.ts, summon-flow.ts, billing-reminders.ts)
+/supabase/storage-policies/ (if custom policies beyond UI are needed)
+/stripe/webhooks.ts (or a Supabase Function handling Stripe webhooks)
+/stripe/products-and-prices.sql (or manage products/prices via Stripe Dashboard)
+API endpoint handlers (e.g., in /src/pages/api/ if Next.js, or equivalent structure for your chosen server-side framework).
+[ ] Environment Variables: Securely manage all environment variables (Supabase URL/keys, Stripe keys, Twilio/SMS service keys, database passwords, etc.) using your hosting provider's secrets management.
+[ ] Database Migrations: Establish a process for creating and applying database schema changes using /supabase/migrations/.
+II. Core User Lifecycle & Authentication
+[ ] Supabase Auth:
+[ ] Implement email/password sign-up and login.
+[ ] Configure Auth settings (e.g., email confirmations, password policies).
+[ ] Profile Creation (profiles table):
+[ ] Define schema: id (uuid, pk, fk to auth.users), full_name (text), age (int), organisation (text), gender (text), phone (text), address (text), stripe_customer_id (text), is_paid (bool, default false), role (text, default 'user'), last_summon_at (timestamptz), any "competition" settings.
+[ ] Implement auth-trigger.ts: Supabase Function triggered on new auth.users creation to automatically insert a corresponding row into profiles.
+[ ] Row-Level Security (RLS) for profiles:
+[ ] Users can only read/write their own profile.
+[ ] Admins can read/write all profiles.
+III. Subscription & Billing (Stripe Integration)
+[ ] Stripe Products & Prices: Define the $9.99/mo subscription product and price in Stripe.
+[ ] Create Checkout Session Endpoint (/api/stripe/create-checkout-session):
+[ ] Accepts user_id (or infers from authenticated session).
+[ ] Creates a Stripe Checkout session linked to the user.
+[ ] Returns session_url to the frontend for redirection.
+[ ] Stripe Webhooks Handler (/stripe/webhooks or Supabase Function):
+[ ] Implement robust Stripe signature verification.
+[ ] Handle checkout.session.completed:
+Store stripe_customer_id in the user's profiles row.
+Update is_paid = true in profiles (or create/update a subscriptions table record to 'active').
+[ ] Handle invoice.payment_succeeded: Update current_period_end in subscriptions table (if used) and ensure continued access.
+[ ] Handle invoice.payment_failed: Update subscription status to 'past_due' or 'canceled', and potentially trigger a user notification flow.
+[ ] Handle customer.subscription.updated & customer.subscription.deleted: Keep local subscription status in sync.
+[ ] subscriptions Table (Recommended for detailed tracking):
+[ ] Define schema: id (uuid, pk), user_id (fk to profiles), stripe_subscription_id (text), status (text: active, past_due, canceled), current_period_end (timestamptz), created_at, updated_at.
+[ ] Implement RLS: Users can read their own subscription, admins can read all.
+IV. Workout Submission & Processing
+[ ] Video Upload Endpoint (/api/videos/upload):
+[ ] Authenticate user via JWT.
+[ ] Stream video file to Supabase Storage (e.g., videos/{user_id}/{timestamp}.mp4).
+[ ] Validate file type, size, etc.
+[ ] Supabase Storage Bucket & Policies:
+[ ] Create a dedicated storage bucket for videos.
+[ ] Implement appropriate storage access policies (e.g., users can upload to their own prefixed path, admins can read all).
+[ ] submissions Table:
+[ ] Define schema: id (uuid, pk), user_id (fk to profiles), video_url (text), pull_up_count (int) (user-claimed), actual_pull_up_count (int) (admin-verified), status (text: pending, approved, rejected, default 'pending'), notes (text) (admin feedback), submitted_at (timestamptz, default now()), approved_at (timestamptz).
+[ ] On video upload success, insert a new row into submissions with status='pending'.
+[ ] RLS for submissions:
+[ ] Users can read/create their own submissions.
+[ ] Users can only update submissions if status='rejected' (for resubmission).
+[ ] Admins can read/update all submissions.
+[ ] 30-Day Resubmission Cooldown Logic (Backend Enforced):
+[ ] If a submission is approved, store approved_at.
+[ ] Backend logic must prevent new submissions from a user if now() < latest_approved_at + 30 days.
+V. Communication & Notifications (SMS/Email via e.g., Twilio)
+[ ] SMS/Email Service Integration: Configure credentials and SDK for your chosen provider.
+[ ] welcome-flow.ts Supabase Function:
+[ ] Triggered when a subscription becomes active (e.g., new row in subscriptions with status='active' or profiles.is_paid becomes true).
+[ ] Sends "Welcome to Pull-Up Club!" message.
+[ ] Logs the communication (e.g., in a messages_log table).
+[ ] summon-flow.ts (Daily CRON Supabase Function):
+[ ] Queries active subscribers due for a workout "summon" (e.g., based on last_summon_at and subscription status).
+[ ] Composes payload (workout details, video demo link, submission link).
+[ ] Sends message via SMS/email.
+[ ] Updates last_summon_at for the user.
+[ ] billing-reminders.ts (Daily CRON Supabase Function):
+[ ] Finds subscriptions nearing renewal (e.g., current_period_end - 3 days).
+[ ] Sends pre-bill reminder SMS/email.
+[ ] Submission Rejected Notification:
+[ ] When an admin rejects a submission, trigger an email/SMS to the user with feedback/reason if available.
+VI. Admin Functionality & Reporting
+[ ] Admin API Endpoints (e.g., /api/admin/..., secured for admin role):
+[ ] submissions:
+[ ] List pending/all submissions with user details and video links.
+[ ] Approve a submission (updates status, sets approved_at, actual_pull_up_count).
+[ ] Reject a submission (updates status, optionally adds rejection notes).
+[ ] users: List users, view profiles, manage roles (if necessary), view subscription status.
+[ ] leaderboard_management (if manual intervention is ever needed).
+[ ] (Optional) broadcast_message: Endpoint to send custom messages.
+[ ] Role-Based Access Control (RBAC): Ensure admin endpoints are strictly protected. RLS on tables provides data-layer security. The profiles.role field will be key.
+VII. Leaderboard System
+[ ] Data Source: Determine if the leaderboard is a direct query/view on approved submissions or a denormalized/periodically updated table for performance.
+[ ] Leaderboard Logic:
+[ ] Display based on actual_pull_up_count.
+[ ] Tie-breaking logic (e.g., earlier approved_at).
+[ ] Filterable (e.g., by date range, club, region - if these fields exist).
+[ ] Update Mechanism: Ensure the leaderboard is updated promptly after submissions are approved.
+VIII. Scalability, Performance & Reliability (Target: 100,000 Users)
+[ ] Database Optimization:
+[ ] Index frequently queried columns in all tables (e.g., user_id, status, submitted_at, approved_at, stripe_customer_id, current_period_end).
+[ ] Regularly analyze query performance (use EXPLAIN ANALYZE).
+[ ] Choose an appropriate Supabase instance size and monitor resource usage (CPU, RAM, I/O) to scale as needed.
+[ ] Supabase Edge Functions:
+[ ] Write efficient, stateless code. Minimize cold start impact.
+[ ] Be mindful of execution time limits and memory constraints.
+[ ] Implement error handling and logging within functions.
+[ ] Supabase Storage:
+[ ] Leverage Supabase's built-in CDN for video delivery.
+[ ] For uploads, ensure efficient streaming and error handling.
+[ ] API & Webhook Robustness:
+[ ] Implement idempotent designs for webhook handlers (Stripe can send webhooks multiple times).
+[ ] Handle API rate limits for external services (Stripe, Twilio).
+[ ] Implement retries with backoff for critical external API calls.
+[ ] CRON Job Design:
+[ ] Ensure CRON jobs are idempotent.
+[ ] Design to handle large volumes of users efficiently (e.g., process users in batches for summon-flow and billing-reminders).
+[ ] Stagger execution if multiple heavy CRONs run.
+[ ] Asynchronous Processing: Utilize Supabase's capabilities for asynchronous tasks (e.g., DB triggers calling functions) to avoid blocking user-facing operations.
+[ ] Connection Pooling: Supabase manages this, but be aware of connection limits if using tools that bypass Supabase's pooling.
+[ ] Load Testing:
+[ ] Plan and execute load tests simulating peak user activity (sign-ups, submissions, API calls) to identify and address bottlenecks before launch or reaching 100,000 users.
+[ ] Monitoring & Logging:
+[ ] Implement comprehensive logging across all backend services (API endpoints, Supabase Functions, CRON jobs).
+[ ] Set up monitoring and alerting for error rates, performance degradation, and resource utilization (Supabase dashboard + potentially external tools).
+IX. Security
+[ ] RLS Thoroughness: Double-check RLS policies on ALL tables to ensure data segregation and prevent unauthorized access.
+[ ] Input Validation: Implement strict input validation on all API endpoints and function parameters.
+[ ] Secrets Management: Ensure all API keys, JWT secrets, and service credentials are NEVER hardcoded and are securely managed.
+[ ] Dependency Security: Regularly update dependencies to patch known vulnerabilities.
+[ ] CSRF/XSS Protection: While Supabase helps, be mindful of how frontend interacts with backend.
+[ ] Storage Security: Reconfirm Supabase Storage bucket policies are as restrictive as possible.
+[ ] Admin Access: Secure admin credentials and consider MFA for admin accounts if Supabase/your auth provider supports it.
+X. Testing & Deployment
+[ ] Automated Testing:
+[ ] Unit tests for individual functions and logic units.
+[ ] Integration tests for flows involving multiple components (e.g., API -> Supabase Function -> DB).
+[ ] CI/CD Pipeline: Automate testing and deployments for Supabase schema migrations, functions, and any other backend code.
+[ ] Staging Environment: Maintain a staging environment that mirrors production for testing new features and changes.
+
+[ ] Backup & Recovery Plan: Understand Supabase's backup capabilities and have a recovery plan.

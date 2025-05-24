@@ -1,0 +1,233 @@
+Backend Setup & Scalability Checklist for Pull-Up Club
+
+PURPOSE & OBJECTIVES
+Mission: Build a community-driven fitness challenge centered around pull-ups that empowers individuals to compete, share progress, and celebrate growth through consistency, accountability, and camaraderie.
+
+Desired User Outcomes:
+1. Track Progress & Improve Performance
+   - Backend supports consistent rep logging
+   - Performance tracking over time
+   - Personal record tracking
+   
+2. Recognition & Motivation
+   - Badge system implementation
+   - Dynamic leaderboards
+   - Club tier progression
+   
+3. Community Connection
+   - Video sharing capabilities
+   - Club-based features
+   - Social engagement tracking
+
+Core Technical Objectives:
+1. Seamless Submission & Verification
+   - Typeform integration
+   - Stripe payment processing
+   - Supabase backend validation
+   
+2. Dynamic Leaderboard System
+   - Real-time updates
+   - Multi-dimensional filtering
+   - Performance optimization
+   
+3. Gamification Infrastructure
+   - Achievement tracking
+   - Tier progression
+   - Challenge management
+
+I. Foundational Setup (Supabase, Stripe, Project Structure)
+[✓] Supabase Project: Confirm Supabase project is fully set up, accessible, and appropriate instance type selected for anticipated load.
+[✓] Stripe Account: Confirm Stripe account is active, accessible, and API keys (publishable and secret) are securely configured as environment variables.
+[✓] Backend Folder Structure: Implement the defined backend folder structure:
+/supabase/migrations/ (✓ Completed with all necessary migrations)
+/supabase/functions/ (✓ Implemented key functions)
+/stripe/webhooks.ts (✓ Implemented as Supabase Function)
+[✓] Environment Variables: Securely manage all environment variables (Supabase URL/keys, Stripe keys, database passwords) using environment configuration.
+[✓] Database Migrations: Establish a process for creating and applying database schema changes using /supabase/migrations/.
+[✓] Database Webhooks: Configure webhooks to trigger Edge Functions on database events:
+   [✓] Auth User Creation Webhook (auth.users -> auth-trigger)
+   [✓] Subscription Created Webhook (subscriptions -> welcome-flow)
+   [✓] Submission Status Update Webhook (submissions -> send-email)
+   [✓] Badge Assignment Webhook (user_badges -> send-email)
+   [✓] Notification Queue Webhook (notification_queue -> send-email)
+
+II. Core User Lifecycle & Authentication
+[✓] Supabase Auth:
+[✓] Implement email/password sign-up and login.
+[✓] Configure Auth settings (e.g., email confirmations, password policies).
+[✓] Profile Creation (profiles table):
+[✓] Define schema: id, full_name, age, organisation, gender, phone, address, stripe_customer_id, is_paid, role, last_summon_at
+[✓] Implement auth-trigger.ts: Supabase Function for profile creation
+[✓] Row-Level Security (RLS) for profiles:
+[✓] Users can only read/write their own profile.
+[✓] Admins can read/write all profiles.
+[ ] Navigation & Flow Updates:
+    [✓] Remove Submit button from header (Purpose: Streamline user journey)
+        - Ensure submissions happen through proper user portal flow
+        - Support progress tracking and validation
+        - Guide users through profile completion first
+        - Maintain clear separation between viewing (Home/Leaderboard) and participation
+    [✓] Confirm Header Items: Home, Leaderboard, Shop, Login
+    [✓] Merge admin/user login system
+    [✓] Role-based portal redirection
+
+III. Subscription & Billing (Stripe Integration)
+[✓] Stripe Products & Prices: Define the $9.99/mo subscription product and price in Stripe.
+[✓] Create Checkout Session Endpoint:
+[✓] Accepts user_id (or infers from authenticated session).
+[✓] Creates a Stripe Checkout session linked to the user.
+[✓] Returns session_url to the frontend for redirection.
+[✓] Stripe Webhooks Handler:
+[✓] Implement robust Stripe signature verification.
+[✓] Handle checkout.session.completed
+[✓] Handle invoice.payment_succeeded
+[✓] Handle invoice.payment_failed
+[✓] Handle customer.subscription.updated & customer.subscription.deleted
+[✓] subscriptions Table:
+[✓] Define schema with all required fields
+[✓] Implement RLS policies
+
+IV. Workout Submission & Processing
+[✓] Video Submission System:
+[✓] Authenticate user via JWT.
+[✓] Validate video URLs (YouTube, TikTok, Instagram).
+[✓] Store video URLs in submissions table.
+[REMOVED] Supabase Storage Bucket & Policies (Not needed - using video platform URLs)
+[✓] submissions Table:
+[✓] Define schema with all required fields including video_url and platform
+[✓] RLS policies implemented
+[✓] 30-Day Resubmission Cooldown Logic:
+[✓] Store approved_at timestamp
+[✓] Implement cooldown check function
+[✓] Two-Page Submission Form:
+    [✓] Page 1 & 2 Implementation Only
+    [✓] Remove Page 3
+    [✓] Immediate Resubmission on Rejection
+
+V. Communication & Notifications (SMS/Email via Resend)
+[✓] Email Service Integration:
+    [✓] Resend API Integration
+    [✓] Webhook Handler for Events
+    [✓] Email Tracking System
+[✓] Email Event Tracking:
+    [✓] Delivery Status (sent, delivered, bounced)
+    [✓] User Engagement (opened, clicked)
+    [✓] Error Tracking
+[✓] Email Analytics:
+    [✓] Event Logging
+    [✓] Engagement Metrics
+    [✓] Delivery Statistics
+[✓] Security:
+    [✓] Webhook Signature Verification
+    [✓] RLS Policies for Events
+    [✓] Secure API Key Management
+[✓] Email Templates & Flows:
+    [✓] Welcome Email Flow
+    [✓] Submission Review Notifications
+    [✓] Badge Achievement Notifications
+    [✓] Billing Reminder Emails
+[✓] Email Infrastructure:
+    [✓] Notification Queue System
+    [✓] Event Tracking Tables
+    [✓] Suppression List Management
+    [✓] Engagement Analytics
+
+VI. Admin Functionality & Reporting
+[✓] Admin API Endpoints:
+[✓] submissions: List, approve, reject submissions with video URLs
+[✓] users: List users, view profiles, manage roles
+[✓] leaderboard_management
+[✓] Role-Based Access Control (RBAC)
+[✓] Enhanced Badge Analytics:
+    [✓] Badge Distribution Statistics
+    [✓] Achievement Rate Analysis
+    [✓] Time-to-Achievement Metrics
+    [✓] Gender-based Badge Analysis
+    [✓] Organization Badge Performance
+
+VII. Leaderboard System
+[✓] Data Source: Implemented materialized view for performance
+[✓] Leaderboard Logic:
+[✓] Display based on actual_pull_up_count
+[✓] Tie-breaking logic using approved_at
+[✓] Filterable by gender and organisation
+[✓] Update Mechanism: Automatic refresh via triggers
+[✓] Badge Integration:
+    [✓] Badge Display on Leaderboard
+    [✓] Current Badge Status
+    [✓] Badge Progress Indicators
+    [✓] Next Badge Requirements
+
+VIII. Scalability, Performance & Reliability (Target: 100,000 Users)
+[✓] Database Optimization:
+[✓] Indexes on frequently queried columns
+[✓] Materialized view for leaderboard
+[✓] Query optimization
+[✓] Supabase Edge Functions:
+[✓] Efficient, stateless code
+[✓] Error handling and logging
+[REMOVED] Supabase Storage (Not needed - using video platform URLs)
+[✓] API & Webhook Robustness:
+[✓] Idempotent webhook handlers
+[✓] Error handling and retries
+[✓] CRON Job Design:
+[✓] Idempotent jobs
+[✓] Efficient batch processing
+[✓] Email Processing CRON:
+    [✓] Batch Processing (10 emails per run)
+    [✓] Error Handling & Retries
+    [✓] Status Tracking
+    [✓] Performance Optimization
+    [✓] Webhook Event Processing
+    [✓] Delivery Analytics
+[✓] Stagger execution if multiple heavy CRONs run
+[✓] Load Testing:
+[✓] Plan and execute load tests
+[✓] Monitoring & Logging:
+[✓] Set up comprehensive logging
+[✓] Configure monitoring and alerting
+[✓] Badge System Performance:
+    [✓] Optimize Badge Calculations
+    [✓] Cache Badge Statistics
+    [✓] Monitor Badge Assignment Load
+
+IX. Security
+[✓] RLS Thoroughness: Implemented on all tables
+[✓] Input Validation: Implemented in all Edge Functions
+[✓] Secrets Management: Using environment variables
+[✓] Dependency Security: Regular updates needed
+    [✓] Dependency tracking system
+    [✓] Automated version checks
+    [✓] Security vulnerability monitoring
+    [✓] Update history tracking
+[✓] CSRF/XSS Protection: Implemented in Edge Functions
+[REMOVED] Storage Security (Not needed - using video platform URLs)
+[✓] Admin Access: Secure admin system implemented
+
+X. Testing & Documentation
+[ ] Automated Testing:
+[ ] Unit tests
+[ ] Integration tests
+[ ] Badge System Tests:
+    [ ] Badge Assignment Tests
+    [ ] Progress Calculation Tests
+    [ ] Notification Trigger Tests
+[ ] CI/CD Pipeline
+[ ] Staging Environment
+[ ] Backup & Recovery Plan
+[ ] Documentation:
+    [ ] Badge System Documentation
+    [ ] Achievement Criteria
+    [ ] Analytics Guide
+
+IMMEDIATE PRIORITIES:
+1. Navigation/UI Updates
+2. Badge Analytics & Notifications
+3. User Flow Testing & Documentation
+4. Automated Testing Implementation
+
+NOTES:
+- Core functionality is largely implemented
+- Email notification system is complete and operational
+- Main gaps are in UI refinements and testing
+- Focus should be on user experience and system reliability

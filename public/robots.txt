@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /rules
+Allow: /faq
+Allow: /privacy
+Allow: /cookies
+Allow: /leaderboard
+Allow: /login
+Allow: /create-account
+Allow: /subscription
+
+# Prevent access to sensitive paths
+Disallow: /profile
+Disallow: /admin-dashboard
+Disallow: /admin-users
+Disallow: /submit-video
+Disallow: /.env
+Disallow: /.git/
+Disallow: /node_modules/
+Disallow: /supabase/
+
+# Sitemap location
+Sitemap: https://pullupclub.com/sitemap.xml 

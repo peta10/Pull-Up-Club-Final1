@@ -1,0 +1,111 @@
+Quick-look summary
+Battle Bunker markets a tough-love, military-inspired fitness culture: matte blacks, desert-tan
+accents, big stencil typography, and action-packed videos that mix friendly cash-prize
+challenges with serious training tips. Their gear store, YouTube comps, and “4 Weeks to Your
+First Pull-up” program all reinforce a “train hard, earn rewards, join the squad”
+ethos—exactly the vibe we want for a $9.99/mo Pull Up Club that grades footage and hands out
+prizes. Battle BunkerYouTubeYouTubeYouTubeBattle Bunker
+1. Core brand themes
+Theme Evidence from Battle Bunker Pull Up Club takeaway
+Military roots
+& grit
+Founder Austen Alexander is ex-Navy;
+channel art shows obstacle courses,
+camo, and drill-style workouts.
+YouTubeYouTube
+Use a subtle camo texture or
+stenciled font in hero sections;
+keep copy crisp and
+“mission-based.”
+Community
+competition
+Frequent “Beat us in pull-ups, win $1000”
+and regional Hybrid Games livestreams.
+YouTubeYouTube
+Spotlight monthly leaderboard
++ prize pot; talk to users as
+teammates.
+Reward-driven
+funnel
+Shop bundles (“Deployment Pack”) and
+training plans promise tangible gains.
+Battle BunkerBattle Bunker
+Lead with “Submit. Score. Win
+Gear.” CTA blocks; integrate
+merch upsell post-subscription.
+Hybrid-athlete
+persona
+Tagline “Gear for the hybrid athlete” on
+Instagram store. Instagram
+Position Pull Up Club as the
+testbed for functional strength
+athletes, not just calisthenics
+purists.
+2. Visual & UI cues
+Color palette
+● #000000 / #1B1B1B — dominant backgrounds (shop + YT thumbnails). Battle Bunker
+● #F5F3EE (sand) — text overlays & apparel prints. Battle Bunker
+● Accent red (#E63946) or yellow-gold (#FFC65A) on CTAs/prize callouts.
+YouTubeYouTube
+Pull Up Club can keep the dark base but swap accent to a bold electric blue (#2D8FFF) for
+differentiation while retaining high-contrast energy.
+Typography
+● Heavy stencil/athletic block faces are common in thumbnails and merch. Battle
+BunkerYouTube
+● Pair with a clean sans (Inter, Satoshi) for UI legibility.
+Imagery & motion
+● Slow-mo reps, chalk dust bursts, and money-drop reveals. YouTubeYouTube
+● High-energy jump-cuts; graphics slide in from bottom. Perfect use-case for motion.dev
+variants (slideUp, pop).
+● Use Lenis for subtle parallax on hero background images—e.g., hanging pull-up bar
+drifting as user scrolls.
+3. Messaging & tone
+Element Sample BB copy Pull Up Club adaptation
+Tagline “Stronger Than Yesterday” Battle Bunker “Rep. Record. Rise.”
+CTA “Beat Us In Pull-Ups, Win $1000!” YouTube “Can your reps top the board? $250
+gear bounty every month.”
+Voice Direct, competitive, peppered with military
+slang (“send it”, “gear up”).
+YouTubeYouTube
+Keep command-style verbs: “Log in.
+Lock on. Pull.”; sprinkle friendly
+trash-talk.
+4. Product & pricing insights
+● BB sells $99 Deployment Packs & $25 resistance bands; value-add programs at
+$19/mo. Battle BunkerBattle Bunker
+● Our $9.99/mo subscription undercuts that, so emphasize exclusive judging, real
+prizes, and community cred to justify the fee.
+● Consider tier-upsell: Pro ($19.99) includes form-feedback videos by judges.
+5. Community & social proof hooks
+1. User-generated montage: showcase weekly top-3 clips on hero video banner
+(auto-plays muted).
+2. Live stream finals: copy BB livestream format for monthly finals on YouTube; embed via
+Supabase RLS gate. YouTube
+3. Judge bios: quick cards with military/athletic creds to project authority.
+4. “First pull-up” program cross-sell: if user fails criteria, surface a 4-week regression
+plan (upsell e-book). Battle Bunker
+6. Technical pointers for the existing Next.js prompt
+Area Adjustment
+Color tokens In tailwind.config.ts extend with brand blacks and new
+accentBlue.
+Fonts Add Google Font Bebas Neue (stencil) + Inter; wire via
+_document.tsx.
+Hero
+component
+Wrap headline in motion.span with clipPath reveal; background
+image parallax via Lenis container.
+Leaderboard Include avatar thumbnails styled as circular dog-tags.
+Submission
+form
+Validate YouTube/TikTok URL pattern
+(`/^(https?:\/\/(?:www\.)?(?:youtube\.com
+Judging panel Add Judges tab inside Admin dashboard; grid of pending clips with
+one-click “Approve / Reject / Needs-Form-Fix” actions.
+7. Next steps
+1. Update the Bolt.new prompt’s color & font sections (let me know when you’re ready
+and I’ll patch the canvas).
+2. Draft marketing copy for the / hero and checkout page using the tone table above.
+3. Source brand-aligned imagery (dark gym scenes, chalk dust) or generate with
+Mid-journey for quick mock-ups.
+Ping me when you want any of these woven directly into the existing spec.
+Sources

@@ -1,0 +1,27 @@
+First, here is the response for the POD:
+The Purpose of Pull-Up Club
+Pull-Up Club exists to build a community-driven fitness challenge centered around pull-ups. It
+empowers individuals to compete, share progress, and celebrate growth, no matter their skill
+level, by submitting videos, tracking reps, and earning recognition. The mission is to foster
+consistency, accountability, and camaraderie through a simple but powerful movement: the
+pull-up.
+Three Desired Outcomes for Users
+1. Track Progress & Improve Performance
+Users can consistently log their pull-up reps, see how they rank over time, and push
+themselves to new personal records.
+2. Earn Recognition & Motivation
+Through badges, leaderboards, and club tiers, users get tangible milestones that
+celebrate their achievements and fuel ongoing motivation.
+3. Connect with a Like-Minded Community
+By sharing videos and joining clubs, users engage with others chasing similar goals,
+creating a social layer that keeps them inspired and accountable.
+Three Clear Objectives or Goals for the Site
+1. Seamless Submission & Verification System
+Enables users to easily submit pull-up videos via Typeform (linked to Stripe payments
+and Supabase backend) with logic-driven filtering to validate and sort entries.
+2. Dynamic Leaderboard & Club Sorting
+Provide users with real-time leaderboards that display top performers and club
+members filtered by reps, location, tier, and badges.
+3. Incentivized Participation through Gamification
+Use achievements (badges), tiers (clubs), and challenges to keep users engaged,
+returning regularly, and striving for improvement.
