@@ -3,13 +3,11 @@ import {
   Submission,
   LeaderboardFilters,
   Badge as BadgeType,
-} from "../../types";
-import { Badge } from "../../components/ui/Badge";
+} from "../../types/index.ts";
 import { getBadgesForSubmission, badges } from "../../data/mockData";
 import {
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   Award,
   Info,
 } from "lucide-react";

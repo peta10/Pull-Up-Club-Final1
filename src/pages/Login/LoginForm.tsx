@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 interface LoginFormProps {
@@ -16,7 +16,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { signIn } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const routeState = location.state as {
     from?: string;

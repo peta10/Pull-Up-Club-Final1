@@ -7,9 +7,11 @@ interface ImportMetaEnv {
   MODE: string;
 }
 
-// Augment the ImportMeta interface
-interface ImportMeta {
-  env: ImportMetaEnv;
+// Augment the ImportMeta interface using declare global
+declare global {
+  interface ImportMeta {
+    env: ImportMetaEnv;
+  }
 }
 
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {

@@ -42,7 +42,11 @@ const SubscriptionPlans: React.FC = () => {
         { userId: user.id }
       );
 
-      window.location.href = checkoutUrl;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error("Failed to create checkout session");
+      }
     } catch (err) {
       console.error("Checkout error:", err);
       setError(

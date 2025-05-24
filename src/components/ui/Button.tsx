@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 import useAnalytics from "../../hooks/useAnalytics";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger' | 'default';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   fullWidth?: boolean;
@@ -38,6 +38,8 @@ export const Button: React.FC<ButtonProps> = ({
     outline: 'border border-[#9b9b6f] text-[#9b9b6f] hover:bg-[#9b9b6f]/10',
     ghost: 'bg-transparent text-white hover:bg-white/10',
     link: 'bg-transparent text-[#9b9b6f] hover:underline p-0',
+    danger: 'bg-red-600 text-white hover:bg-red-700',
+    default: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
   };
   
   const sizes = {

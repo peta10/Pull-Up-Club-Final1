@@ -1,15 +1,13 @@
 import React from 'react';
 import { calculateBadgeProgress, getBadgeRequirements } from '../../lib/badgeUtils';
-import { Badge } from '../../types';
 import { Award, ChevronRight } from 'lucide-react';
 
 interface BadgeProgressProps {
   pullUps: number;
-  gender: string;
 }
 
-const BadgeProgress: React.FC<BadgeProgressProps> = ({ pullUps, gender }) => {
-  const { currentBadge, nextBadge, progress, pullUpsNeeded } = calculateBadgeProgress(pullUps, gender);
+const BadgeProgress: React.FC<BadgeProgressProps> = ({ pullUps }) => {
+  const { currentBadge, nextBadge, progress, pullUpsNeeded } = calculateBadgeProgress(pullUps);
 
   return (
     <div className="bg-gray-950 p-6 rounded-lg">

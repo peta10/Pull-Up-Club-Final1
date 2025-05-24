@@ -16,23 +16,7 @@ const AnalyticsWrapper: React.FC<AnalyticsWrapperProps> = ({
   pageName 
 }) => {
   const location = useLocation();
-  const { trackEvent } = useAnalytics();
-
-  // Example of how to track a custom event
-  const handleCustomEvent = (
-    action: string, 
-    category: string, 
-    label: string, 
-    value?: number
-  ) => {
-    trackEvent({
-      action,
-      category,
-      label,
-      value
-    });
-  };
-
+  
   return (
     <div data-page={pageName || location.pathname}>
       {children}

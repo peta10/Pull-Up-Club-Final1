@@ -1,6 +1,5 @@
 import React from 'react';
 import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
-import { Submission } from '../../types';
 import { mockSubmissions } from '../../data/mockData';
 
 interface RankingsTabProps {

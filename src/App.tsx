@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 import AdminRoute from "./components/Layout/AdminRoute.tsx";

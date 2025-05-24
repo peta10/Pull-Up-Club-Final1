@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Loader2 } from "lucide-react";
 import SubscriptionManager from "../Subscription/SubscriptionManager";
 
 interface SubscriptionSectionProps {

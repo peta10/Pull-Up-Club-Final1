@@ -16,7 +16,7 @@ const sql = postgres(databaseUrl, {
 // Test the connection
 async function testConnection() {
   try {
-    const result = await sql`SELECT version()`
+    await sql`SELECT version()`
     console.log('Database connected successfully')
     return true
   } catch (error) {

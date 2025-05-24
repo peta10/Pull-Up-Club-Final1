@@ -2,14 +2,6 @@ import { useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnalyticsEvent } from '../types';
 
-// Define types for gtag events
-interface GTagEvent {
-  action: string;
-  category: string;
-  label: string;
-  value?: number;
-}
-
 // Declare global gtag function
 declare global {
   interface Window {

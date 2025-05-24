@@ -3,6 +3,10 @@ declare global {
     env: {
       VITE_SUPABASE_URL: string;
       VITE_SUPABASE_ANON_KEY: string;
+      VITE_DATABASE_URL?: string;
+      VITE_LOGO_URL?: string;
+      VITE_STRIPE_PUBLISHABLE_KEY?: string;
+      VITE_GA_MEASUREMENT_ID?: string;
       MODE: string;
       [key: string]: any; // To allow other VITE_ env variables
     };

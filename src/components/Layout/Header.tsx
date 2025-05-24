@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button.tsx';
 import { useAuth } from '../../context/AuthContext.tsx';
-import { User, Menu, X, CreditCard, Trophy, Home, ShoppingBag } from 'lucide-react';
+import { User, Menu, X, Trophy, Home, ShoppingBag } from 'lucide-react';
 
 const Header: React.FC = () => {
   const { user, signOut, isAdmin } = useAuth();

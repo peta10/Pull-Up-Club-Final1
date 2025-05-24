@@ -34,18 +34,20 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onError }) =>
   }, [onError]);
 
   const handleManageSubscription = async () => {
-    setIsPortalLoading(true);
-    setError(null);
-    
     try {
+      setIsLoading(true);
       const portalUrl = await createCustomerPortalSession();
-      window.location.href = portalUrl;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to open customer portal';
-      setError(errorMessage);
-      if (onError) onError(errorMessage);
+      if (portalUrl) {
+        window.location.href = portalUrl;
+      } else {
+        throw new Error("Failed to create customer portal session");
+      }
+    } catch (error) {
+      console.error("Error creating portal session:", error);
+      setError("Failed to open customer portal. Please try again later.");
+      if (onError) onError("Failed to open customer portal. Please try again later.");
     } finally {
-      setIsPortalLoading(false);
+      setIsLoading(false);
     }
   };
 

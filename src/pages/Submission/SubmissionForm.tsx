@@ -1,5 +1,5 @@
-import React, { useState, useReducer } from "react";
-import { FormState } from "../../types";
+import React, { useState, useReducer, useEffect } from "react";
+import { FormState } from "../../types/index.ts";
 import { Button } from "../../components/ui/Button";
 import { clubs, regions } from "../../data/mockData";
 import { AlertTriangle, CreditCard } from "lucide-react";
@@ -67,7 +67,7 @@ const SubmissionForm: React.FC = () => {
     new URLSearchParams(window.location.search).get("resubmit") === "true";
 
   // Initialize form with user data if they're a subscriber
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSubscriber && user) {
       dispatch({
         type: "INITIALIZE_USER_DATA",
@@ -178,11 +178,17 @@ const SubmissionForm: React.FC = () => {
           formState.subscriptionType,
           formState.email,
           {
-            ...formState,
+            userId: String(formState.email),
+            fullName: formState.fullName,
             clubAffiliation: finalClubAffiliation,
-          }
+          } as Record<string, string>
         );
-        window.location.href = checkoutUrl;
+        
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
+        } else {
+          throw new Error("Failed to create checkout session");
+        }
       }
     } catch (error) {
       dispatch({

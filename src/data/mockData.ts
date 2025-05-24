@@ -1,5 +1,5 @@
 // Import the Badge and Submission types
-import { Badge, Submission } from '../types';
+import { Badge, Submission } from '../types/index.ts';
 
 // Mock clubs data
 export const clubs = [
@@ -90,6 +90,7 @@ export const badges: Badge[] = [
 export const mockSubmissions: Submission[] = [
   {
     id: '1',
+    userId: 'user-1',
     fullName: 'John Smith',
     email: 'john@example.com',
     age: 28,
@@ -99,11 +100,12 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 30,
     videoLink: 'https://youtube.com/watch?v=abc123',
     submissionDate: '2025-06-12T14:30:00Z',
-    status: 'Approved' as 'Approved',
+    status: 'Approved',
     featured: true,
   },
   {
     id: '2',
+    userId: 'user-2',
     fullName: 'Sarah Johnson',
     email: 'sarah@example.com',
     phone: '555-123-4567',
@@ -114,11 +116,12 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 25,
     videoLink: 'https://instagram.com/p/xyz789',
     submissionDate: '2025-06-12T16:45:00Z',
-    status: 'Approved' as 'Approved',
+    status: 'Approved',
     featured: true,
   },
   {
     id: '3',
+    userId: 'user-3',
     fullName: 'Mike Williams',
     email: 'mike@example.com',
     age: 35,
@@ -128,11 +131,12 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 28,
     videoLink: 'https://youtube.com/watch?v=def456',
     submissionDate: '2025-06-11T10:15:00Z',
-    status: 'Approved' as 'Approved',
+    status: 'Approved',
     featured: true,
   },
   {
     id: '4',
+    userId: 'user-4',
     fullName: 'Emily Davis',
     email: 'emily@example.com',
     phone: '555-987-6543',
@@ -143,11 +147,12 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 22,
     videoLink: 'https://tiktok.com/@user/video/456789',
     submissionDate: '2025-06-11T09:30:00Z',
-    status: 'Approved' as 'Approved',
+    status: 'Approved',
     featured: true,
   },
   {
     id: '5',
+    userId: 'user-5',
     fullName: 'Alex Chen',
     email: 'alex@example.com',
     age: 27,
@@ -157,26 +162,28 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 20,
     videoLink: 'https://youtube.com/watch?v=ghi789',
     submissionDate: '2025-06-10T14:00:00Z',
-    status: 'Approved' as 'Approved',
+    status: 'Approved',
     featured: true,
   },
   // More submissions with identical scores (to demonstrate grouping)
   ...Array.from({ length: 10 }, (_, i) => ({
     id: `${i + 6}`,
+    userId: `user-${i + 6}`,
     fullName: `Contestant ${i + 6}`,
     email: `contestant${i + 6}@example.com`,
     age: 25 + i,
-    gender: i % 2 === 0 ? 'Male' : 'Female',
+    gender: i % 2 === 0 ? 'Male' as "Male" : 'Female' as "Female",
     region: regions[i % regions.length],
     clubAffiliation: clubs[i % clubs.length],
     pullUpCount: 15, // Same pull-up count to demonstrate grouping
     videoLink: `https://youtube.com/watch?v=abc${i + 100}`,
     submissionDate: `2025-06-0${9 - (i % 9)}T${10 + i}:00:00Z`,
-    status: 'Approved' as 'Approved',
+    status: 'Approved' as "Approved" | "Pending" | "Rejected",
     featured: true,
   })),
   {
     id: '16',
+    userId: 'user-16',
     fullName: 'Taylor Reed',
     email: 'taylor@example.com',
     phone: '555-111-2222',
@@ -187,11 +194,12 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 23,
     videoLink: 'https://instagram.com/p/abc123',
     submissionDate: '2025-06-09T11:30:00Z',
-    status: 'Pending' as 'Pending',
+    status: 'Pending',
     featured: false,
   },
   {
     id: '17',
+    userId: 'user-17',
     fullName: 'Jordan Lee',
     email: 'jordan@example.com',
     age: 29,
@@ -201,7 +209,7 @@ export const mockSubmissions: Submission[] = [
     pullUpCount: 18,
     videoLink: 'https://tiktok.com/@user/video/123456',
     submissionDate: '2025-06-08T16:15:00Z',
-    status: 'Rejected' as 'Rejected',
+    status: 'Rejected',
     featured: false,
   },
 ];

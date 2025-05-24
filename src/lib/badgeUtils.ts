@@ -1,4 +1,4 @@
-import { Badge } from '../types';
+import { Badge } from '../types/index.ts';
 import { badges } from '../data/mockData';
 
 interface BadgeProgress {
@@ -8,10 +8,10 @@ interface BadgeProgress {
   pullUpsNeeded: number;
 }
 
-export function calculateBadgeProgress(pullUps: number, gender: string = 'Male'): BadgeProgress {
+export function calculateBadgeProgress(pullUps: number): BadgeProgress {
   // Sort badges by required pull-ups
   const sortedBadges = [...badges].sort((a, b) => 
-    (a.criteria.value as number) - (b.criteria.value as number)
+    (Number(a.criteria.value)) - (Number(b.criteria.value))
   );
 
   // Find current and next badge
@@ -19,7 +19,7 @@ export function calculateBadgeProgress(pullUps: number, gender: string = 'Male')
   let nextBadge: Badge | null = null;
 
   for (let i = 0; i < sortedBadges.length; i++) {
-    if (pullUps >= sortedBadges[i].criteria.value) {
+    if (pullUps >= Number(sortedBadges[i].criteria.value)) {
       currentBadge = sortedBadges[i];
       nextBadge = sortedBadges[i + 1] || null;
     } else {
@@ -36,14 +36,14 @@ export function calculateBadgeProgress(pullUps: number, gender: string = 'Male')
 
   if (!currentBadge && nextBadge) {
     // Haven't reached first badge yet
-    progress = (pullUps / (nextBadge.criteria.value as number)) * 100;
-    pullUpsNeeded = (nextBadge.criteria.value as number) - pullUps;
+    progress = (pullUps / Number(nextBadge.criteria.value)) * 100;
+    pullUpsNeeded = Number(nextBadge.criteria.value) - pullUps;
   } else if (currentBadge && nextBadge) {
     // Between badges
-    const range = (nextBadge.criteria.value as number) - (currentBadge.criteria.value as number);
-    const progressInRange = pullUps - (currentBadge.criteria.value as number);
+    const range = Number(nextBadge.criteria.value) - Number(currentBadge.criteria.value);
+    const progressInRange = pullUps - Number(currentBadge.criteria.value);
     progress = (progressInRange / range) * 100;
-    pullUpsNeeded = (nextBadge.criteria.value as number) - pullUps;
+    pullUpsNeeded = Number(nextBadge.criteria.value) - pullUps;
   } else if (currentBadge && !nextBadge) {
     // Reached highest badge
     progress = 100;
@@ -59,6 +59,6 @@ export function calculateBadgeProgress(pullUps: number, gender: string = 'Male')
 }
 
 export function getBadgeRequirements(badge: Badge): string {
-  const pullUps = badge.criteria.value as number;
+  const pullUps = Number(badge.criteria.value);
   return `Requires ${pullUps} pull-ups in a single set`;
 } 
