@@ -214,7 +214,7 @@ These must be set in the Supabase project dashboard under Settings > Environment
     *   Deploy Edge Functions: `npx supabase functions deploy --project-ref yqnikgupiaghgjtsaypr` (or deploy individual functions).
     *   **Configure Redirect URLs for Auth:**
         * In your Supabase Dashboard, go to Authentication > URL Configuration
-        * Set your Site URL to `https://pullupclub.netlify.app` (your production Netlify URL)
+        * Set your Site URL to `https://pullupclub.com` (your production domain)
         * Add the following additional redirect URLs for development and deployment previews:
           ```
           http://localhost:3000/**
@@ -236,7 +236,7 @@ These must be set in the Supabase project dashboard under Settings > Environment
 3. **Set environment variables:**
    * `VITE_SUPABASE_URL`: Your Supabase project URL
    * `VITE_SUPABASE_ANON_KEY`: Your Supabase project anonymous key
-   * `VITE_SITE_URL`: Set to your Netlify app domain (e.g., `https://pullupclub.netlify.app`)
+   * `VITE_SITE_URL`: Set to your domain (e.g., `https://pullupclub.com`)
    * `VITE_STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key
 4. **Deploy the site**
 5. **Verify authentication flows:**

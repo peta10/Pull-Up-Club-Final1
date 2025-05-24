@@ -10,4 +10,4 @@
 
 # Environment variables
 [build.environment]
-  VITE_SITE_URL = "https://pullupclub.netlify.app" 
+  VITE_SITE_URL = "https://pullupclub.com" 
