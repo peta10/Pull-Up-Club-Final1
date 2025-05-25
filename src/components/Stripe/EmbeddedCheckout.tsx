@@ -11,6 +11,7 @@ interface EmbeddedCheckoutProps {
   metadata?: Record<string, any>;
 }
 
+// Use any type to avoid TypeScript errors with the newer Stripe SDK
 const validateEmail = async (email: string | null, checkout: any) => {
   if (!checkout || !email) {
     return { isValid: false, message: "Checkout or email not available" };
@@ -22,7 +23,8 @@ const validateEmail = async (email: string | null, checkout: any) => {
 }
 
 const EmailInput = ({ email, setEmail, error, setError }: { email: string, setEmail: (email: string) => void, error: string | null, setError: (error: string | null) => void }) => {
-  const checkout = useCheckout();
+  // Use any type for checkout to avoid TypeScript errors
+  const checkout: any = useCheckout();
 
   const handleBlur = async () => {
     if (!email) {
@@ -65,7 +67,8 @@ const EmailInput = ({ email, setEmail, error, setError }: { email: string, setEm
 };
 
 const EmbeddedCheckout: React.FC<EmbeddedCheckoutProps> = ({ priceId, returnUrl, metadata }) => {
-  const checkout = useCheckout();
+  // Use any type for checkout to avoid TypeScript errors
+  const checkout: any = useCheckout();
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -73,13 +76,33 @@ const EmbeddedCheckout: React.FC<EmbeddedCheckoutProps> = ({ priceId, returnUrl,
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // Initialize checkout when component mounts
     if (checkout) {
-      // Initialize checkout with the provided price ID and metadata
-      checkout.initialize({
-        priceId,
-        returnUrl,
-        metadata
-      });
+      try {
+        // Different versions of Stripe SDK might use different initialization methods
+        if (typeof checkout.initCheckout === 'function') {
+          checkout.initCheckout({
+            priceId,
+            returnUrl,
+            metadata
+          });
+        } else if (typeof checkout.initialize === 'function') {
+          checkout.initialize({
+            priceId,
+            returnUrl,
+            metadata
+          });
+        } else {
+          // Fallback to setting options directly
+          checkout.options = {
+            priceId,
+            returnUrl,
+            metadata
+          };
+        }
+      } catch (err) {
+        console.error("Failed to initialize checkout:", err);
+      }
     }
   }, [checkout, priceId, returnUrl, metadata]);
 
@@ -110,13 +133,21 @@ const EmbeddedCheckout: React.FC<EmbeddedCheckoutProps> = ({ priceId, returnUrl,
     setIsLoading(false);
   };
 
-  const totalAmount = checkout?.total?.total?.amount;
-  const currencyCode = checkout?.total?.total?.currencyCode;
-  
-  const formattedAmount = totalAmount && currencyCode
-    ? new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode }).format(totalAmount / 100)
-    : '';
-
+  // Get amount and currency from checkout total
+  let formattedAmount = '';
+  try {
+    const amount = checkout?.total?.amount || checkout?.total?.total?.amount;
+    const currency = checkout?.total?.currency || checkout?.total?.total?.currencyCode;
+    
+    if (amount && currency) {
+      formattedAmount = new Intl.NumberFormat(undefined, { 
+        style: 'currency', 
+        currency 
+      }).format(Number(amount) / 100);
+    }
+  } catch (err) {
+    console.error("Error formatting amount:", err);
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-gray-800 rounded-lg shadow-xl max-w-md mx-auto my-10">

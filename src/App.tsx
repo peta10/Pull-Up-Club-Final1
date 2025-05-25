@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 import AdminRoute from "./components/Layout/AdminRoute.tsx";
@@ -28,7 +28,7 @@ const VideoSubmissionPage = lazy(() => import("./pages/VideoSubmission/VideoSubm
 const AdminUserManagement = lazy(() => import("./pages/AdminUserManagement.tsx"));
 const EmbeddedCheckout = lazy(() => import("./components/Stripe/EmbeddedCheckout"));
 
-// Stripe setup
+// Stripe setup - now using latest version which includes Basil release by default
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 // Loading component
@@ -38,7 +38,8 @@ const LoadingFallback = () => (
   </div>
 );
 
-function App() {
+// Main App component with routing
+function AppContent() {
   const [connectionStatus, setConnectionStatus] = useState<
     "initializing" | "connecting" | "connected" | "error"
   >("initializing");
@@ -111,6 +112,126 @@ function App() {
     }
   };
 
+  return (
+    <>
+      {connectionStatus === "error" && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-0 left-0 right-0 z-50 flex justify-between items-center">
+          <span>
+            <strong>Connection Error:</strong> Unable to connect to the
+            database. Some features may not work correctly.
+          </span>
+          <button
+            onClick={() => {
+              setConnectionStatus("connecting");
+              checkConnection();
+            }}
+            className="bg-red-700 text-white px-4 py-2 rounded"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+      
+      {/* Debug connection component for better diagnostics */}
+      <DebugConnection />
+      
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          {/* Public routes that don't require authentication */}
+          <Route path="/" element={<Home />} />
+          <Route path="/rules" element={<RulesPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/cookies" element={<CookiesPolicyPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+
+          {/* Authentication routes - redirect if already logged in */}
+          <Route
+            path="/login"
+            element={
+              <ProtectedRoute requireAuth={false} redirectTo="/profile">
+                <LoginPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Redirect from /create-account to /login */}
+          <Route
+            path="/create-account"
+            element={<Navigate to="/login" replace />}
+          />
+
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          {/* Public route with conditional display based on auth state */}
+          <Route path="/subscription" element={<SubscriptionPage />} />
+
+          {/* Alias route for backwards compatibility */}
+          <Route path="/subscribe" element={<SubscriptionPage />} />
+          
+          {/* Checkout return page for Stripe Embedded Checkout */}
+          <Route path="/subscription/return" element={<CheckoutReturn />} />
+
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/success" element={<SuccessPage />} />
+
+          <Route
+            path="/submit-video"
+            element={
+              <ProtectedRoute>
+                <VideoSubmissionPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin routes with role check */}
+          <Route
+            path="/admin-dashboard"
+            element={
+              <AdminRoute>
+                <AdminDashboardPage />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin-users"
+            element={
+              <AdminRoute>
+                <AdminUserManagement />
+              </AdminRoute>
+            }
+          />
+
+          {/* Stripe Embedded Checkout Routes */}
+          <Route path="/checkout" element={
+            <ProtectedRoute>
+              <EmbeddedCheckout 
+                priceId="price_1RMacXGaHiDfsUfBF4dgFfjO"
+                returnUrl={`${window.location.origin}/subscription/return`}
+              />
+            </ProtectedRoute>
+          } />
+          <Route path="/return" element={<ProtectedRoute><CheckoutReturn /></ProtectedRoute>} />
+
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </>
+  );
+}
+
+// Main App component with providers
+function App() {
   const fetchCheckoutClientSecret = useMemo(() => {
     // This function will be called by the CheckoutProvider
     return async () => {
@@ -150,7 +271,7 @@ function App() {
   }, []);
 
   const stripeElementsAppearance = {
-    theme: 'night', // or 'stripe', 'flat', etc.
+    theme: 'night' as const, // Explicitly type as 'night' literal
     variables: {
       colorPrimary: '#0570de',
       colorBackground: '#1f2937', 
@@ -161,7 +282,7 @@ function App() {
       borderRadius: '4px',
     },
   };
-
+  
   return (
     <AuthProvider>
       <CheckoutProvider
@@ -171,128 +292,10 @@ function App() {
           elementsOptions: { appearance: stripeElementsAppearance }
         }}
       >
-        {connectionStatus === "error" && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-0 left-0 right-0 z-50 flex justify-between items-center">
-            <span>
-              <strong>Connection Error:</strong> Unable to connect to the
-              database. Some features may not work correctly.
-            </span>
-            <button
-              onClick={() => {
-                setConnectionStatus("connecting");
-                checkConnection();
-              }}
-              className="bg-red-700 text-white px-4 py-2 rounded"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-        
-        {/* Debug connection component for better diagnostics */}
-        <DebugConnection />
-        
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            {/* Public routes that don't require authentication */}
-            <Route path="/" element={<Home />} />
-            <Route path="/rules" element={<RulesPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/cookies" element={<CookiesPolicyPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-
-            {/* Authentication routes - redirect if already logged in */}
-            <Route
-              path="/login"
-              element={
-                <ProtectedRoute requireAuth={false} redirectTo="/profile">
-                  <LoginPage />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Redirect from /create-account to /login */}
-            <Route
-              path="/create-account"
-              element={<Navigate to="/login" replace />}
-            />
-
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-            {/* Public route with conditional display based on auth state */}
-            <Route path="/subscription" element={<SubscriptionPage />} />
-
-            {/* Alias route for backwards compatibility */}
-            <Route path="/subscribe" element={<SubscriptionPage />} />
-            
-            {/* Checkout return page for Stripe Embedded Checkout */}
-            <Route path="/subscription/return" element={<CheckoutReturn />} />
-
-            {/* Protected routes - require authentication */}
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route path="/success" element={<SuccessPage />} />
-
-            <Route
-              path="/submit-video"
-              element={
-                <ProtectedRoute>
-                  <VideoSubmissionPage />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin routes with role check */}
-            <Route
-              path="/admin-dashboard"
-              element={
-                <AdminRoute>
-                  <AdminDashboardPage />
-                </AdminRoute>
-              }
-            />
-
-            <Route
-              path="/admin-users"
-              element={
-                <AdminRoute>
-                  <AdminUserManagement />
-                </AdminRoute>
-              }
-            />
-
-            {/* Stripe Embedded Checkout Routes */}
-            <Route path="/checkout" element={
-              <ProtectedRoute>
-                <EmbeddedCheckout 
-                  priceId="price_1RMacXGaHiDfsUfBF4dgFfjO"
-                  returnUrl={`${window.location.origin}/subscription/return`}
-                />
-              </ProtectedRoute>
-            } />
-            <Route path="/return" element={<ProtectedRoute><CheckoutReturn /></ProtectedRoute>} />
-
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
+        <AppContent />
       </CheckoutProvider>
     </AuthProvider>
   );
 }
 
-// Wrap App with Router for useLocation to work
-const AppWrapper = () => (
-  <Router>
-    <App />
-  </Router>
-);
-
-export default AppWrapper;
+export default App;
