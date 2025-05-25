@@ -83,65 +83,50 @@ export default function useSubmissions({
   }, [userId, status, limit, isAdmin]);
 
   const approveSubmission = async (submissionId: string, actualPullUpCount: number) => {
-    if (!isAdmin) {
-      setError('Only admins can approve submissions');
-      return false;
-    }
-    
     try {
-      setError(null);
+      // Use Edge Function to approve submission
+      const { error } = await supabase.functions.invoke('admin-submissions', {
+        body: {
+          action: 'approve',
+          submissionId,
+          actualPullUpCount
+        }
+      });
       
-      const { data, error } = await supabase
-        .from('submissions')
-        .update({ 
-          status: 'approved',
-          actual_pull_up_count: actualPullUpCount,
-          approved_at: new Date().toISOString()
-        })
-        .eq('id', submissionId)
-        .select();
-        
       if (error) throw error;
       
-      // Refresh submissions list
+      // Refetch submissions
       fetchSubmissions();
       
-      return true;
+      return { success: true };
     } catch (err) {
-      console.error('Error approving submission:', err);
+      console.error("Error approving submission:", err);
       setError(err instanceof Error ? err.message : 'Failed to approve submission');
-      return false;
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to approve submission' };
     }
   };
-
+  
   const rejectSubmission = async (submissionId: string, notes?: string) => {
-    if (!isAdmin) {
-      setError('Only admins can reject submissions');
-      return false;
-    }
-    
     try {
-      setError(null);
+      // Use Edge Function to reject submission
+      const { error } = await supabase.functions.invoke('admin-submissions', {
+        body: {
+          action: 'reject',
+          submissionId,
+          notes
+        }
+      });
       
-      const updateData: { status: string; notes?: string } = { status: 'rejected' };
-      if (notes) updateData.notes = notes;
-      
-      const { data, error } = await supabase
-        .from('submissions')
-        .update(updateData)
-        .eq('id', submissionId)
-        .select();
-        
       if (error) throw error;
       
-      // Refresh submissions list
+      // Refetch submissions
       fetchSubmissions();
       
-      return true;
+      return { success: true };
     } catch (err) {
-      console.error('Error rejecting submission:', err);
+      console.error("Error rejecting submission:", err);
       setError(err instanceof Error ? err.message : 'Failed to reject submission');
-      return false;
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to reject submission' };
     }
   };
 

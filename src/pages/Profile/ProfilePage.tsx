@@ -7,7 +7,6 @@ import { Badge } from "../../components/ui/Badge";
 import SubmissionDashboard from "./SubmissionDashboard";
 import PatchProgress from "./PatchProgress";
 import RankingsTab from "./RankingsTab";
-import SubscriptionStatus from "./SubscriptionStatus";
 import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 import { AlertTriangle } from "lucide-react";
@@ -58,22 +57,6 @@ const ProfilePage: React.FC = () => {
   const userSubmissions = mockSubmissions.filter(
     (sub) => sub.email === user?.email
   );
-  const mockBillingHistory = [
-    {
-      id: "1",
-      date: "2025-03-01",
-      amount: "$10.00",
-      status: "Paid",
-      description: "Monthly Subscription",
-    },
-    {
-      id: "2",
-      date: "2025-02-01",
-      amount: "$10.00",
-      status: "Paid",
-      description: "Monthly Subscription",
-    },
-  ];
 
   const highestSubmission = userSubmissions.reduce((highest: Submission | null, current: Submission) => {
     const currentCount = current.actualPullUpCount ?? current.pullUpCount;

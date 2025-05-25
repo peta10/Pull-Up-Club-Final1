@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getActiveSubscription } from '../../lib/stripe';
 import { CreditCard, Calendar, AlertTriangle, ChevronRight } from 'lucide-react';
-import { Button } from '../ui/Button';
 import { Link } from 'react-router-dom';
 import PaymentStatusBadge, { PaymentStatus } from '../Stripe/PaymentStatusBadge';
 import { LinkButton } from '../ui/LinkButton';

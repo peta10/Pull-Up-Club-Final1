@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '../ui/Badge';
-import { CheckCircle, AlertCircle, Clock, RefreshCcw, XCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, XCircle } from 'lucide-react';
 
 export type PaymentStatus = 'active' | 'past_due' | 'canceled' | 'unpaid' | 'trialing' | 'incomplete' | 'incomplete_expired' | 'paused';
 

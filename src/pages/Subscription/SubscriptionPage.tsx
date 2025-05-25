@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../../components/Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
-import SubscriptionPlans from "./SubscriptionPlans";
 import { getActiveSubscription } from "../../lib/stripe";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import SubscriptionDetails from "./SubscriptionDetails";

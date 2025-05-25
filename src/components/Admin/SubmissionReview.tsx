@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import useSubmissions from '../../hooks/useSubmissions';
 import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Check, X, AlertTriangle, Filter } from 'lucide-react';
+import { Check, X, Filter } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../ui/LoadingState';
 
 type FilterStatus = 'pending' | 'approved' | 'rejected' | 'all';
@@ -18,8 +17,7 @@ const SubmissionReview: React.FC = () => {
     error, 
     refetch, 
     approveSubmission,
-    rejectSubmission,
-    totalCount
+    rejectSubmission
   } = useSubmissions({ 
     status: currentFilter === 'all' ? undefined : currentFilter,
     isAdmin: true,
@@ -295,7 +293,7 @@ const SubmissionReview: React.FC = () => {
                     <h4 className="text-gray-300 font-medium mb-2">Video</h4>
                     <div className="bg-gray-700 rounded-lg p-4">
                       <div className="mb-4">
-                        {renderVideoEmbed(submission.videoLink, submission.platform)}
+                        {renderVideoEmbed(submission.videoLink)}
                       </div>
                     </div>
                   </div>

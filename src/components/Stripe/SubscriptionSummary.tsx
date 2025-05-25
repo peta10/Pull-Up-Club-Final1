@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { CreditCard, Calendar, AlertCircle } from 'lucide-react';
+import { Calendar, AlertCircle } from 'lucide-react';
 import PaymentStatusBadge, { PaymentStatus } from './PaymentStatusBadge';
 import PaymentMethodDisplay from './PaymentMethodDisplay';
 

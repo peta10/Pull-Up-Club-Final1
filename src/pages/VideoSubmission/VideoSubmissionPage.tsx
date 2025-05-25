@@ -1,14 +1,13 @@
-import React, { useState } from "react";
-import Layout from "../../components/Layout/Layout";
-import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { supabase } from "../../lib/supabase";
-import { AlertTriangle, CheckCircle, Clock, Info, Upload } from "lucide-react";
-import { Button } from "../../components/ui/Button";
-import useVideoSubmission from "../../hooks/useVideoSubmission";
-import useSubmissions from "../../hooks/useSubmissions";
-import { Alert } from "../../components/ui/Alert";
-import { LoadingState, EmptyState } from "../../components/ui/LoadingState";
+import React, { useState } from 'react';
+import Layout from '../../components/Layout/Layout';
+import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
+import { AlertTriangle, CheckCircle, Clock, Info, Upload } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import useVideoSubmission from '../../hooks/useVideoSubmission';
+import useSubmissions from '../../hooks/useSubmissions';
+import { Alert } from '../../components/ui/Alert';
+import { LoadingState } from '../../components/ui/LoadingState';
 import { LinkButton } from '../../components/ui/LinkButton';
 
 const VideoSubmissionPage: React.FC = () => {
@@ -29,8 +28,6 @@ const VideoSubmissionPage: React.FC = () => {
   const { submitVideo, isSubmitting, error: submitError, validateVideoUrl } = useVideoSubmission();
   const { 
     submissions, 
-    isLoading: submissionsLoading, 
-    error: submissionsError, 
     refetch 
   } = useSubmissions({ 
     userId: user?.id,

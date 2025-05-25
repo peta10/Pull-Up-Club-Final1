@@ -1,6 +1,5 @@
 import React from 'react';
 import { CheckCircle, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { LinkButton } from '../ui/LinkButton';
 
 interface CheckoutSuccessProps {

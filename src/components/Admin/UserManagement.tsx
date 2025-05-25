@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
-import { Search, AlertTriangle, User, Users, Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, User, Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { LoadingState, ErrorState, EmptyState } from '../ui/LoadingState';
 
 interface UserProfile {

@@ -77,12 +77,6 @@ const SuccessPage: React.FC = () => {
     );
   }
 
-  const redirectPath = user ? "/profile" : "/create-account";
-  const buttonText = user ? "Go to Profile" : "Create Account";
-  const redirectMessage = user
-    ? "to your profile page"
-    : "to create your account";
-
   return (
     <Layout>
       <div className="bg-gray-900 py-32">
@@ -99,7 +93,7 @@ const SuccessPage: React.FC = () => {
           </h1>
           <p className="text-gray-400 text-xl mb-8 max-w-2xl mx-auto">
             Your video is being reviewed by our team. You'll be notified once a
-            decision has been made. Good luck! You will be redirected {redirectMessage} in{" "}
+            decision has been made. Good luck! You will be redirected to your profile page in{" "}
             {countdown} seconds.
           </p>
         </div>

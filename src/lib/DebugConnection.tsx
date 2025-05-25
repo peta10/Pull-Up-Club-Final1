@@ -19,21 +19,19 @@ const DebugConnection: React.FC = () => {
     // Check database connection
     const checkConnection = async () => {
       try {
-        console.log('Checking database connection...');
-        // Try a simple query that doesn't involve RLS
-        const { data, error, count } = await supabase
+        // Check if Supabase is accessible
+        const { error } = await supabase
           .from('profiles')
-          .select('id', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true });
         
         if (error) {
-          throw error;
+          setConnectionStatus('error');
+          return;
         }
         
         setConnectionStatus('connected');
-      } catch (error) {
-        console.error('Database connection error:', error);
+      } catch (err) {
         setConnectionStatus('error');
-        setErrorDetails(error instanceof Error ? error.message : 'Unknown connection error');
       }
     };
     
@@ -52,7 +50,7 @@ const DebugConnection: React.FC = () => {
           setUserId(session.user.id);
           
           // Only check admin status if authenticated
-          await checkAdminStatus(session.user.id);
+          await checkAdminStatus();
         } else {
           setAuthStatus('unauthenticated');
           setAdminStatus('not-admin'); // Not authenticated means not admin
@@ -65,7 +63,7 @@ const DebugConnection: React.FC = () => {
     };
     
     // Check admin status
-    const checkAdminStatus = async (userId: string) => {
+    const checkAdminStatus = async (): Promise<boolean> => {
       try {
         console.log('Checking admin status...');
         
@@ -84,13 +82,16 @@ const DebugConnection: React.FC = () => {
         
         if (data.user?.isAdmin) {
           setAdminStatus('admin');
+          return true;
         } else {
           setAdminStatus('not-admin');
+          return false;
         }
       } catch (error) {
         console.error('Admin status check error:', error);
         setAdminStatus('error');
         setErrorDetails(error instanceof Error ? error.message : 'Unknown admin check error');
+        return false;
       }
     };
     

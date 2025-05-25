@@ -15,10 +15,9 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   onPaymentComplete,
   onPaymentError,
 }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
 
   const stripe = useStripe();
   const elements = useElements();
@@ -26,7 +25,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   useEffect(() => {
     const initializePayment = async () => {
       try {
-        setIsProcessing(true);
+        setLoading(true);
         const result = await createPaymentIntent(amount);
         if (result?.clientSecret) {
           setClientSecret(result.clientSecret);
@@ -36,7 +35,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize payment');
       } finally {
-        setIsProcessing(false);
+        setLoading(false);
       }
     };
 
@@ -51,8 +50,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       return;
     }
 
-    setIsProcessing(true);
-    setError(null);
+    setLoading(true);
+    setError('');
 
     try {
       const cardElement = elements.getElement(CardElement);
@@ -69,8 +68,6 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       if (paymentMethodError) {
         throw new Error(paymentMethodError.message);
       }
-
-      setPaymentMethod(paymentMethod.id);
 
       const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: paymentMethod.id,
@@ -90,7 +87,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       setError(message);
       onPaymentError(message);
     } finally {
-      setIsProcessing(false);
+      setLoading(false);
     }
   };
 
@@ -137,11 +134,11 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
 
         <Button
           type="submit"
-          disabled={!stripe || !elements || isProcessing || !clientSecret}
-          isLoading={isProcessing}
+          disabled={!stripe || !elements || loading || !clientSecret}
+          isLoading={loading}
           fullWidth
         >
-          {isProcessing ? 'Processing...' : `Pay $${(amount / 100).toFixed(2)}`}
+          {loading ? 'Processing...' : `Pay $${(amount / 100).toFixed(2)}`}
         </Button>
 
         <div className="text-center text-xs text-gray-400 flex justify-center items-center">

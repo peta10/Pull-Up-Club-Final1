@@ -23,8 +23,12 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   useEffect(() => {
     const initializePayment = async () => {
       try {
-        const { clientSecret } = await createPaymentIntent();
-        setClientSecret(clientSecret);
+        const result = await createPaymentIntent();
+        if (result?.clientSecret) {
+          setClientSecret(result.clientSecret);
+        } else {
+          setError('Failed to get payment details. Please try again.');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize payment');
       }

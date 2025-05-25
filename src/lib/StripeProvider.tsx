@@ -1,39 +1,40 @@
 import React, { ReactNode } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { stripePromise } from './stripe';
 import { useAuth } from '../context/AuthContext';
 
-// Initialize Stripe with publishable key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+// Define allowed theme types for Stripe
+type StripeTheme = 'flat' | 'night' | 'stripe';
 
 interface StripeProviderProps {
   children: ReactNode;
 }
 
 /**
- * StripeProvider component that wraps the application with Stripe Elements
- * This provides Stripe context to all child components
+ * Provider component that wraps application with Stripe Elements
+ * Makes Stripe available throughout the app
  */
 const StripeProvider: React.FC<StripeProviderProps> = ({ children }) => {
   const { user } = useAuth();
-  
-  // Configuration for Stripe Elements
-  const options = {
-    // Pass the user's email to Stripe when available
-    customerEmail: user?.email,
-    // Set appearance theme to match our dark UI
-    appearance: {
-      theme: 'night',
-      variables: {
-        colorPrimary: '#9b9b6f',
-        colorBackground: '#121212',
-        colorText: '#ffffff',
-        colorDanger: '#ef4444',
-        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-        spacingUnit: '4px',
-        borderRadius: '8px',
-      },
+
+  // Appearance configuration for Stripe elements
+  const appearance = {
+    theme: 'flat' as StripeTheme, // Explicitly type as StripeTheme
+    variables: {
+      colorPrimary: '#9b9b6f',
+      colorBackground: '#1e1e1e',
+      colorText: '#ffffff',
+      colorDanger: '#ff5555',
+      fontFamily: 'Inter, sans-serif',
+      spacingUnit: '4px',
+      borderRadius: '8px',
     },
+  };
+
+  // Create options without clientSecret to fix type issues
+  const options = {
+    appearance,
+    customerEmail: user?.email,
   };
 
   return (
