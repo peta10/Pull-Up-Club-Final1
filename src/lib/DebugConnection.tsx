@@ -21,7 +21,9 @@ const DebugConnection: React.FC = () => {
       try {
         console.log('Checking database connection...');
         // Try a simple query that doesn't involve RLS
-        const { error } = await supabase.from('profiles').select('count(*)');
+        const { data, error, count } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true });
         
         if (error) {
           throw error;
