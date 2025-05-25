@@ -68,8 +68,8 @@ function App() {
   // Check database connection
   const checkConnection = async () => {
     try {
-      // Use a simpler query that doesn't involve RLS
-      const { error } = await supabase.from("profiles").select("count(*)");
+      // Use a simpler query that just selects the id of one row
+      const { error } = await supabase.from("profiles").select("id").limit(1);
       if (error) throw error;
       setConnectionStatus("connected");
       setRetryCount(0);

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'npm:@supabase/supabase-js@2.38.4';
 
 // Initialize Supabase client with service role key for admin access
 const supabaseAdmin = createClient(
@@ -437,7 +437,7 @@ async function handleGetStats(): Promise<Response> {
 
     // Get subscription stats
     const { data: subscriptionStats, error: subscriptionStatsError } = await supabaseAdmin
-      .rpc('get_subscription_stats');
+      .rpc('get_submission_stats');
 
     if (subscriptionStatsError) {
       throw new Error(`Failed to fetch subscription stats: ${subscriptionStatsError.message}`);
