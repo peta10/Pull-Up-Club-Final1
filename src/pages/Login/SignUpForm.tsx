@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { CheckCircle2 } from "lucide-react";
 
@@ -13,7 +13,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { signUp } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const routeState = location.state as {
     from?: string;
