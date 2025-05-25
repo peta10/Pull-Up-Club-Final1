@@ -51,7 +51,7 @@ serve(async (req: Request) => {
     }
 
     // Check if user is admin
-    const { data: adminRole, error: adminError } = await supabaseAdmin
+    const { data: adminRole, error: _adminError } = await supabaseAdmin
       .from('admin_roles')
       .select('user_id')
       .eq('user_id', user.id)
@@ -69,7 +69,7 @@ serve(async (req: Request) => {
     }
 
     // Check subscription status
-    const { data: subscription, error: subscriptionError } = await supabaseAdmin
+    const { data: subscription, error: _subscriptionError } = await supabaseAdmin
       .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
