@@ -6,8 +6,9 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import SubscriptionDetails from "./SubscriptionDetails";
 import PlanComparison from "../../components/Stripe/PlanComparison";
 import PaymentHistory from "../../components/Stripe/PaymentHistory";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import CheckoutSuccess from "../../components/Stripe/CheckoutSuccess";
+import StripePaymentForm from "./StripePaymentForm";
 
 const SubscriptionPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,6 +16,15 @@ const SubscriptionPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const routeState = (location.state || {}) as {
+    intendedAction?: string;
+    plan?: "monthly" | "annual";
+  };
+  const [showPaymentForm, setShowPaymentForm] = useState(
+    routeState?.intendedAction === "subscribe"
+  );
   const successParam = searchParams.get("success");
   const cancelledParam = searchParams.get("cancelled");
   const planParam = searchParams.get("plan") as "monthly" | "annual" | null;
@@ -53,6 +63,31 @@ const SubscriptionPage: React.FC = () => {
               customerName={user?.email?.split('@')[0]}
               redirectTo="/profile"
               redirectLabel="Go to your profile"
+            />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // If user explicitly came to subscribe and we don't yet have an active subscription
+  if (showPaymentForm && !hasSubscription) {
+    return (
+      <Layout>
+        <div className="bg-black min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex justify-center items-start">
+          <div className="w-full max-w-lg">
+            <h1 className="text-2xl font-bold text-white mb-6 text-center">
+              Complete Your Subscription
+            </h1>
+            <StripePaymentForm
+              onPaymentComplete={() => {
+                // When payment succeeds show the success component
+                navigate("/subscribe?success=true&plan=" + (routeState.plan || "monthly"), { replace: true, state: {} });
+              }}
+              onPaymentError={(msg) => {
+                // stay on page, maybe show toast (handled in component)
+                console.error("Payment error", msg);
+              }}
             />
           </div>
         </div>
