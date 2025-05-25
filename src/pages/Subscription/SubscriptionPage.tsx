@@ -9,6 +9,7 @@ import PaymentHistory from "./PaymentHistory";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import CheckoutSuccess from "./CheckoutSuccess";
 import StripePaymentForm from "./StripePaymentForm";
+import { supabase } from "../../lib/supabase";
 
 const SubscriptionPage: React.FC = () => {
   const { user } = useAuth();
@@ -38,8 +39,35 @@ const SubscriptionPage: React.FC = () => {
       }
 
       try {
+        // Helper to obtain a valid session, retrying briefly if needed
+        const obtainSession = async (retries = 3, delayMs = 500) => {
+          for (let i = 0; i < retries; i++) {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (session && !error) return session;
+            // Wait before retrying
+            await new Promise((res) => setTimeout(res, delayMs));
+          }
+          return null;
+        };
+
+        // Make sure we have a valid session before checking subscription
+        const session = await obtainSession();
+        if (!session) {
+          console.warn("No authenticated session available for subscription check");
+          setHasSubscription(false);
+          setIsLoading(false);
+          return;
+        }
+
         const data = await getActiveSubscription();
-        setHasSubscription(!!data.subscription);
+        
+        // Safely handle null data
+        if (!data) {
+          console.warn("No subscription data returned");
+          setHasSubscription(false);
+        } else {
+          setHasSubscription(!!data.subscription);
+        }
       } catch (err) {
         console.error("Error checking subscription:", err);
         setError("Failed to load subscription status");

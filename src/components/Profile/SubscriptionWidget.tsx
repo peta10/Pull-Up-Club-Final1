@@ -4,6 +4,7 @@ import { CreditCard, Calendar, AlertTriangle, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import PaymentStatusBadge, { PaymentStatus } from '../Stripe/PaymentStatusBadge';
 import { LinkButton } from '../ui/LinkButton';
+import { supabase } from '../../lib/supabase';
 
 interface SubscriptionWidgetProps {
   compact?: boolean;
@@ -18,8 +19,30 @@ const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false
     const fetchSubscription = async () => {
       try {
         setIsLoading(true);
+        
+        // Helper to obtain a valid session, retrying briefly if needed
+        const obtainSession = async (retries = 3, delayMs = 500) => {
+          for (let i = 0; i < retries; i++) {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (session && !error) return session;
+            // Wait before retrying
+            await new Promise((res) => setTimeout(res, delayMs));
+          }
+          return null;
+        };
+
+        // Make sure we have a valid session before checking subscription
+        const session = await obtainSession();
+        if (!session) {
+          console.warn("No authenticated session available for subscription widget");
+          setIsLoading(false);
+          return;
+        }
+        
         const data = await getActiveSubscription();
-        setSubscription(data);
+        if (data) {
+          setSubscription(data);
+        }
       } catch (err) {
         console.error('Error fetching subscription:', err);
         setError('Could not load subscription data');

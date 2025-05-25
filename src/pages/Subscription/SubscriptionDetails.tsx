@@ -5,6 +5,7 @@ import { products } from '../../lib/stripe-config';
 import { Button } from '../../components/ui/Button';
 import { Calendar, CreditCard, AlertTriangle } from 'lucide-react';
 import ManageSubscription from '../../components/Stripe/ManageSubscription';
+import { supabase } from '../../lib/supabase';
 
 interface SubscriptionDetailsProps {
   userName?: string;
@@ -20,8 +21,32 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userName }) =
     const fetchSubscriptionData = async () => {
       try {
         setIsLoading(true);
+
+        // Helper to obtain a valid session, retrying briefly if needed
+        const obtainSession = async (retries = 3, delayMs = 500) => {
+          for (let i = 0; i < retries; i++) {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (session && !error) return session;
+            // Wait before retrying
+            await new Promise((res) => setTimeout(res, delayMs));
+          }
+          return null;
+        };
+
+        // Make sure we have a valid session before checking subscription
+        const session = await obtainSession();
+        if (!session) {
+          setError('No active session found. Please sign in again.');
+          setIsLoading(false);
+          return;
+        }
+
         const data = await getActiveSubscription();
-        setSubscription(data);
+        if (!data) {
+          setError('No subscription data available');
+        } else {
+          setSubscription(data);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load subscription data');
       } finally {
