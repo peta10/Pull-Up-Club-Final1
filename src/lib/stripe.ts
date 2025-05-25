@@ -125,35 +125,49 @@ export async function createCustomerPortalSession(): Promise<string | null> {
  */
 export const getActiveSubscription = async () => {
   try {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+    // Helper to obtain a valid session, retrying briefly if needed
+    const obtainSession = async (retries = 3, delayMs = 500): Promise<Session | null> => {
+      for (let i = 0; i < retries; i++) {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-      throw new Error("User not authenticated");
+        if (session && !error) return session;
+
+        // Wait before retrying
+        await new Promise((res) => setTimeout(res, delayMs));
+      }
+      return null;
+    };
+
+    const session = await obtainSession();
+
+    if (!session) {
+      console.warn('getActiveSubscription: No authenticated session; skipping subscription check');
+      return null;
     }
 
     const response = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/subscription-status`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to get subscription status");
+      throw new Error(errorData.error || 'Failed to get subscription status');
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Error getting subscription status:", error);
+    console.error('Error getting subscription status:', error);
     throw error;
   }
 };

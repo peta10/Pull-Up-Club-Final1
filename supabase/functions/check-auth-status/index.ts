@@ -7,12 +7,22 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS headers will be computed per-request so we can echo back the caller's origin.
+
+function buildCorsHeaders(origin: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers':
+      'authorization, x-client-info, apikey, content-type',
+  } as Record<string, string>;
+}
 
 serve(async (req: Request) => {
+  // Determine origin for CORS (fall back to *)
+  const origin = req.headers.get('origin') ?? '*';
+  const corsHeaders = buildCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -72,33 +82,42 @@ serve(async (req: Request) => {
       { user_id: user.id }
     );
 
-    return new Response(JSON.stringify({
-      user: {
-        id: user.id,
-        email: user.email,
-        isAdmin: !!adminRole,
-      },
-      profile: profile || null,
-      hasProfile: !!profile,
-      isProfileComplete: profile?.is_profile_completed || false,
-      hasSubscription: !!subscription,
-      submissionStatus,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        user: {
+          id: user.id,
+          email: user.email,
+          isAdmin: !!adminRole,
+        },
+        profile: profile || null,
+        hasProfile: !!profile,
+        isProfileComplete: profile?.is_profile_completed || false,
+        hasSubscription: !!subscription,
+        submissionStatus,
+      }),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error checking auth status:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const statusCode = errorMessage.includes('Authentication error') ? 401 : 500;
     
-    return new Response(JSON.stringify({ 
-      error: errorMessage,
-      authenticated: false 
-    }), {
-      status: statusCode,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: errorMessage, authenticated: false }),
+      {
+        status: statusCode,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
   }
 });
