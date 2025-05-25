@@ -5,7 +5,7 @@ export default function SubscriptionPage() {
   const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
   
   // Replace with your actual Stripe price ID for the $9.99/month subscription
-  const MONTHLY_PRICE_ID = 'price_1234567890'; // Example price ID
+  const MONTHLY_PRICE_ID = 'price_1RMacXGaHiDfsUfBF4dgFfjO'; // Updated to actual price ID
   
   const handleSubscribe = () => {
     setSelectedPriceId(MONTHLY_PRICE_ID);

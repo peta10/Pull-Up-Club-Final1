@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   PaymentElement,
   AddressElement,
   useCheckout,
 } from '@stripe/react-stripe-js';
+
+interface EmbeddedCheckoutProps {
+  priceId: string;
+  returnUrl: string;
+  metadata?: Record<string, any>;
+}
 
 const validateEmail = async (email: string | null, checkout: any) => {
   if (!checkout || !email) {
@@ -58,13 +64,24 @@ const EmailInput = ({ email, setEmail, error, setError }: { email: string, setEm
   );
 };
 
-const EmbeddedCheckout: React.FC = () => {
+const EmbeddedCheckout: React.FC<EmbeddedCheckoutProps> = ({ priceId, returnUrl, metadata }) => {
   const checkout = useCheckout();
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (checkout) {
+      // Initialize checkout with the provided price ID and metadata
+      checkout.initialize({
+        priceId,
+        returnUrl,
+        metadata
+      });
+    }
+  }, [checkout, priceId, returnUrl, metadata]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

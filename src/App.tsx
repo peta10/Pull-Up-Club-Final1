@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext.tsx";
+import { AuthProvider } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 import AdminRoute from "./components/Layout/AdminRoute.tsx";
 import { supabase } from "./lib/supabase.ts";
 import Lenis from "lenis";
-import StripeProvider from "./lib/StripeProvider.tsx";
 import DebugConnection from "./lib/DebugConnection.tsx";
 import { loadStripe } from '@stripe/stripe-js';
 import { CheckoutProvider } from '@stripe/react-stripe-js';
@@ -271,7 +270,14 @@ function App() {
             />
 
             {/* Stripe Embedded Checkout Routes */}
-            <Route path="/checkout" element={<ProtectedRoute><EmbeddedCheckout /></ProtectedRoute>} />
+            <Route path="/checkout" element={
+              <ProtectedRoute>
+                <EmbeddedCheckout 
+                  priceId="price_1RMacXGaHiDfsUfBF4dgFfjO"
+                  returnUrl={`${window.location.origin}/subscription/return`}
+                />
+              </ProtectedRoute>
+            } />
             <Route path="/return" element={<ProtectedRoute><CheckoutReturn /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />
