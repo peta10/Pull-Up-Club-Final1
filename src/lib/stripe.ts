@@ -41,6 +41,29 @@ export async function createCheckoutSession(
   metadata: Record<string, string> = {}
 ): Promise<string | null> {
   try {
+    // Helper to obtain a valid session, retrying briefly if needed
+    const obtainSession = async (retries = 3, delayMs = 500): Promise<Session | null> => {
+      for (let i = 0; i < retries; i++) {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (session && !error) return session;
+
+        // Wait before retrying
+        await new Promise((res) => setTimeout(res, delayMs));
+      }
+      return null;
+    };
+
+    // Make sure we have a valid session
+    const session = await obtainSession();
+    if (!session) {
+      console.warn('createCheckoutSession: No authenticated session; cannot create checkout');
+      throw new Error('Authentication required. Please sign in to continue.');
+    }
+
     // Determine which product to use
     const priceId = plan === 'monthly' 
       ? products.pullUpClub.priceId 
@@ -50,10 +73,16 @@ export async function createCheckoutSession(
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { 
         priceId, 
-        email,
-        successUrl: `${window.location.origin}/success`,
+        email: email || session.user.email,
+        successUrl: `${window.location.origin}/success?checkout=completed&plan=${plan}`,
         cancelUrl: `${window.location.origin}/subscription`,
-        metadata 
+        metadata: {
+          ...metadata,
+          userId: session.user.id,
+        }
+      },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
 
@@ -70,7 +99,7 @@ export async function createCheckoutSession(
     return data.url;
   } catch (err) {
     console.error('Error in createCheckoutSession:', err);
-    return null;
+    throw err;
   }
 }
 

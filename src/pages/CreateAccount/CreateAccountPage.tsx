@@ -12,40 +12,54 @@ const CreateAccountPage: React.FC = () => {
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [intendedPlan, setIntendedPlan] = useState<
-    "monthly" | "annual" | undefined
-  >(undefined);
+  const [intendedPlan, setIntendedPlan] = useState<"monthly" | "annual" | undefined>(undefined);
+  const [returnTo, setReturnTo] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (user) {
-      const routeState = location.state as { intendedAction?: string } | null;
-      if (!routeState?.intendedAction) {
+      const routeState = location.state as { 
+        intendedAction?: string;
+        returnTo?: string;
+      } | null;
+      
+      if (routeState?.intendedAction === 'subscribe' && routeState?.returnTo) {
+        navigate(routeState.returnTo, { 
+          replace: true,
+          state: { intendedAction: 'subscribe', plan: intendedPlan }
+        });
+      } else {
         navigate("/profile", { replace: true });
       }
       return;
     }
+
+    // Extract state from location
     const routeState = location.state as {
-      from?: string;
+      intendedAction?: string;
       plan?: "monthly" | "annual";
+      returnTo?: string;
     } | null;
 
     if (routeState?.plan) {
       setIntendedPlan(routeState.plan);
+    }
+    
+    if (routeState?.returnTo) {
+      setReturnTo(routeState.returnTo);
     }
 
     const storedEmail = localStorage.getItem("checkoutEmail");
     if (storedEmail) {
       setEmail(storedEmail);
     }
-  }, [navigate, user, location.state]);
+  }, [navigate, user, location.state, intendedPlan]);
 
   // Password validation
   const hasMinLength = password.length >= 6;
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
-  const isPasswordValid =
-    hasMinLength && hasUpperCase && hasLowerCase && hasNumber;
+  const isPasswordValid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber;
 
   // Email validation
   const isEmailValid = (email: string) => {
@@ -78,14 +92,20 @@ const CreateAccountPage: React.FC = () => {
 
       await signUp(email, password);
       localStorage.removeItem("checkoutEmail");
-      // After successful signup, send the user to the subscription page
-      navigate('/subscribe', {
-        replace: true,
-        state: intendedPlan ? { plan: intendedPlan } : undefined,
-      });
+      
+      // After successful signup, redirect based on intended action
+      if (intendedPlan) {
+        navigate(returnTo || '/subscription', {
+          replace: true,
+          state: { 
+            intendedAction: 'subscribe',
+            plan: intendedPlan 
+          }
+        });
+      } else {
+        navigate('/profile', { replace: true });
+      }
     } catch (err: any) {
-      // localStorage.removeItem("pendingSubscriptionPlan"); // Ensure this is also removed if it exists here
-
       // Handle specific Supabase errors
       if (err?.message?.includes("User already registered")) {
         setError("This email is already registered. Please sign in instead.");

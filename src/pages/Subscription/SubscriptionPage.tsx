@@ -19,17 +19,22 @@ const SubscriptionPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Extract information from route state and query parameters
   const routeState = (location.state || {}) as {
     intendedAction?: string;
     plan?: "monthly" | "annual";
   };
-  const [showPaymentForm] = useState(
+  
+  const [showPaymentForm, setShowPaymentForm] = useState(
     routeState?.intendedAction === "subscribe"
   );
+  
   const successParam = searchParams.get("success");
   const cancelledParam = searchParams.get("cancelled");
   const planParam = searchParams.get("plan") as "monthly" | "annual" | null;
 
+  // Check if the user has a subscription when the component mounts or when the user changes
   useEffect(() => {
     const checkSubscription = async () => {
       if (!user) {
@@ -80,6 +85,14 @@ const SubscriptionPage: React.FC = () => {
     checkSubscription();
   }, [user]);
 
+  // Set up the payment form if the user comes with intendedAction=subscribe
+  useEffect(() => {
+    // If user has returned from login/signup and wants to subscribe
+    if (user && routeState?.intendedAction === "subscribe" && routeState?.plan) {
+      setShowPaymentForm(true);
+    }
+  }, [user, routeState]);
+
   // Show success page if redirected from successful checkout
   if (successParam === "true") {
     return (
@@ -99,18 +112,21 @@ const SubscriptionPage: React.FC = () => {
   }
 
   // If user explicitly came to subscribe and we don't yet have an active subscription
-  if (showPaymentForm && !hasSubscription) {
+  if (showPaymentForm && !hasSubscription && user) {
     return (
       <Layout>
         <div className="bg-black min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex justify-center items-start">
           <div className="w-full max-w-lg">
             <h1 className="text-2xl font-bold text-white mb-6 text-center">
-              Complete Your Subscription
+              Complete Your {routeState.plan === "annual" ? "Annual" : "Monthly"} Subscription
             </h1>
             <StripePaymentForm
               onPaymentComplete={() => {
                 // When payment succeeds show the success component
-                navigate("/subscribe?success=true&plan=" + (routeState.plan || "monthly"), { replace: true, state: {} });
+                navigate("/subscription?success=true&plan=" + (routeState.plan || "monthly"), { 
+                  replace: true, 
+                  state: {} 
+                });
               }}
               onPaymentError={(msg) => {
                 // stay on page, maybe show toast (handled in component)

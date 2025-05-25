@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getActiveSubscription } from '../../lib/stripe';
-import { CreditCard, Calendar, AlertTriangle, ExternalLink } from 'lucide-react';
+import { CreditCard, Calendar, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PaymentStatusBadge, { PaymentStatus } from '../Stripe/PaymentStatusBadge';
 import { LinkButton } from '../ui/LinkButton';
 import { supabase } from '../../lib/supabase';
@@ -10,9 +11,6 @@ interface SubscriptionWidgetProps {
 }
 
 const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false }) => {
-  // Direct Stripe customer portal URL
-  const STRIPE_CUSTOMER_PORTAL_URL = "https://billing.stripe.com/p/login/dRmdR9dos2kmaQcdHGejK00";
-  
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,14 +107,9 @@ const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false
           </div>
           <p className="text-sm text-gray-400">Next billing: {formattedDate}</p>
         </div>
-        <a 
-          href={STRIPE_CUSTOMER_PORTAL_URL}
-          target="_blank"
-          rel="noopener noreferrer" 
-          className="inline-flex items-center px-3 py-1.5 border border-gray-600 rounded-md text-sm font-medium text-white hover:bg-gray-700 transition"
-        >
-          Manage <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-        </a>
+        <LinkButton to="/subscription" variant="outline" size="sm">
+          Manage
+        </LinkButton>
       </div>
     );
   }
@@ -134,14 +127,9 @@ const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false
             )}
           </div>
         </div>
-        <a 
-          href={STRIPE_CUSTOMER_PORTAL_URL}
-          target="_blank"
-          rel="noopener noreferrer" 
-          className="inline-flex items-center px-3 py-1.5 border border-gray-600 rounded-md text-sm font-medium text-white hover:bg-gray-700 transition"
-        >
-          Manage <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-        </a>
+        <LinkButton to="/subscription" variant="outline" size="sm">
+          Manage
+        </LinkButton>
       </div>
 
       <div className="space-y-3">
@@ -161,15 +149,13 @@ const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-700">
-        <a 
-          href={STRIPE_CUSTOMER_PORTAL_URL}
-          target="_blank"
-          rel="noopener noreferrer" 
+        <Link 
+          to="/subscription" 
           className="flex items-center text-sm text-[#9b9b6f] hover:text-[#7a7a58]"
         >
-          Manage subscription
-          <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-        </a>
+          View billing history
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Link>
       </div>
     </div>
   );

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ChevronRight,
   CreditCard,
   ShieldCheck,
 } from "lucide-react";
-import { products } from "../../stripe-config";
+import { products } from "../../lib/stripe-config";
+import { createCheckoutSession } from "../../lib/stripe";
 import { useAuth } from "../../context/AuthContext";
 
 const SubscriptionPlans: React.FC = () => {
@@ -17,20 +18,17 @@ const SubscriptionPlans: React.FC = () => {
   );
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // Direct Stripe checkout URLs
-  const STRIPE_MONTHLY_URL = "https://buy.stripe.com/dRmdR9dos2kmaQcdHGejK00";
-  const STRIPE_ANNUAL_URL = "https://buy.stripe.com/28EcN5dosf784rO0UUejK01";
 
   const handleSubscribe = async () => {
     setError(null);
 
     if (!user) {
+      // Redirect to create account, passing along the plan information
       navigate("/create-account", {
         state: {
-          from: location.pathname,
+          intendedAction: "subscribe",
           plan: selectedPlan,
+          returnTo: "/subscription",
         },
       });
       return;
@@ -38,18 +36,38 @@ const SubscriptionPlans: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Instead of creating a checkout session, redirect directly to Stripe hosted checkout
-      const checkoutUrl = selectedPlan === "monthly" 
-        ? STRIPE_MONTHLY_URL 
-        : STRIPE_ANNUAL_URL;
-      
-      // Redirect to the appropriate Stripe checkout page
-      window.location.href = checkoutUrl;
+      // Now the createCheckoutSession will handle session validation internally
+      const checkoutUrl = await createCheckoutSession(
+        selectedPlan,
+        user.email,
+        { 
+          userId: user.id,
+          selectedPlan,
+          timestamp: new Date().toISOString()
+        }
+      );
+
+      if (checkoutUrl) {
+        // Redirect to Stripe Checkout
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error("Failed to create checkout session. Please try again.");
+      }
     } catch (err) {
       console.error("Checkout error:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to start checkout process"
-      );
+      
+      // Handle different types of errors
+      let errorMessage = "Failed to start checkout process. Please try again.";
+      
+      if (err instanceof Error) {
+        if (err.message.includes("Authentication required")) {
+          errorMessage = "Authentication session expired. Please sign in again.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
       setIsLoading(false);
     }
   };

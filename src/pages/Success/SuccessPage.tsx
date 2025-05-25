@@ -13,11 +13,16 @@ const SuccessPage: React.FC = () => {
 
   const isResubmission = searchParams.get("resubmit") === "true";
   const isStripeSuccess = searchParams.get("checkout") === "completed";
+  const planType = searchParams.get("plan") as "monthly" | "annual" || "monthly";
 
   useEffect(() => {
     if (authIsLoading) {
       return;
     }
+
+    // For checkout success, we'll use a longer countdown to give the user time to read
+    const countdownDuration = isStripeSuccess ? 10 : 5;
+    setCountdown(countdownDuration);
 
     const timer = setInterval(() => {
       setCountdown((prevCountdown) => {
@@ -25,12 +30,12 @@ const SuccessPage: React.FC = () => {
           clearInterval(timer);
           if (user) {
             console.log(
-              "[SuccessPage] User logged in, redirecting to /profile"
+              `[SuccessPage] User logged in, redirecting to /profile. isStripeSuccess=${isStripeSuccess}`
             );
             navigate("/profile");
           } else {
             console.warn(
-              "[SuccessPage] User not logged in after payment, redirecting to /create-account as a fallback."
+              `[SuccessPage] User not logged in after payment, redirecting to /create-account as a fallback. isStripeSuccess=${isStripeSuccess}`
             );
             navigate("/create-account");
           }
@@ -41,7 +46,7 @@ const SuccessPage: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate, user, authIsLoading, isResubmission]);
+  }, [navigate, user, authIsLoading, isResubmission, isStripeSuccess]);
 
   if (authIsLoading) {
     return (
@@ -50,7 +55,7 @@ const SuccessPage: React.FC = () => {
           <div className="container mx-auto px-4 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9b9b6f] mx-auto mb-4"></div>
             <h1 className="text-3xl font-bold text-white mb-4">
-              Verifying payment...
+              {isStripeSuccess ? "Verifying payment..." : "Processing..."}
             </h1>
           </div>
         </div>
@@ -64,7 +69,12 @@ const SuccessPage: React.FC = () => {
       <Layout>
         <div className="bg-black min-h-screen py-16">
           <div className="container mx-auto px-4">
-            <CheckoutSuccess />
+            <CheckoutSuccess 
+              subscriptionType={planType}
+              customerName={user?.email?.split('@')[0]}
+              redirectTo="/profile"
+              redirectLabel={`Go to Profile (${countdown}s)`}
+            />
           </div>
         </div>
       </Layout>
