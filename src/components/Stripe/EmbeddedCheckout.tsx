@@ -37,6 +37,10 @@ const EmbeddedCheckoutComponent: React.FC<EmbeddedCheckoutComponentProps> = ({
       
       const accessToken = sessionData.session.access_token;
       
+      // Ensure returnUrl is defined and log it
+      const finalReturnUrl = returnUrl || `${window.location.origin}/subscription/return`;
+      console.log('Using returnUrl:', finalReturnUrl);
+      
       // Create a Checkout Session by calling our Edge Function
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`, {
         method: 'POST',
@@ -47,7 +51,7 @@ const EmbeddedCheckoutComponent: React.FC<EmbeddedCheckoutComponentProps> = ({
         body: JSON.stringify({
           priceId,
           customerEmail: user?.email,
-          returnUrl,
+          returnUrl: finalReturnUrl,
           uiMode: 'embedded',
           metadata: {
             ...metadata,

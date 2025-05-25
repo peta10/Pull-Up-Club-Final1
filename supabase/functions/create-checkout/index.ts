@@ -140,12 +140,16 @@ serve(async (req: Request) => {
     
     // For embedded mode, we need returnUrl; for hosted mode, we need successUrl and cancelUrl
     if (uiMode === 'embedded' && !returnUrl) {
-      return new Response(JSON.stringify({ error: 'Missing required parameter for embedded mode: returnUrl' }), {
+      console.error(`Missing returnUrl parameter for embedded mode: returnUrl=${returnUrl}, uiMode=${uiMode}`);
+      return new Response(JSON.stringify({ 
+        error: 'Missing required parameter for embedded mode: returnUrl',
+        details: { returnUrl, uiMode }
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else if (uiMode === 'hosted' && (!successUrl || !cancelUrl)) {
-      console.error(`Missing URL parameters: successUrl=${successUrl}, cancelUrl=${cancelUrl}`);
+      console.error(`Missing URL parameters: successUrl=${successUrl}, cancelUrl=${cancelUrl}, uiMode=${uiMode}`);
       return new Response(JSON.stringify({ 
         error: 'Missing required parameters for hosted mode: successUrl or cancelUrl',
         details: { successUrl, cancelUrl, uiMode }
