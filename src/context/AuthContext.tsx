@@ -152,14 +152,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       console.log("[AuthContext] Fetching profile for user:", userId);
       
-      // First check if user has admin role
+      // First check if user has admin role - changed from .single() to handle no rows gracefully
       const { data: adminData, error: adminError } = await supabase
         .from('admin_roles')
         .select('*')
-        .eq('user_id', userId)
-        .single();
+        .eq('user_id', userId);
 
-      const isUserAdmin = !adminError && adminData !== null;
+      // Check if adminData exists and has at least one row
+      const isUserAdmin = !adminError && adminData && adminData.length > 0;
       console.log("[AuthContext] Admin check result:", { isUserAdmin, adminData, adminError });
       
       // Set admin status immediately

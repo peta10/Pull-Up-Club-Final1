@@ -42,14 +42,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
       localStorage.removeItem("pendingSubscriptionPlan");
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
+        
+      // Improved error handling with more specific messages
       if (errorMessage.includes("invalid_credentials")) {
-        setError("Invalid email or password. Please try again.");
+        setError("Invalid email or password. Please check your credentials and try again.");
       } else if (errorMessage.includes("email_not_confirmed")) {
-        setError("Your email has not been confirmed. Please check your inbox.");
+        setError("Your email has not been confirmed. Please check your inbox and follow the verification link.");
       } else if (errorMessage.includes("email")) {
         setError("Please enter a valid email address.");
+      } else if (errorMessage.includes("too_many_attempts")) {
+        setError("Too many login attempts. Please try again later or reset your password.");
+      } else if (errorMessage.includes("password")) {
+        setError("Password must be at least 6 characters.");
       } else {
-        setError(errorMessage);
+        setError("Login failed. " + errorMessage);
       }
     } finally {
       setIsLoading(false);
