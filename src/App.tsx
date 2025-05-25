@@ -21,6 +21,7 @@ import VideoSubmissionPage from "./pages/VideoSubmission/VideoSubmissionPage.tsx
 import AdminUserManagement from "./pages/AdminUserManagement.tsx";
 import { supabase } from "./lib/supabase.ts";
 import Lenis from "lenis";
+import StripeProvider from "./lib/StripeProvider.tsx";
 
 function App() {
   const [connectionStatus, setConnectionStatus] = useState<
@@ -85,98 +86,100 @@ function App() {
 
   return (
     <AuthProvider>
-      {connectionStatus === "error" && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-0 left-0 right-0 z-50 flex justify-between items-center">
-          <span>
-            <strong>Connection Error:</strong> Unable to connect to the
-            database. Some features may not work correctly.
-          </span>
-          <button
-            onClick={() => {
-              setConnectionStatus("connecting");
-              checkConnection();
-            }}
-            className="bg-red-700 text-white px-4 py-2 rounded"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-      <Routes>
-        {/* Public routes that don't require authentication */}
-        <Route path="/" element={<Home />} />
-        <Route path="/rules" element={<RulesPage />} />
-        <Route path="/faq" element={<FAQPage />} />
-        <Route path="/privacy" element={<PrivacyPolicyPage />} />
-        <Route path="/cookies" element={<CookiesPolicyPage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
+      <StripeProvider>
+        {connectionStatus === "error" && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-0 left-0 right-0 z-50 flex justify-between items-center">
+            <span>
+              <strong>Connection Error:</strong> Unable to connect to the
+              database. Some features may not work correctly.
+            </span>
+            <button
+              onClick={() => {
+                setConnectionStatus("connecting");
+                checkConnection();
+              }}
+              className="bg-red-700 text-white px-4 py-2 rounded"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        <Routes>
+          {/* Public routes that don't require authentication */}
+          <Route path="/" element={<Home />} />
+          <Route path="/rules" element={<RulesPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/cookies" element={<CookiesPolicyPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
 
-        {/* Authentication routes - redirect if already logged in */}
-        <Route
-          path="/login"
-          element={
-            <ProtectedRoute requireAuth={false} redirectTo="/profile">
-              <LoginPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Authentication routes - redirect if already logged in */}
+          <Route
+            path="/login"
+            element={
+              <ProtectedRoute requireAuth={false} redirectTo="/profile">
+                <LoginPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/create-account"
-          element={
-            <ProtectedRoute requireAuth={false} redirectTo="/profile">
-              <CreateAccountPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/create-account"
+            element={
+              <ProtectedRoute requireAuth={false} redirectTo="/profile">
+                <CreateAccountPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Public route with conditional display based on auth state */}
-        <Route path="/subscription" element={<SubscriptionPage />} />
+          {/* Public route with conditional display based on auth state */}
+          <Route path="/subscription" element={<SubscriptionPage />} />
 
-        {/* Protected routes - require authentication */}
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="/success" element={<SuccessPage />} />
+          <Route path="/success" element={<SuccessPage />} />
 
-        <Route
-          path="/submit-video"
-          element={
-            <ProtectedRoute>
-              <VideoSubmissionPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/submit-video"
+            element={
+              <ProtectedRoute>
+                <VideoSubmissionPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Admin routes with role check */}
-        <Route
-          path="/admin-dashboard"
-          element={
-            <AdminRoute>
-              <AdminDashboardPage />
-            </AdminRoute>
-          }
-        />
+          {/* Admin routes with role check */}
+          <Route
+            path="/admin-dashboard"
+            element={
+              <AdminRoute>
+                <AdminDashboardPage />
+              </AdminRoute>
+            }
+          />
 
-        <Route
-          path="/admin-users"
-          element={
-            <AdminRoute>
-              <AdminUserManagement />
-            </AdminRoute>
-          }
-        />
+          <Route
+            path="/admin-users"
+            element={
+              <AdminRoute>
+                <AdminUserManagement />
+              </AdminRoute>
+            }
+          />
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </StripeProvider>
     </AuthProvider>
   );
 }
