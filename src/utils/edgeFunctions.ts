@@ -131,5 +131,15 @@ export const adminApi = {
    */
   async getStats(): Promise<any> {
     return callEdgeFunction('admin-api', 'get-stats');
+  },
+  
+  /**
+   * Add or remove admin role for a user
+   */
+  async toggleAdmin(userId: string, action: 'add' | 'remove'): Promise<any> {
+    return callEdgeFunction('add-admin', undefined, {
+      user_id: userId,
+      action: action === 'remove' ? 'remove' : 'add'
+    });
   }
-}; 
+};
