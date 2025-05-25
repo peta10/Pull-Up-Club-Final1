@@ -56,20 +56,21 @@ jobs:
         run: npm audit --production
         continue-on-error: true
       
-      - name: Snyk Security Scan
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
+      # Uncomment and add SNYK_TOKEN to repository secrets to enable Snyk scanning
+      # - name: Snyk Security Scan
+      #   uses: snyk/actions/node@master
+      #   continue-on-error: true
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --severity-threshold=high
       
-      - name: Upload Snyk Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: snyk-report
-          path: snyk-report.json
-          if-no-files-found: ignore
+      # - name: Upload Snyk Report
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: snyk-report
+      #     path: snyk-report.json
+      #     if-no-files-found: ignore
   
   update-dependencies:
     name: Update Dependencies
@@ -91,7 +92,7 @@ jobs:
         run: |
           npm i -g npm-check-updates
           UPDATES=$(ncu --format json)
-          echo "::set-output name=has_updates::$(echo $UPDATES | jq 'length > 0')"
+          echo "has_updates=$(echo $UPDATES | jq 'length > 0')" >> $GITHUB_OUTPUT
           echo $UPDATES > updates.json
       
       - name: Create Pull Request
