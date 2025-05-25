@@ -74,11 +74,41 @@ serve(async (req: Request) => {
       console.warn('Missing or invalid Authorization header');
     }
 
-    // Parse request body
-    const requestBody = await req.json();
-    console.log('Received request body:', JSON.stringify(requestBody));
+    // Check Content-Type header
+    const contentType = req.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`Invalid Content-Type: ${contentType}`);
+      return new Response(JSON.stringify({ error: 'Content-Type must be application/json' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Safely parse request body with error handling
+    let requestBody;
+    try {
+      const rawBody = await req.text();
+      console.log('Raw request body:', rawBody);
+      
+      if (!rawBody || rawBody.trim() === '') {
+        throw new Error('Empty request body');
+      }
+      
+      requestBody = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid JSON in request body',
+        details: parseError instanceof Error ? parseError.message : 'Unknown parse error'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
-    const { priceId, successUrl, cancelUrl, customerEmail, metadata = {} } = requestBody;
+    console.log('Parsed request body:', JSON.stringify(requestBody));
+    
+    const { priceId, successUrl, cancelUrl, customerEmail, metadata = {} } = requestBody || {};
     
     // Validate required parameters
     if (!priceId) {
@@ -151,7 +181,10 @@ serve(async (req: Request) => {
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error creating checkout session' }), {
+    return new Response(JSON.stringify({ 
+      error: error instanceof Error ? error.message : 'Unknown error creating checkout session',
+      stack: error instanceof Error ? error.stack : undefined
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

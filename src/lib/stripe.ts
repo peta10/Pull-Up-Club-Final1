@@ -77,19 +77,24 @@ export async function createCheckoutSession(
       throw new Error('Customer email is required for checkout');
     }
 
-    // Call Supabase Edge Function to create checkout session
+    // Prepare the request body as a proper object
+    const requestBody = {
+      priceId,
+      customerEmail,
+      successUrl: `${window.location.origin}/success?checkout=completed&plan=${plan}`,
+      cancelUrl: `${window.location.origin}/subscription`,
+      metadata: {
+        ...metadata,
+        userId: session.user.id,
+        plan
+      }
+    };
+
+    console.log('Sending request body to create-checkout:', JSON.stringify(requestBody));
+
+    // Call Supabase Edge Function to create checkout session with explicit headers
     const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: { 
-        priceId, 
-        customerEmail, 
-        successUrl: `${window.location.origin}/success?checkout=completed&plan=${plan}`,
-        cancelUrl: `${window.location.origin}/subscription`,
-        metadata: {
-          ...metadata,
-          userId: session.user.id,
-          plan
-        }
-      },
+      body: requestBody,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`,
