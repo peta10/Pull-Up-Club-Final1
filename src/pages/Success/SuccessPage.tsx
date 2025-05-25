@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
 import { Check } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import CheckoutSuccess from "../../components/Stripe/CheckoutSuccess";
+import CheckoutSuccess from "../Subscription/CheckoutSuccess";
 
 const SuccessPage: React.FC = () => {
   const [countdown, setCountdown] = useState(5);
@@ -65,12 +65,7 @@ const SuccessPage: React.FC = () => {
       <Layout>
         <div className="bg-black min-h-screen py-16">
           <div className="container mx-auto px-4">
-            <CheckoutSuccess 
-              subscriptionType={subscriptionType}
-              customerName={user?.email?.split('@')[0]}
-              redirectTo="/profile"
-              redirectLabel="Go to your profile"
-            />
+            <CheckoutSuccess />
           </div>
         </div>
       </Layout>

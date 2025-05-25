@@ -26,20 +26,16 @@ const CreateAccountPage: React.FC = () => {
     }
     const routeState = location.state as {
       from?: string;
-      intendedAction?: string;
       plan?: "monthly" | "annual";
     } | null;
-    if (routeState?.intendedAction === "subscribe" && routeState.plan) {
+
+    if (routeState?.plan) {
       setIntendedPlan(routeState.plan);
-      const storedEmail = localStorage.getItem("checkoutEmail");
-      if (storedEmail) {
-        setEmail(storedEmail);
-      }
-    } else {
-      const storedEmail = localStorage.getItem("checkoutEmail");
-      if (storedEmail) {
-        setEmail(storedEmail);
-      }
+    }
+
+    const storedEmail = localStorage.getItem("checkoutEmail");
+    if (storedEmail) {
+      setEmail(storedEmail);
     }
   }, [navigate, user, location.state]);
 
@@ -83,14 +79,10 @@ const CreateAccountPage: React.FC = () => {
       await signUp(email, password);
       localStorage.removeItem("checkoutEmail");
       // After successful signup, send the user to the subscription page
-      if (intendedPlan) {
-        navigate('/subscribe', {
-          replace: true,
-          state: { intendedAction: 'subscribe', plan: intendedPlan },
-        });
-      } else {
-        navigate('/subscribe', { replace: true });
-      }
+      navigate('/subscribe', {
+        replace: true,
+        state: intendedPlan ? { plan: intendedPlan } : undefined,
+      });
     } catch (err: any) {
       // localStorage.removeItem("pendingSubscriptionPlan"); // Ensure this is also removed if it exists here
 

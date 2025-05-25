@@ -27,7 +27,6 @@ const SubscriptionPlans: React.FC = () => {
       navigate("/create-account", {
         state: {
           from: location.pathname,
-          intendedAction: "subscribe",
           plan: selectedPlan,
         },
       });

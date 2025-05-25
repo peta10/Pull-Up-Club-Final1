@@ -44,7 +44,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
       // Redirect user to subscription flow immediately
       navigate('/subscribe', {
         replace: true,
-        state: { intendedAction: 'subscribe', plan: intendedPlan || 'monthly' },
+        state: intendedPlan ? { plan: intendedPlan } : undefined,
       });
     } catch (err) {
       const errorMessage =
