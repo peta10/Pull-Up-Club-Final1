@@ -210,3 +210,25 @@ export const cancelSubscription = async (): Promise<boolean> => {
     throw error;
   }
 };
+
+export async function getPaymentHistory() {
+  try {
+    const response = await fetch('/api/stripe/payment-history', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch payment history');
+    }
+
+    const data = await response.json();
+    return data.payments || [];
+  } catch (error) {
+    console.error('Error fetching payment history:', error);
+    return [];
+  }
+}

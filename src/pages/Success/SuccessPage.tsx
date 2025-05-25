@@ -12,7 +12,6 @@ const SuccessPage: React.FC = () => {
   const { user, isLoading: authIsLoading } = useAuth();
 
   const isResubmission = searchParams.get("resubmit") === "true";
-  const subscriptionType = searchParams.get("plan") as "monthly" | "annual" || "monthly";
   const isStripeSuccess = searchParams.get("checkout") === "completed";
 
   useEffect(() => {

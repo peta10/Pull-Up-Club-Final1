@@ -5,9 +5,9 @@ import { getActiveSubscription } from "../../lib/stripe";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import SubscriptionDetails from "./SubscriptionDetails";
 import SubscriptionPlans from "./SubscriptionPlans";
-import PaymentHistory from "../../components/Stripe/PaymentHistory";
+import PaymentHistory from "./PaymentHistory";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
-import CheckoutSuccess from "../../components/Stripe/CheckoutSuccess";
+import CheckoutSuccess from "./CheckoutSuccess";
 import StripePaymentForm from "./StripePaymentForm";
 
 const SubscriptionPage: React.FC = () => {
