@@ -108,7 +108,16 @@ serve(async (req: Request) => {
     
     console.log('Parsed request body:', JSON.stringify(requestBody));
     
-    const { priceId, successUrl, cancelUrl, customerEmail, metadata = {} } = requestBody || {};
+    // Support both traditional redirect and new embedded checkout
+    const { 
+      priceId, 
+      successUrl, 
+      cancelUrl, 
+      returnUrl, 
+      customerEmail, 
+      metadata = {},
+      uiMode = 'hosted' // Default to traditional hosted checkout
+    } = requestBody || {};
     
     // Validate required parameters
     if (!priceId) {
@@ -118,8 +127,14 @@ serve(async (req: Request) => {
       });
     }
     
-    if (!successUrl || !cancelUrl) {
-      return new Response(JSON.stringify({ error: 'Missing required parameters: successUrl or cancelUrl' }), {
+    // For embedded mode, we need returnUrl; for hosted mode, we need successUrl and cancelUrl
+    if (uiMode === 'embedded' && !returnUrl) {
+      return new Response(JSON.stringify({ error: 'Missing required parameter for embedded mode: returnUrl' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } else if (uiMode === 'hosted' && (!successUrl || !cancelUrl)) {
+      return new Response(JSON.stringify({ error: 'Missing required parameters for hosted mode: successUrl or cancelUrl' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -147,7 +162,8 @@ serve(async (req: Request) => {
       priceId,
       email: customerEmail,
       userId: userId || 'not authenticated',
-      metadata: sessionMetadata
+      metadata: sessionMetadata,
+      uiMode
     });
 
     // Create Stripe Checkout Session
@@ -160,8 +176,6 @@ serve(async (req: Request) => {
         },
       ],
       mode: 'subscription',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
       metadata: sessionMetadata,
       allow_promotion_codes: true,
     };
@@ -171,14 +185,33 @@ serve(async (req: Request) => {
       sessionParams.customer_email = customerEmail;
     }
 
+    // Configure based on UI mode
+    if (uiMode === 'embedded') {
+      sessionParams.ui_mode = 'embedded';
+      sessionParams.return_url = `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`;
+    } else {
+      // Traditional hosted mode
+      sessionParams.success_url = successUrl;
+      sessionParams.cancel_url = cancelUrl;
+    }
+
     const session = await stripe.checkout.sessions.create(sessionParams);
 
     console.log('Stripe checkout session created successfully with ID:', session.id);
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Return different response formats based on the UI mode
+    if (uiMode === 'embedded') {
+      return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } else {
+      // Traditional hosted mode
+      return new Response(JSON.stringify({ url: session.url }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
   } catch (error) {
     console.error('Error creating checkout session:', error);
     return new Response(JSON.stringify({ 
