@@ -1,3 +1,7 @@
+/**
+ * Stripe product configuration
+ * These values should match the products created in your Stripe dashboard
+ */
 export const products = {
   pullUpClub: {
     id: 'prod_SH8uXKHPtjHbke',
@@ -16,3 +20,9 @@ export const products = {
     mode: 'subscription' as const,
   }
 };
+
+// Stripe API Keys (using environment variables)
+export const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+
+// Stripe webhook endpoint
+export const STRIPE_WEBHOOK_ENDPOINT = '/api/webhooks/stripe';

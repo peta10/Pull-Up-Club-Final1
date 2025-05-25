@@ -1,4 +1,4 @@
-import { products } from "../services/stripe-config";
+import { products } from "./stripe-config";
 import { supabase } from "./supabase";
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -40,9 +40,20 @@ export async function createCheckoutSession(
   metadata: Record<string, string> = {}
 ): Promise<string | null> {
   try {
+    // Determine which product to use
+    const priceId = plan === 'monthly' 
+      ? products.pullUpClub.priceId 
+      : products.pullUpClubAnnual.priceId;
+
     // Call Supabase Edge Function to create checkout session
     const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: { plan, email, metadata },
+      body: { 
+        priceId, 
+        email,
+        successUrl: `${window.location.origin}/success`,
+        cancelUrl: `${window.location.origin}/subscription`,
+        metadata 
+      },
     });
 
     if (error) {
@@ -64,22 +75,24 @@ export async function createCheckoutSession(
 
 /**
  * Creates a payment intent for one-time payments
+ * @param amount Amount in cents (e.g., 999 for $9.99)
  * @returns Payment intent client secret
  */
-export async function createPaymentIntent(): Promise<{ clientSecret: string }> {
+export async function createPaymentIntent(amount: number = 999): Promise<{ clientSecret: string } | null> {
   try {
-    // In a real app, you'd call a serverless function or API
-    // For this example, we'll mock the response
     const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-      body: { amount: 999 }, // $9.99
+      body: { amount },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating payment intent:', error);
+      return null;
+    }
     
     return { clientSecret: data.clientSecret };
   } catch (err) {
     console.error('Error creating payment intent:', err);
-    throw new Error('Failed to create payment intent');
+    return null;
   }
 }
 
@@ -90,7 +103,9 @@ export async function createPaymentIntent(): Promise<{ clientSecret: string }> {
 export async function createCustomerPortalSession(): Promise<string | null> {
   try {
     const { data, error } = await supabase.functions.invoke('customer-portal', {
-      body: {},
+      body: {
+        returnUrl: `${window.location.origin}/profile`,
+      },
     });
 
     if (error) {
@@ -105,6 +120,9 @@ export async function createCustomerPortalSession(): Promise<string | null> {
   }
 }
 
+/**
+ * Gets the active subscription for the current user
+ */
 export const getActiveSubscription = async () => {
   try {
     const {
@@ -136,6 +154,44 @@ export const getActiveSubscription = async () => {
     return data;
   } catch (error) {
     console.error("Error getting subscription status:", error);
+    throw error;
+  }
+};
+
+/**
+ * Cancels the active subscription for the current user
+ */
+export const cancelSubscription = async (): Promise<boolean> => {
+  try {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      throw new Error("User not authenticated");
+    }
+
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cancel-subscription`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to cancel subscription");
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Error cancelling subscription:", error);
     throw error;
   }
 };

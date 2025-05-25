@@ -1,10 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'npm:@supabase/supabase-js@2.38.4';
 
 // Initialize Supabase client with service role key for admin access
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
+
+// Helper function to check admin status
+const checkAdminStatus = async (userId: string): Promise<boolean> => {
+  const { data } = await supabaseAdmin
+    .from('admin_roles')
+    .select('user_id')
+    .eq('user_id', userId);
+  
+  return !!(data && data.length > 0);
+};
 
 /**
  * Admin API Edge Function that handles multiple admin operations
@@ -70,17 +80,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Check if the user is an admin
-    const { data: adminCheck, error: adminError } = await supabaseAdmin
-      .from('admin_roles')
-      .select('user_id')
-      .eq('user_id', userData.user.id)
-      .single();
-
-    if (adminError || !adminCheck) {
+    // Check if the user is an admin (using our safe helper function)
+    const isAdmin = await checkAdminStatus(userData.user.id);
+    
+    if (!isAdmin) {
       return new Response(JSON.stringify({ 
         error: 'Access denied: Only admins can access this function',
-        details: adminError?.message || 'User is not an admin'
+        details: 'User is not an admin'
       }), {
         status: 403,
         headers: { 
@@ -431,7 +437,7 @@ async function handleGetStats(): Promise<Response> {
 
     // Get subscription stats
     const { data: subscriptionStats, error: subscriptionStatsError } = await supabaseAdmin
-      .rpc('get_subscription_stats');
+      .rpc('get_submission_stats');
 
     if (subscriptionStatsError) {
       throw new Error(`Failed to fetch subscription stats: ${subscriptionStatsError.message}`);
@@ -464,4 +470,4 @@ async function handleGetStats(): Promise<Response> {
       }
     );
   }
-} 
+}

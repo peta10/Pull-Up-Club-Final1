@@ -1,26 +1,30 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout/Layout.tsx";
-import { AlertTriangle, Users, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Users, ArrowLeft, Lock, Unlock, UserPlus } from "lucide-react";
 import { Button } from "../components/ui/Button.tsx";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase.ts";
+import { adminApi } from "../utils/edgeFunctions.ts";
+import { Alert } from "../components/ui/Alert";
 
 interface User {
-  user_id: string;
+  id: string;
   email: string;
   full_name: string | null;
   role: string;
   is_paid: boolean;
   created_at: string;
+  is_admin?: boolean;
 }
 
 const AdminUserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleteStatus, setDeleteStatus] = useState<{
+  const [actionStatus, setActionStatus] = useState<{
     userId: string;
-    status: "deleting" | "success" | "error";
+    action: "admin_add" | "admin_remove" | "delete";
+    status: "processing" | "success" | "error";
     message?: string;
   } | null>(null);
   const navigate = useNavigate();
@@ -31,7 +35,7 @@ const AdminUserManagement: React.FC = () => {
 
   const fetchUsers = async () => {
     console.log("fetchUsers called");
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
     try {
       // Get the current session
@@ -49,15 +53,14 @@ const AdminUserManagement: React.FC = () => {
       const { data: adminCheck, error: adminError } = await supabase
         .from('admin_roles')
         .select('user_id')
-        .eq('user_id', session.user.id)
-        .single();
+        .eq('user_id', session.user.id);
 
       if (adminError) {
         console.error('Admin check error:', adminError);
         throw new Error('Error checking admin permissions');
       }
 
-      if (!adminCheck) {
+      if (!adminCheck || adminCheck.length === 0) {
         throw new Error('Unauthorized: Admin access required');
       }
 
@@ -98,13 +101,26 @@ const AdminUserManagement: React.FC = () => {
       console.log("Fetch result:", result);
 
       if (result.users) {
+        // Get admin roles to determine which users are admins
+        const { data: adminRoles, error: adminRolesError } = await supabase
+          .from('admin_roles')
+          .select('user_id');
+        
+        if (adminRolesError) {
+          console.error('Error fetching admin roles:', adminRolesError);
+          throw new Error('Error fetching admin status');
+        }
+
+        const adminUserIds = new Set((adminRoles || []).map(role => role.user_id));
+
         const fetchedUsers: User[] = result.users.map((profile: any) => ({
-          user_id: profile.id,
+          id: profile.id,
           email: profile.email,
           full_name: profile.full_name,
           role: profile.role,
           is_paid: profile.is_paid,
           created_at: profile.created_at,
+          is_admin: adminUserIds.has(profile.id)
         }));
         console.log("Mapped users:", fetchedUsers);
         setUsers(fetchedUsers);
@@ -129,11 +145,61 @@ const AdminUserManagement: React.FC = () => {
 
       // If unauthorized, redirect to dashboard
       if (errorMessage.includes('Unauthorized') || errorMessage.includes('admin access')) {
-        navigate('/dashboard');
+        navigate('/profile');
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
       console.log("fetchUsers finished");
+    }
+  };
+
+  const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
+    // Set loading state for this specific action
+    setActionStatus({
+      userId,
+      action: isCurrentlyAdmin ? "admin_remove" : "admin_add",
+      status: "processing"
+    });
+
+    try {
+      const response = await adminApi.toggleAdmin(
+        userId, 
+        isCurrentlyAdmin ? 'remove' : 'add'
+      );
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update admin status');
+      }
+
+      // Update the user in the local state
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId ? { ...user, is_admin: !isCurrentlyAdmin } : user
+        )
+      );
+
+      // Set success state
+      setActionStatus({
+        userId,
+        action: isCurrentlyAdmin ? "admin_remove" : "admin_add",
+        status: "success",
+        message: response.message
+      });
+
+      // Clear status after 3 seconds
+      setTimeout(() => {
+        setActionStatus(null);
+      }, 3000);
+
+    } catch (err) {
+      console.error("Error toggling admin status:", err);
+      
+      setActionStatus({
+        userId,
+        action: isCurrentlyAdmin ? "admin_remove" : "admin_add",
+        status: "error",
+        message: err instanceof Error ? err.message : "Failed to update admin status"
+      });
     }
   };
 
@@ -146,67 +212,70 @@ const AdminUserManagement: React.FC = () => {
       return;
     }
 
-    setDeleteStatus({ userId, status: "deleting" });
-    try {
-      console.log(`Attempting to delete user: ${userId}`); // Debug log
+    setActionStatus({
+      userId,
+      action: "delete",
+      status: "processing"
+    });
 
+    try {
       const supabaseUrl =
         import.meta.env.VITE_SUPABASE_URL ||
         "https://yqnikgupiaghgjtsaypr.supabase.co";
 
-      // Generate a debug log of all headers being sent
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: "Bearer dummy-token-for-mvp-testing",
-      };
-
-      console.log("Request headers:", headers); // Debug headers
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
       const response = await fetch(
         `${supabaseUrl}/functions/v1/admin-delete-user`,
         {
           method: "POST",
-          headers,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
           body: JSON.stringify({ user_id: userId }),
         }
       );
 
-      console.log(`Delete response status: ${response.status}`); // Debug log
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Delete response error:", errorText); // Debug log
         throw new Error(
           `Failed to delete user. Status: ${response.status}, Response: ${errorText}`
         );
       }
 
       const result = await response.json();
-      console.log("Delete result:", result); // Debug log
 
       if (result.success) {
-        setDeleteStatus({ userId, status: "success" });
         // Remove the deleted user from the list
-        setUsers(users.filter((user) => user.user_id !== userId));
+        setUsers(users.filter((user) => user.id !== userId));
 
-        // Optional: Show success message
-        console.log(`User ${userId} deleted successfully`);
-      } else {
-        setDeleteStatus({
+        setActionStatus({
           userId,
-          status: "error",
-          message: result.error || "Failed to delete user",
+          action: "delete",
+          status: "success",
+          message: `User deleted successfully`
         });
+
+        // Clear status after 3 seconds
+        setTimeout(() => {
+          setActionStatus(null);
+        }, 3000);
+      } else {
+        throw new Error(result.error || "Failed to delete user");
       }
     } catch (err) {
-      console.error("Error in handleDeleteUser:", err); // Debug log
-      setDeleteStatus({
+      console.error("Error in handleDeleteUser:", err);
+      
+      setActionStatus({
         userId,
+        action: "delete",
         status: "error",
-        message:
-          err instanceof Error
-            ? err.message
-            : "An error occurred while deleting the user",
+        message: err instanceof Error ? err.message : "An error occurred while deleting the user"
       });
     }
   };
@@ -246,13 +315,15 @@ const AdminUserManagement: React.FC = () => {
           </div>
 
           {error && (
-            <div className="bg-red-900 border border-red-700 text-white p-4 rounded-lg mb-6 flex items-center">
-              <AlertTriangle size={20} className="mr-2" />
-              <span>{error}</span>
-            </div>
+            <Alert 
+              variant="error" 
+              title="Error" 
+              description={error} 
+              className="mb-6" 
+            />
           )}
 
-          {loading ? (
+          {isLoading ? (
             <div className="bg-gray-800 p-8 rounded-lg text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
               <p className="text-white">Loading users...</p>
@@ -296,7 +367,7 @@ const AdminUserManagement: React.FC = () => {
                     ) : (
                       users.map((user) => (
                         <tr
-                          key={user.user_id}
+                          key={user.id}
                           className="hover:bg-gray-700 transition-colors"
                         >
                           <td className="py-4 px-6 text-white">{user.email}</td>
@@ -306,12 +377,12 @@ const AdminUserManagement: React.FC = () => {
                           <td className="py-4 px-6">
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                user.role === "admin"
+                                user.is_admin
                                   ? "bg-purple-900 text-purple-300"
                                   : "bg-gray-700 text-gray-300"
                               }`}
                             >
-                              {user.role}
+                              {user.is_admin ? "Admin" : user.role || "User"}
                             </span>
                           </td>
                           <td className="py-4 px-6">
@@ -329,36 +400,72 @@ const AdminUserManagement: React.FC = () => {
                             {new Date(user.created_at).toLocaleString()}
                           </td>
                           <td className="py-4 px-6">
-                            {deleteStatus?.userId === user.user_id ? (
-                              deleteStatus.status === "deleting" ? (
-                                <span className="text-gray-400">
-                                  Deleting...
-                                </span>
-                              ) : deleteStatus.status === "error" ? (
-                                <div className="space-y-1">
-                                  <div className="text-red-400 text-sm">
-                                    Error: {deleteStatus.message}
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleDeleteUser(user.user_id)
-                                    }
-                                  >
-                                    Retry
-                                  </Button>
-                                </div>
-                              ) : null
-                            ) : (
+                            <div className="flex space-x-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDeleteUser(user.user_id)}
+                                onClick={() => handleToggleAdmin(user.id, !!user.is_admin)}
+                                disabled={actionStatus?.userId === user.id && 
+                                         (actionStatus.action === "admin_add" || 
+                                          actionStatus.action === "admin_remove") && 
+                                         actionStatus.status === "processing"}
+                                className={`${
+                                  user.is_admin 
+                                    ? "border-red-600 text-red-400 hover:bg-red-900 hover:border-red-500" 
+                                    : "border-green-600 text-green-400 hover:bg-green-900 hover:border-green-500"
+                                }`}
+                              >
+                                {actionStatus?.userId === user.id && 
+                                 (actionStatus.action === "admin_add" || actionStatus.action === "admin_remove") && 
+                                 actionStatus.status === "processing" ? (
+                                  "Processing..."
+                                ) : user.is_admin ? (
+                                  <>
+                                    <Unlock size={16} className="mr-2" />
+                                    Remove Admin
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock size={16} className="mr-2" />
+                                    Make Admin
+                                  </>
+                                )}
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteUser(user.id)}
+                                disabled={actionStatus?.userId === user.id && 
+                                         actionStatus.action === "delete" && 
+                                         actionStatus.status === "processing"}
                                 className="border-red-600 text-red-400 hover:bg-red-900 hover:border-red-500"
                               >
-                                Delete
+                                {actionStatus?.userId === user.id && 
+                                 actionStatus.action === "delete" && 
+                                 actionStatus.status === "processing" 
+                                  ? "Deleting..." 
+                                  : "Delete"}
                               </Button>
+                            </div>
+                            
+                            {/* Show status messages */}
+                            {actionStatus?.userId === user.id && actionStatus.status === "error" && (
+                              <div className="mt-2 text-red-400 text-xs">
+                                Error: {actionStatus.message}
+                              </div>
+                            )}
+                            
+                            {actionStatus?.userId === user.id && actionStatus.status === "success" && (
+                              <div className="mt-2 text-green-400 text-xs">
+                                Success: {
+                                  actionStatus.action === "admin_add" 
+                                    ? "Admin role added" 
+                                    : actionStatus.action === "admin_remove"
+                                    ? "Admin role removed"
+                                    : "User deleted"
+                                }
+                              </div>
                             )}
                           </td>
                         </tr>

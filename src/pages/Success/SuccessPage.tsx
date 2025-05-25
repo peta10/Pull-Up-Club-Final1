@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
-import { Button } from "../../components/ui/Button";
 import { Check } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import CheckoutSuccess from "../../components/Stripe/CheckoutSuccess";
 
 const SuccessPage: React.FC = () => {
   const [countdown, setCountdown] = useState(5);
@@ -12,6 +12,8 @@ const SuccessPage: React.FC = () => {
   const { user, isLoading: authIsLoading } = useAuth();
 
   const isResubmission = searchParams.get("resubmit") === "true";
+  const subscriptionType = searchParams.get("plan") as "monthly" | "annual" || "monthly";
+  const isStripeSuccess = searchParams.get("checkout") === "completed";
 
   useEffect(() => {
     if (authIsLoading) {
@@ -47,9 +49,28 @@ const SuccessPage: React.FC = () => {
       <Layout>
         <div className="bg-gray-900 py-32">
           <div className="container mx-auto px-4 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9b9b6f] mx-auto mb-4"></div>
             <h1 className="text-3xl font-bold text-white mb-4">
               Verifying payment...
             </h1>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // If this is a Stripe checkout success, show the CheckoutSuccess component
+  if (isStripeSuccess) {
+    return (
+      <Layout>
+        <div className="bg-black min-h-screen py-16">
+          <div className="container mx-auto px-4">
+            <CheckoutSuccess 
+              subscriptionType={subscriptionType}
+              customerName={user?.email?.split('@')[0]}
+              redirectTo="/profile"
+              redirectLabel="Go to your profile"
+            />
           </div>
         </div>
       </Layout>
@@ -72,20 +93,15 @@ const SuccessPage: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-white mb-4">
-            Payment Successful!
+            {isResubmission
+              ? "Thank You for Your Resubmission!"
+              : "Thank You for Your Submission!"}
           </h1>
           <p className="text-gray-400 text-xl mb-8 max-w-2xl mx-auto">
-            Thank you for joining the Pull-Up Club! Your payment has been
-            processed successfully. You will be redirected {redirectMessage} in{" "}
+            Your video is being reviewed by our team. You'll be notified once a
+            decision has been made. Good luck! You will be redirected {redirectMessage} in{" "}
             {countdown} seconds.
           </p>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={() => navigate(redirectPath)}
-          >
-            {buttonText}
-          </Button>
         </div>
       </div>
     </Layout>

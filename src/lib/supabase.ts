@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  throw new Error('Missing Supabase environment variables');
+// Get Supabase URL and anon key from environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Validate required environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing required environment variables for Supabase connection');
+  alert('Missing Supabase configuration. Please check your environment variables.');
 }
 
 // Function to get the correct URL for authentication redirects
@@ -17,17 +23,20 @@ export const getRedirectUrl = (): string => {
   return 'http://localhost:5173/auth/callback';
 };
 
-// Initialize the Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Create the Supabase client
+// Create and export the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    // Remove redirectTo property since it's not recognized
-    // redirectTo: getRedirectUrl()
+  },
+  // Reduce default timeout and retry counts
+  global: {
+    fetch: (url, options) => {
+      return fetch(url, { 
+        ...options, 
+        signal: AbortSignal.timeout(10000) // 10-second timeout
+      });
+    }
   },
 });
 
@@ -43,4 +52,22 @@ export const handleAuthRedirect = (customPath?: string) => {
   return customPath?.startsWith('/') 
     ? `${baseUrl.slice(0, -1)}${redirectPath}`
     : `${baseUrl}${redirectPath}`;
-}; 
+};
+
+// Test connection on initialization
+(async () => {
+  try {
+    console.log('Testing Supabase connection...');
+    const { data, error, count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection successful!');
+    }
+  } catch (err) {
+    console.error('Supabase connection test error:', err);
+  }
+})();
