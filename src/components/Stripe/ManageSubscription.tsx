@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { createCustomerPortalSession } from '../../lib/stripe';
 
 interface ManageSubscriptionProps {
   customerName?: string;
@@ -11,20 +10,18 @@ const ManageSubscription: React.FC<ManageSubscriptionProps> = ({ customerName })
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Direct Stripe customer portal URL
+  const STRIPE_CUSTOMER_PORTAL_URL = "https://billing.stripe.com/p/login/dRmdR9dos2kmaQcdHGejK00";
+
   const handleManageSubscription = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const portalUrl = await createCustomerPortalSession();
-      if (portalUrl) {
-        window.location.href = portalUrl;
-      } else {
-        throw new Error("Failed to create customer portal session");
-      }
+      // Redirect directly to the Stripe customer portal
+      window.location.href = STRIPE_CUSTOMER_PORTAL_URL;
     } catch (error) {
-      console.error("Error creating portal session:", error);
+      console.error("Error redirecting to portal:", error);
       setError("Failed to open customer portal. Please try again later.");
-    } finally {
       setIsLoading(false);
     }
   };

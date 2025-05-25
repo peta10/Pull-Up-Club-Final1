@@ -9,11 +9,14 @@ import PatchProgress from "./PatchProgress";
 import RankingsTab from "./RankingsTab";
 import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ExternalLink } from "lucide-react";
 import { Submission } from "../../types";
 import SubscriptionWidget from "../../components/Profile/SubscriptionWidget";
 
 const ProfilePage: React.FC = () => {
+  // Direct Stripe customer portal URL
+  const STRIPE_CUSTOMER_PORTAL_URL = "https://billing.stripe.com/p/login/dRmdR9dos2kmaQcdHGejK00";
+  
   const { user, signOut, isFirstLogin, profile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
@@ -278,7 +281,18 @@ const ProfilePage: React.FC = () => {
             <div className="p-6">
               {activeTab === "submissions" && (
                 <div className="space-y-6">
-                  <SubscriptionWidget compact={true} />
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <SubscriptionWidget compact={true} />
+                    
+                    <a 
+                      href={STRIPE_CUSTOMER_PORTAL_URL} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 bg-[#9b9b6f] text-black rounded-md hover:bg-[#7a7a58] transition"
+                    >
+                      Manage Subscription <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
+                  </div>
 
                   <SubmissionDashboard submissions={userSubmissions} />
 

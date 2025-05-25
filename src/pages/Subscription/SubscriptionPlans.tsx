@@ -7,7 +7,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { products } from "../../stripe-config";
-import { createCheckoutSession } from "../../lib/stripe";
 import { useAuth } from "../../context/AuthContext";
 
 const SubscriptionPlans: React.FC = () => {
@@ -19,6 +18,10 @@ const SubscriptionPlans: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Direct Stripe checkout URLs
+  const STRIPE_MONTHLY_URL = "https://buy.stripe.com/dRmdR9dos2kmaQcdHGejK00";
+  const STRIPE_ANNUAL_URL = "https://buy.stripe.com/28EcN5dosf784rO0UUejK01";
 
   const handleSubscribe = async () => {
     setError(null);
@@ -35,17 +38,13 @@ const SubscriptionPlans: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const checkoutUrl = await createCheckoutSession(
-        selectedPlan,
-        user.email,
-        { userId: user.id }
-      );
-
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      } else {
-        throw new Error("Failed to create checkout session");
-      }
+      // Instead of creating a checkout session, redirect directly to Stripe hosted checkout
+      const checkoutUrl = selectedPlan === "monthly" 
+        ? STRIPE_MONTHLY_URL 
+        : STRIPE_ANNUAL_URL;
+      
+      // Redirect to the appropriate Stripe checkout page
+      window.location.href = checkoutUrl;
     } catch (err) {
       console.error("Checkout error:", err);
       setError(
