@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getPaymentHistory } from "../../lib/stripe";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 
 interface Payment {
   id: string;
