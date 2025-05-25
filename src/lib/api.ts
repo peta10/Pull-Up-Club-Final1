@@ -1,82 +1,78 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './supabase';
 
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Type for checkout request parameters
-interface CreateCheckoutParams {
+/**
+ * Creates a checkout session for Stripe Embedded Checkout
+ */
+export async function createCheckout(payload: {
   priceId: string;
   customerEmail?: string;
   returnUrl: string;
   metadata?: Record<string, string>;
-}
-
-/**
- * Creates a Stripe checkout session with embedded UI mode
- */
-export async function createCheckout({
-  priceId,
-  customerEmail,
-  returnUrl,
-  metadata
-}: CreateCheckoutParams) {
+}): Promise<{ clientSecret: string; error?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: {
-        priceId,
-        customerEmail,
-        returnUrl,
-        metadata,
-        uiMode: 'embedded' // Specify embedded mode
-      }
+        ...payload,
+        uiMode: 'embedded' // Explicitly set embedded mode
+      },
     });
 
     if (error) {
       console.error('Error creating checkout session:', error);
-      return { error: error.message };
+      return { clientSecret: '', error: error.message };
     }
 
-    return data; // Contains clientSecret
+    if (!data?.clientSecret) {
+      console.error('No client secret returned', data);
+      return { clientSecret: '', error: 'No client secret returned from Stripe' };
+    }
+
+    return { clientSecret: data.clientSecret };
   } catch (err) {
-    console.error('Unexpected error in createCheckout:', err);
-    return { error: 'Failed to create checkout session' };
+    console.error('Error in createCheckout:', err);
+    return { 
+      clientSecret: '', 
+      error: err instanceof Error ? err.message : 'Unknown error creating checkout'
+    };
   }
 }
 
 /**
- * Gets the status of a Stripe checkout session
+ * Checks the status of a checkout session
  */
-export async function getSessionStatus(sessionId: string) {
+export async function getSessionStatus(sessionId: string): Promise<{ 
+  status: 'open' | 'complete' | 'expired'; 
+  customer_email?: string;
+  error?: string;
+}> {
   try {
-    // For GET requests with parameters, we'll construct the URL manually
-    const functionUrl = `${supabaseUrl}/functions/v1/get-session-status?session_id=${encodeURIComponent(sessionId)}`;
-    
-    // Get the access token
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token || '';
-    
-    // Make a fetch request with the appropriate authorization
-    const response = await fetch(functionUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+    // Call our session-status Edge Function
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/session-status?session_id=${sessionId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       }
-    });
-    
+    );
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      return { error: `Failed with status ${response.status}` };
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get session status');
     }
 
     const data = await response.json();
-    return data;
-  } catch (err) {
-    console.error('Unexpected error in getSessionStatus:', err);
-    return { error: 'Failed to get session status' };
+    return {
+      status: data.status,
+      customer_email: data.customer_email
+    };
+  } catch (error) {
+    console.error('Error checking session status:', error);
+    return {
+      status: 'expired', // Default to expired on error
+      error: error instanceof Error ? error.message : 'Unknown error checking session'
+    };
   }
 }
 

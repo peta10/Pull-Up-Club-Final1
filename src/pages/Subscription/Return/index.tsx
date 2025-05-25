@@ -1,120 +1,115 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getSessionStatus } from '../../../lib/api';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { XCircle, CheckCircle } from 'lucide-react';
 
-// Status types from Stripe
-type CheckoutStatus = 'open' | 'complete' | 'expired';
-type PaymentStatus = 'paid' | 'unpaid' | 'no_payment_required';
-
-export default function SubscriptionReturn() {
+const CheckoutReturn: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState<'loading' | 'complete' | 'open' | 'error'>('loading');
+  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'loading' | CheckoutStatus>('loading');
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-    
     if (!sessionId) {
-      setError('No session ID found. Please try subscribing again.');
+      setStatus('error');
       return;
     }
 
-    const verifySession = async () => {
+    const fetchSessionStatus = async () => {
       try {
-        const result = await getSessionStatus(sessionId);
-        
-        if (result.error) {
-          setError(result.error);
-          return;
-        }
-        
-        setStatus(result.status);
-        setPaymentStatus(result.payment_status);
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-session-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId }),
+        });
 
-        // If payment was successful, redirect to success page after a short delay
-        if (result.status === 'complete' && result.payment_status === 'paid') {
-          setTimeout(() => {
-            navigate('/success?type=subscription');
-          }, 2000);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to get session status');
         }
-      } catch (err) {
-        console.error('Error verifying payment:', err);
-        setError('Failed to verify payment status. Please contact support.');
+
+        setStatus(data.status);
+        setCustomerEmail(data.customer_email);
+
+        // If the session is still open, redirect back to checkout
+        if (data.status === 'open') {
+          navigate('/subscription');
+        }
+      } catch (error) {
+        console.error('Error checking session status:', error);
+        setStatus('error');
       }
     };
 
-    verifySession();
+    fetchSessionStatus();
   }, [searchParams, navigate]);
-
-  if (error) {
-    return (
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-bold text-red-600 mb-4">Payment Error</h2>
-        <p className="text-gray-700 mb-4">{error}</p>
-        <div className="flex justify-center">
-          <button
-            onClick={() => navigate('/subscription')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (status === 'loading') {
     return (
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md text-center">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Verifying your payment...</h2>
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="container mx-auto py-12">
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9b9b6f]"></div>
+          <p className="mt-4 text-lg">Verifying your payment...</p>
         </div>
       </div>
     );
   }
 
-  if (status === 'complete' && paymentStatus === 'paid') {
+  if (status === 'error') {
     return (
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md text-center">
-        <h2 className="text-xl font-bold text-green-600 mb-4">Payment Successful!</h2>
-        <p className="text-gray-700 mb-4">Your subscription is now active. Redirecting you to the success page...</p>
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === 'expired') {
-    return (
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-bold text-yellow-600 mb-4">Checkout Session Expired</h2>
-        <p className="text-gray-700 mb-4">Your checkout session has expired. Please try again.</p>
-        <div className="flex justify-center">
+      <div className="container mx-auto py-12">
+        <div className="max-w-md mx-auto p-6 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center mb-4">
+            <XCircle className="h-8 w-8 text-red-500 mr-3" />
+            <h1 className="text-xl font-bold text-red-700">Payment Error</h1>
+          </div>
+          <p className="text-red-600 mb-4">
+            We couldn't verify your payment status. Please contact customer support if you believe this is an error.
+          </p>
           <button
             onClick={() => navigate('/subscription')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition-colors"
           >
-            Try Again
+            Return to Subscription Page
           </button>
         </div>
       </div>
     );
   }
 
-  // Default case for open or other statuses
-  return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-bold text-yellow-600 mb-4">Payment In Progress</h2>
-      <p className="text-gray-700 mb-4">
-        Your payment is still being processed. Please do not close this page.
-      </p>
-      <div className="flex justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div>
+  if (status === 'complete') {
+    return (
+      <div className="container mx-auto py-12">
+        <div className="max-w-md mx-auto p-6 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center mb-4">
+            <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
+            <h1 className="text-xl font-bold text-green-700">Payment Successful!</h1>
+          </div>
+          <p className="text-green-700 mb-2">
+            Thank you for your subscription to Pull-Up Club!
+          </p>
+          {customerEmail && (
+            <p className="text-green-600 mb-4">
+              We've sent a confirmation email to <span className="font-medium">{customerEmail}</span>.
+            </p>
+          )}
+          <p className="text-green-600 mb-6">
+            Your account has been activated and you now have full access to all features.
+          </p>
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-full bg-[#9b9b6f] hover:bg-[#7a7a58] text-black font-medium py-2 px-4 rounded transition-colors"
+          >
+            Go to My Profile
+          </button>
+        </div>
       </div>
-    </div>
-  );
-} 
+    );
+  }
+
+  return null;
+};
+
+export default CheckoutReturn; 

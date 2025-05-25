@@ -9,6 +9,7 @@ import PaymentHistory from "./PaymentHistory";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import CheckoutSuccess from "./CheckoutSuccess";
 import StripePaymentForm from "./StripePaymentForm";
+import EmbeddedCheckout from "../../components/Stripe/EmbeddedCheckout";
 import { supabase } from "../../lib/supabase";
 
 const SubscriptionPage: React.FC = () => {
@@ -24,15 +25,23 @@ const SubscriptionPage: React.FC = () => {
   const routeState = (location.state || {}) as {
     intendedAction?: string;
     plan?: "monthly" | "annual";
+    useEmbedded?: boolean; // New flag for embedded checkout
   };
   
   const [showPaymentForm, setShowPaymentForm] = useState(
     routeState?.intendedAction === "subscribe"
   );
+
+  // New state for embedded checkout
+  const [showEmbeddedCheckout, setShowEmbeddedCheckout] = useState(
+    routeState?.intendedAction === "subscribe" && routeState?.useEmbedded === true
+  );
   
   const successParam = searchParams.get("success");
   const cancelledParam = searchParams.get("cancelled");
   const planParam = searchParams.get("plan") as "monthly" | "annual" | null;
+  // For embedded checkout
+  const checkoutParam = searchParams.get("checkout");
 
   // Check if the user has a subscription when the component mounts or when the user changes
   useEffect(() => {
@@ -89,12 +98,18 @@ const SubscriptionPage: React.FC = () => {
   useEffect(() => {
     // If user has returned from login/signup and wants to subscribe
     if (user && routeState?.intendedAction === "subscribe" && routeState?.plan) {
-      setShowPaymentForm(true);
+      if (routeState?.useEmbedded) {
+        setShowEmbeddedCheckout(true);
+        setShowPaymentForm(false);
+      } else {
+        setShowPaymentForm(true);
+        setShowEmbeddedCheckout(false);
+      }
     }
   }, [user, routeState]);
 
   // Show success page if redirected from successful checkout
-  if (successParam === "true") {
+  if (successParam === "true" || checkoutParam === "completed") {
     return (
       <Layout>
         <div className="bg-black min-h-screen py-16 px-4 sm:px-6 lg:px-8">
@@ -111,7 +126,35 @@ const SubscriptionPage: React.FC = () => {
     );
   }
 
-  // If user explicitly came to subscribe and we don't yet have an active subscription
+  // If using embedded checkout
+  if (showEmbeddedCheckout && !hasSubscription && user) {
+    // Determine price ID based on selected plan
+    const priceId = routeState.plan === "annual" 
+      ? "price_1RMadhGaHiDfsUfBrKZXrwQS" // Annual price ID
+      : "price_1RMacXGaHiDfsUfBF4dgFfjO"; // Monthly price ID
+
+    return (
+      <Layout>
+        <div className="bg-black min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-2xl font-bold text-white mb-6 text-center">
+              Complete Your {routeState.plan === "annual" ? "Annual" : "Monthly"} Subscription
+            </h1>
+            <EmbeddedCheckout 
+              priceId={priceId}
+              metadata={{
+                userId: user.id,
+                plan: routeState.plan || "monthly",
+                timestamp: new Date().toISOString()
+              }}
+            />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // If user explicitly came to subscribe with the standard checkout flow
   if (showPaymentForm && !hasSubscription && user) {
     return (
       <Layout>
@@ -191,7 +234,7 @@ const SubscriptionPage: React.FC = () => {
                 </div>
               )}
 
-              <SubscriptionPlans />
+              <SubscriptionPlans useEmbedded={true} />
               
               <div className="mt-12 text-center text-sm text-gray-500">
                 <p>

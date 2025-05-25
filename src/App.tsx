@@ -1,28 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 import AdminRoute from "./components/Layout/AdminRoute.tsx";
-import Home from "./pages/Home/Home.tsx";
-import LeaderboardPage from "./pages/Leaderboard/LeaderboardPage.tsx";
-import AdminDashboardPage from "./pages/Admin/AdminDashboardPage.tsx";
-import NotFoundPage from "./pages/NotFound/NotFoundPage.tsx";
-import SuccessPage from "./pages/Success/SuccessPage.tsx";
-import LoginPage from "./pages/Login/LoginPage.tsx";
-import ProfilePage from "./pages/Profile/ProfilePage.tsx";
-import RulesPage from "./pages/Rules/RulesPage.tsx";
-import FAQPage from "./pages/FAQ/FAQPage.tsx";
-import PrivacyPolicyPage from "./pages/PrivacyPolicy/PrivacyPolicyPage.tsx";
-import CookiesPolicyPage from "./pages/CookiesPolicy/CookiesPolicyPage.tsx";
-import CreateAccountPage from "./pages/CreateAccount/CreateAccountPage.tsx";
-import ResetPasswordPage from "./pages/ResetPassword/ResetPasswordPage.tsx";
-import SubscriptionPage from "./pages/Subscription/SubscriptionPage.tsx";
-import VideoSubmissionPage from "./pages/VideoSubmission/VideoSubmissionPage.tsx";
-import AdminUserManagement from "./pages/AdminUserManagement.tsx";
 import { supabase } from "./lib/supabase.ts";
 import Lenis from "lenis";
 import StripeProvider from "./lib/StripeProvider.tsx";
 import DebugConnection from "./lib/DebugConnection.tsx";
+
+// Lazy-loaded components
+const Home = lazy(() => import("./pages/Home/Home.tsx"));
+const LeaderboardPage = lazy(() => import("./pages/Leaderboard/LeaderboardPage.tsx"));
+const AdminDashboardPage = lazy(() => import("./pages/Admin/AdminDashboardPage.tsx"));
+const NotFoundPage = lazy(() => import("./pages/NotFound/NotFoundPage.tsx"));
+const SuccessPage = lazy(() => import("./pages/Success/SuccessPage.tsx"));
+const LoginPage = lazy(() => import("./pages/Login/LoginPage.tsx"));
+const ProfilePage = lazy(() => import("./pages/Profile/ProfilePage.tsx"));
+const RulesPage = lazy(() => import("./pages/Rules/RulesPage.tsx"));
+const FAQPage = lazy(() => import("./pages/FAQ/FAQPage.tsx"));
+const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicy/PrivacyPolicyPage.tsx"));
+const CookiesPolicyPage = lazy(() => import("./pages/CookiesPolicy/CookiesPolicyPage.tsx"));
+const CreateAccountPage = lazy(() => import("./pages/CreateAccount/CreateAccountPage.tsx"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPassword/ResetPasswordPage.tsx"));
+const SubscriptionPage = lazy(() => import("./pages/Subscription/SubscriptionPage.tsx"));
+const CheckoutReturn = lazy(() => import("./pages/Subscription/Return/index.tsx"));
+const VideoSubmissionPage = lazy(() => import("./pages/VideoSubmission/VideoSubmissionPage.tsx"));
+const AdminUserManagement = lazy(() => import("./pages/AdminUserManagement.tsx"));
+
+// Loading component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen bg-black">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9b9b6f]"></div>
+  </div>
+);
 
 function App() {
   const [connectionStatus, setConnectionStatus] = useState<
@@ -110,84 +120,89 @@ function App() {
         {/* Debug connection component for better diagnostics */}
         <DebugConnection />
         
-        <Routes>
-          {/* Public routes that don't require authentication */}
-          <Route path="/" element={<Home />} />
-          <Route path="/rules" element={<RulesPage />} />
-          <Route path="/faq" element={<FAQPage />} />
-          <Route path="/privacy" element={<PrivacyPolicyPage />} />
-          <Route path="/cookies" element={<CookiesPolicyPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            {/* Public routes that don't require authentication */}
+            <Route path="/" element={<Home />} />
+            <Route path="/rules" element={<RulesPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/cookies" element={<CookiesPolicyPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
 
-          {/* Authentication routes - redirect if already logged in */}
-          <Route
-            path="/login"
-            element={
-              <ProtectedRoute requireAuth={false} redirectTo="/profile">
-                <LoginPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Authentication routes - redirect if already logged in */}
+            <Route
+              path="/login"
+              element={
+                <ProtectedRoute requireAuth={false} redirectTo="/profile">
+                  <LoginPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/create-account"
-            element={
-              <ProtectedRoute requireAuth={false} redirectTo="/profile">
-                <CreateAccountPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/create-account"
+              element={
+                <ProtectedRoute requireAuth={false} redirectTo="/profile">
+                  <CreateAccountPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Public route with conditional display based on auth state */}
-          <Route path="/subscription" element={<SubscriptionPage />} />
+            {/* Public route with conditional display based on auth state */}
+            <Route path="/subscription" element={<SubscriptionPage />} />
 
-          {/* Alias route for backwards compatibility */}
-          <Route path="/subscribe" element={<SubscriptionPage />} />
+            {/* Alias route for backwards compatibility */}
+            <Route path="/subscribe" element={<SubscriptionPage />} />
+            
+            {/* Checkout return page for Stripe Embedded Checkout */}
+            <Route path="/subscription/return" element={<CheckoutReturn />} />
 
-          {/* Protected routes - require authentication */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected routes - require authentication */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/success" element={<SuccessPage />} />
+            <Route path="/success" element={<SuccessPage />} />
 
-          <Route
-            path="/submit-video"
-            element={
-              <ProtectedRoute>
-                <VideoSubmissionPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/submit-video"
+              element={
+                <ProtectedRoute>
+                  <VideoSubmissionPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin routes with role check */}
-          <Route
-            path="/admin-dashboard"
-            element={
-              <AdminRoute>
-                <AdminDashboardPage />
-              </AdminRoute>
-            }
-          />
+            {/* Admin routes with role check */}
+            <Route
+              path="/admin-dashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboardPage />
+                </AdminRoute>
+              }
+            />
 
-          <Route
-            path="/admin-users"
-            element={
-              <AdminRoute>
-                <AdminUserManagement />
-              </AdminRoute>
-            }
-          />
+            <Route
+              path="/admin-users"
+              element={
+                <AdminRoute>
+                  <AdminUserManagement />
+                </AdminRoute>
+              }
+            />
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </StripeProvider>
     </AuthProvider>
   );

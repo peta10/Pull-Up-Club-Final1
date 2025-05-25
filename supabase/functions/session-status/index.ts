@@ -21,42 +21,25 @@ serve(async (req: Request) => {
     });
   }
 
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
+  // Parse the URL to get the session_id from query parameters
+  const url = new URL(req.url);
+  const sessionId = url.searchParams.get('session_id');
+
+  if (!sessionId) {
+    return new Response(JSON.stringify({ error: 'Missing session_id parameter' }), {
+      status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
   try {
-    // Parse request body
-    let requestBody;
-    try {
-      requestBody = await req.json();
-    } catch (error) {
-      return new Response(JSON.stringify({ error: 'Invalid request body' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const { sessionId } = requestBody;
-
-    if (!sessionId) {
-      return new Response(JSON.stringify({ error: 'Missing sessionId parameter' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     // Retrieve the Checkout Session
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-
+    
+    // Return the status information
     return new Response(JSON.stringify({
       status: session.status,
       customer_email: session.customer_details?.email || null,
-      payment_status: session.payment_status
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

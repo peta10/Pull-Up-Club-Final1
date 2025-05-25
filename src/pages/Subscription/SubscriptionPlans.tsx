@@ -3,14 +3,17 @@ import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ChevronRight,
-  CreditCard,
   ShieldCheck,
 } from "lucide-react";
 import { products } from "../../lib/stripe-config";
 import { createCheckoutSession } from "../../lib/stripe";
 import { useAuth } from "../../context/AuthContext";
 
-const SubscriptionPlans: React.FC = () => {
+interface SubscriptionPlansProps {
+  useEmbedded?: boolean;
+}
+
+const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ useEmbedded = false }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">(
@@ -31,6 +34,7 @@ const SubscriptionPlans: React.FC = () => {
             intendedAction: "subscribe",
             plan: selectedPlan,
             returnTo: "/subscription",
+            useEmbedded, // Pass the embedded checkout preference
           },
         });
         setIsLoading(false);
@@ -39,7 +43,19 @@ const SubscriptionPlans: React.FC = () => {
 
       console.log(`Starting checkout process for ${selectedPlan} plan`);
       
-      // Now the createCheckoutSession will handle session validation internally
+      if (useEmbedded) {
+        // Navigate to subscription page with embedded checkout
+        navigate("/subscription", {
+          state: {
+            intendedAction: "subscribe",
+            plan: selectedPlan,
+            useEmbedded: true,
+          }
+        });
+        return;
+      }
+      
+      // Use traditional checkout flow
       const checkoutUrl = await createCheckoutSession(
         selectedPlan,
         user.email,
@@ -269,7 +285,7 @@ const SubscriptionPlans: React.FC = () => {
                   </span>
                 ) : (
                   <span className="flex items-center">
-                    Get Annual Plan <ChevronRight size={18} className="ml-1" />
+                    Start Now <ChevronRight size={18} className="ml-1" />
                   </span>
                 )}
               </button>
@@ -279,19 +295,14 @@ const SubscriptionPlans: React.FC = () => {
       </div>
 
       {error && (
-        <div className="mt-6 bg-red-900/50 border border-red-700 text-white p-4 rounded-lg">
+        <div className="mt-6 p-4 bg-red-900/30 border border-red-800 rounded-lg text-red-200 text-center">
           {error}
         </div>
       )}
 
-      <div className="mt-8 flex flex-col items-center">
-        <div className="flex items-center space-x-4 mb-2">
-          <ShieldCheck className="h-5 w-5 text-[#9b9b6f]" />
-          <CreditCard className="h-5 w-5 text-[#9b9b6f]" />
-        </div>
-        <p className="text-sm text-gray-400 text-center">
-          Secure payment processing by Stripe. Cancel your subscription anytime.
-        </p>
+      <div className="flex items-center justify-center mt-8">
+        <ShieldCheck className="h-5 w-5 text-[#9b9b6f] mr-2" />
+        <span className="text-gray-400 text-sm">Secure payment with Stripe</span>
       </div>
     </div>
   );

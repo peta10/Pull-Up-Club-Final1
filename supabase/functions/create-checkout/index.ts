@@ -119,6 +119,17 @@ serve(async (req: Request) => {
       uiMode = 'hosted' // Default to traditional hosted checkout
     } = requestBody || {};
     
+    // Log the extracted values to help debug
+    console.log('Extracted values:', {
+      priceId,
+      successUrl,
+      cancelUrl,
+      returnUrl,
+      customerEmail,
+      uiMode,
+      'metadata.userId': metadata?.userId
+    });
+    
     // Validate required parameters
     if (!priceId) {
       return new Response(JSON.stringify({ error: 'Missing required parameter: priceId' }), {
@@ -134,7 +145,11 @@ serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else if (uiMode === 'hosted' && (!successUrl || !cancelUrl)) {
-      return new Response(JSON.stringify({ error: 'Missing required parameters for hosted mode: successUrl or cancelUrl' }), {
+      console.error(`Missing URL parameters: successUrl=${successUrl}, cancelUrl=${cancelUrl}`);
+      return new Response(JSON.stringify({ 
+        error: 'Missing required parameters for hosted mode: successUrl or cancelUrl',
+        details: { successUrl, cancelUrl, uiMode }
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
