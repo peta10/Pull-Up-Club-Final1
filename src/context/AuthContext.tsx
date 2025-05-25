@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Provider, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { supabase, isDevelopment, getRedirectUrl } from "../lib/supabase.ts";
-import { createCheckoutSession } from "../lib/stripe.ts";
+import { createCheckoutSession, getActiveSubscription } from "../lib/stripe.ts";
 
 interface User {
   id: string;
@@ -96,6 +96,9 @@ const defaultSettings: ProfileSettings = {
   }
 };
 
+// Track subscription state explicitly so unpaid users don't get stuck on a spinner
+type SubscriptionState = 'loading' | 'active' | 'unpaid';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -104,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>('loading');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -370,6 +374,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  /**
+   * Determine whether the current user has an active Stripe subscription.
+   * Treat any failure or missing subscription as "unpaid" so the UI can continue.
+   */
+  const evaluateSubscription = async () => {
+    try {
+      const sub = await getActiveSubscription();
+      const isActive = !!sub && (sub as any)?.status === 'active';
+      setSubscriptionState(isActive ? 'active' : 'unpaid');
+      return isActive ? 'active' : 'unpaid';
+    } catch (err) {
+      console.warn('[AuthContext] Subscription lookup failed, assuming unpaid:', err);
+      setSubscriptionState('unpaid');
+      return 'unpaid';
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       console.log("[AuthContext] initAuth started.");
@@ -387,6 +408,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setUser(currentUser);
           await fetchProfile(recoveredSession.user.id);
           await processPendingSubscription(currentUser);
+
+          const initialSubState = await evaluateSubscription();
+          if (initialSubState === 'unpaid' && location.pathname !== '/subscribe') {
+            navigate('/subscribe', { replace: true });
+          }
         } else {
           console.log("[AuthContext] No active session to recover.");
         }
@@ -412,6 +438,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 setUser(currentUserFromSession);
                 await fetchProfile(session.user.id);
 
+                // Always evaluate subscription so we can render pricing if needed
+                const subState = await evaluateSubscription();
+
                 // After profile fetch, handle admin redirect
                 if (isAdmin) {
                   if (event === 'SIGNED_IN') navigate('/admin-dashboard');
@@ -431,6 +460,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                     navigate('/subscribe', { replace: true });
                   } else {
                     await processPendingSubscription(currentUserFromSession);
+                    // If profile is complete but subscription unpaid, redirect
+                    if (subState === 'unpaid' && location.pathname !== '/subscribe') {
+                      navigate('/subscribe', { replace: true });
+                    }
                   }
                 }
               } else if (event === 'SIGNED_OUT') {
@@ -451,6 +484,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               console.error('[AuthContext] Error inside onAuthStateChange:', err);
             } finally {
               setIsLoading(false);
+              if (subscriptionState === 'loading') {
+                setSubscriptionState('unpaid');
+              }
             }
           },
         );
@@ -606,7 +642,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     navigate("/"); // Redirect to home page after sign out
   };
 
-  if (isLoading) {
+  if (isLoading || subscriptionState === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#9b9b6f]"></div>
