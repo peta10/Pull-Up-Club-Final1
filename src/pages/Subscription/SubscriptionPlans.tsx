@@ -21,21 +21,24 @@ const SubscriptionPlans: React.FC = () => {
 
   const handleSubscribe = async () => {
     setError(null);
-
-    if (!user) {
-      // Redirect to create account, passing along the plan information
-      navigate("/create-account", {
-        state: {
-          intendedAction: "subscribe",
-          plan: selectedPlan,
-          returnTo: "/subscription",
-        },
-      });
-      return;
-    }
-
     setIsLoading(true);
+
     try {
+      if (!user) {
+        // Redirect to create account, passing along the plan information
+        navigate("/create-account", {
+          state: {
+            intendedAction: "subscribe",
+            plan: selectedPlan,
+            returnTo: "/subscription",
+          },
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      console.log(`Starting checkout process for ${selectedPlan} plan`);
+      
       // Now the createCheckoutSession will handle session validation internally
       const checkoutUrl = await createCheckoutSession(
         selectedPlan,
@@ -48,6 +51,7 @@ const SubscriptionPlans: React.FC = () => {
       );
 
       if (checkoutUrl) {
+        console.log(`Redirecting to Stripe checkout: ${checkoutUrl}`);
         // Redirect to Stripe Checkout
         window.location.href = checkoutUrl;
       } else {

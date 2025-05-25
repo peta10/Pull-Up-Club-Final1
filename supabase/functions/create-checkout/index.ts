@@ -27,7 +27,7 @@ const corsHeaders = {
 // Email validation function
 function isValidEmail(email: string): boolean {
   if (!email) return false; // Ensure empty string evaluates to false
-  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
@@ -63,24 +63,40 @@ serve(async (req: Request) => {
         if (!authError && user) {
           userId = user.id;
           console.log(`Authenticated user: ${userId}`);
+        } else {
+          console.error('Auth error or no user:', authError);
         }
       } catch (authError) {
         console.error('Error verifying authentication:', authError);
         // Continue processing without authentication
       }
+    } else {
+      console.warn('Missing or invalid Authorization header');
     }
 
-    const { priceId, successUrl, cancelUrl, customerEmail, metadata } = await req.json();
+    // Parse request body
+    const requestBody = await req.json();
+    console.log('Received request body:', JSON.stringify(requestBody));
     
-    if (!priceId || !successUrl || !cancelUrl) {
-      return new Response(JSON.stringify({ error: 'Missing required parameters' }), {
+    const { priceId, successUrl, cancelUrl, customerEmail, metadata = {} } = requestBody;
+    
+    // Validate required parameters
+    if (!priceId) {
+      return new Response(JSON.stringify({ error: 'Missing required parameter: priceId' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!successUrl || !cancelUrl) {
+      return new Response(JSON.stringify({ error: 'Missing required parameters: successUrl or cancelUrl' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Validate email
-    if (!isValidEmail(customerEmail)) {
+    // Validate email if provided
+    if (customerEmail && !isValidEmail(customerEmail)) {
       return new Response(JSON.stringify({ error: `Invalid email address: ${customerEmail || ''}` }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -100,11 +116,12 @@ serve(async (req: Request) => {
     console.log('Creating Stripe checkout session with:', {
       priceId,
       email: customerEmail,
-      userId: userId || 'not authenticated'
+      userId: userId || 'not authenticated',
+      metadata: sessionMetadata
     });
 
     // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -115,12 +132,18 @@ serve(async (req: Request) => {
       mode: 'subscription',
       success_url: successUrl,
       cancel_url: cancelUrl,
-      customer_email: customerEmail,
       metadata: sessionMetadata,
       allow_promotion_codes: true,
-    });
+    };
+    
+    // Add customer email if provided
+    if (customerEmail) {
+      sessionParams.customer_email = customerEmail;
+    }
 
-    console.log('Stripe checkout session created successfully');
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log('Stripe checkout session created successfully with ID:', session.id);
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
@@ -128,7 +151,7 @@ serve(async (req: Request) => {
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error creating checkout session' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

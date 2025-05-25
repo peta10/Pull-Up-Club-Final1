@@ -64,36 +64,46 @@ export async function createCheckoutSession(
       throw new Error('Authentication required. Please sign in to continue.');
     }
 
-    // Determine which product to use
+    // Determine which product to use - get the exact price ID from our config
     const priceId = plan === 'monthly' 
       ? products.pullUpClub.priceId 
       : products.pullUpClubAnnual.priceId;
+
+    console.log(`Creating checkout session with priceId: ${priceId}, plan: ${plan}`);
+    
+    // Ensure we have a valid email to use
+    const customerEmail = email || session.user.email;
+    if (!customerEmail) {
+      throw new Error('Customer email is required for checkout');
+    }
 
     // Call Supabase Edge Function to create checkout session
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { 
         priceId, 
-        email: email || session.user.email,
+        customerEmail, 
         successUrl: `${window.location.origin}/success?checkout=completed&plan=${plan}`,
         cancelUrl: `${window.location.origin}/subscription`,
         metadata: {
           ...metadata,
           userId: session.user.id,
+          plan
         }
       },
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
       },
     });
 
     if (error) {
       console.error('Error creating checkout session:', error);
-      return null;
+      throw new Error(`Checkout session creation failed: ${error.message}`);
     }
 
     if (!data?.url) {
-      console.error('No checkout URL returned');
-      return null;
+      console.error('No checkout URL returned', data);
+      throw new Error('No checkout URL returned from Stripe');
     }
 
     return data.url;
@@ -242,22 +252,56 @@ export const cancelSubscription = async (): Promise<boolean> => {
 
 export async function getPaymentHistory() {
   try {
-    const response = await fetch('/api/stripe/payment-history', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
+    // Helper to obtain a valid session, retrying briefly if needed
+    const obtainSession = async (retries = 3, delayMs = 500): Promise<Session | null> => {
+      for (let i = 0; i < retries; i++) {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch payment history');
+        if (session && !error) return session;
+
+        // Wait before retrying
+        await new Promise((res) => setTimeout(res, delayMs));
+      }
+      return null;
+    };
+
+    // Make sure we have a valid session
+    const session = await obtainSession();
+    if (!session) {
+      console.warn('getPaymentHistory: No authenticated session; cannot fetch payments');
+      throw new Error('Authentication required. Please sign in to continue.');
     }
 
-    const data = await response.json();
-    return data.payments || [];
+    // Call Supabase Edge Function to get payment history
+    const { data, error } = await supabase.functions.invoke('get-payment-history', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (error) {
+      console.error('Error fetching payment history:', error);
+      return [];
+    }
+
+    if (!data?.payments) {
+      return [];
+    }
+
+    // Transform the data to the format our component expects
+    return data.payments.map((payment: any) => ({
+      id: payment.id,
+      amount: payment.amount / 100, // Convert cents to dollars
+      status: payment.status,
+      date: new Date(payment.created * 1000).toISOString(),
+      receipt: payment.receipt_url,
+    }));
   } catch (error) {
-    console.error('Error fetching payment history:', error);
+    console.error('Error in getPaymentHistory:', error);
     return [];
   }
 }
