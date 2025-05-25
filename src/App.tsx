@@ -5,10 +5,9 @@ import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 import AdminRoute from "./components/Layout/AdminRoute.tsx";
 import { supabase } from "./lib/supabase.ts";
 import Lenis from "lenis";
-import StripeProvider from "./lib/StripeProvider.tsx";
 import DebugConnection from "./lib/DebugConnection.tsx";
 import { loadStripe } from '@stripe/stripe-js';
-import { CheckoutProvider, EmbeddedCheckout as StripeEmbeddedCheckout } from '@stripe/react-stripe-js';
+import { CheckoutProvider } from '@stripe/react-stripe-js';
 
 // Lazy-loaded components
 const Home = lazy(() => import("./pages/Home/Home.tsx"));
@@ -27,7 +26,6 @@ const SubscriptionPage = lazy(() => import("./pages/Subscription/SubscriptionPag
 const CheckoutReturn = lazy(() => import("./pages/Subscription/Return/index.tsx"));
 const VideoSubmissionPage = lazy(() => import("./pages/VideoSubmission/VideoSubmissionPage.tsx"));
 const AdminUserManagement = lazy(() => import("./pages/AdminUserManagement.tsx"));
-const EmbeddedCheckout = lazy(() => import("./components/Stripe/EmbeddedCheckout"));
 
 // Stripe setup
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -200,15 +198,9 @@ const AppMain: React.FC = () => {
         <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
         <Route path="/admin-users" element={<AdminRoute><AdminUserManagement /></AdminRoute>} />
         
-        {/* Embedded Checkout Route: Conditionally wrapped by CheckoutProvider if this is the active route */}
-        {isCheckoutRoute ? (
-            <Route path="/checkout" element={<ProtectedRoute><StripeEmbeddedCheckout /></ProtectedRoute>} />
-        ) : (
-            <Route path="/checkout" element={<ProtectedRoute><StripeEmbeddedCheckout /></ProtectedRoute>} />
-        )}
-        {/* /return is already handled by CheckoutReturn, but if it's part of Stripe flow, ensure it's accessible */}
+        {/* /return is already handled by CheckoutReturn */}
         <Route path="/return" element={<CheckoutReturn />} />
-
+        
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
