@@ -58,7 +58,17 @@ const EmailInput = ({ email, setEmail, error, setError }: { email: string, setEm
   );
 };
 
-const EmbeddedCheckout: React.FC = () => {
+// Add props interface for EmbeddedCheckout
+interface EmbeddedCheckoutProps {
+  priceId: string;
+  returnUrl: string;
+  metadata?: Record<string, any>;
+}
+
+// Update component signature to accept props
+const EmbeddedCheckout: React.FC<EmbeddedCheckoutProps> = ({ priceId, returnUrl, metadata }) => {
+  // Log embedded checkout configuration for debugging and to use props
+  console.log("[EmbeddedCheckout] Config:", { priceId, returnUrl, metadata });
   const checkout = useCheckout();
 
   const [email, setEmail] = useState('');
