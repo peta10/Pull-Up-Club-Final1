@@ -1,4 +1,5 @@
 import { products } from "./stripe-config";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { loadStripe } from '@stripe/stripe-js';
 
