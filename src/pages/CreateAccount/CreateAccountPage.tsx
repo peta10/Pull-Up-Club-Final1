@@ -84,12 +84,12 @@ const CreateAccountPage: React.FC = () => {
       localStorage.removeItem("checkoutEmail");
       // After successful signup, send the user to the subscription page
       if (intendedPlan) {
-        navigate('/subscription', {
+        navigate('/subscribe', {
           replace: true,
           state: { intendedAction: 'subscribe', plan: intendedPlan },
         });
       } else {
-        navigate('/subscription', { replace: true });
+        navigate('/subscribe', { replace: true });
       }
     } catch (err: any) {
       // localStorage.removeItem("pendingSubscriptionPlan"); // Ensure this is also removed if it exists here

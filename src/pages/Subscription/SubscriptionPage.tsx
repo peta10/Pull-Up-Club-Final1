@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getActiveSubscription } from "../../lib/stripe";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import SubscriptionDetails from "./SubscriptionDetails";
-import PlanComparison from "../../components/Stripe/PlanComparison";
+import SubscriptionPlans from "./SubscriptionPlans";
 import PaymentHistory from "../../components/Stripe/PaymentHistory";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import CheckoutSuccess from "../../components/Stripe/CheckoutSuccess";
@@ -82,7 +82,7 @@ const SubscriptionPage: React.FC = () => {
             <StripePaymentForm
               onPaymentComplete={() => {
                 // When payment succeeds show the success component
-                navigate("/subscription?success=true&plan=" + (routeState.plan || "monthly"), { replace: true, state: {} });
+                navigate("/subscribe?success=true&plan=" + (routeState.plan || "monthly"), { replace: true, state: {} });
               }}
               onPaymentError={(msg) => {
                 // stay on page, maybe show toast (handled in component)
@@ -147,7 +147,7 @@ const SubscriptionPage: React.FC = () => {
                 </div>
               )}
 
-              <PlanComparison />
+              <SubscriptionPlans />
               
               <div className="mt-12 text-center text-sm text-gray-500">
                 <p>
