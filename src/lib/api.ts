@@ -86,7 +86,8 @@ export async function getSessionStatus(sessionId: string) {
 export async function createPortalSession() {
   try {
     const { data, error } = await supabase.functions.invoke('customer-portal', {
-      method: 'POST'
+      method: 'POST',
+      body: {} // Send empty object to prevent empty body error
     });
 
     if (error) {
