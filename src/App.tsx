@@ -22,6 +22,7 @@ import AdminUserManagement from "./pages/AdminUserManagement.tsx";
 import { supabase } from "./lib/supabase.ts";
 import Lenis from "lenis";
 import StripeProvider from "./lib/StripeProvider.tsx";
+import DebugConnection from "./lib/DebugConnection.tsx";
 
 function App() {
   const [connectionStatus, setConnectionStatus] = useState<
@@ -67,7 +68,8 @@ function App() {
   // Check database connection
   const checkConnection = async () => {
     try {
-      const { error } = await supabase.from("profiles").select("id").limit(1);
+      // Use a simpler query that doesn't involve RLS
+      const { error } = await supabase.from("profiles").select("count(*)");
       if (error) throw error;
       setConnectionStatus("connected");
       setRetryCount(0);
@@ -104,6 +106,10 @@ function App() {
             </button>
           </div>
         )}
+        
+        {/* Debug connection component for better diagnostics */}
+        <DebugConnection />
+        
         <Routes>
           {/* Public routes that don't require authentication */}
           <Route path="/" element={<Home />} />
