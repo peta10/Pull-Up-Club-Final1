@@ -115,8 +115,8 @@ serve(async (req: Request) => {
       returnUrl, 
       successUrl, 
       cancelUrl, 
-      uiMode = 'hosted',
-      metadata = {}
+      uiMode = 'hosted', 
+      metadata = {} 
     } = requestBody || {};
     
     // Log the extracted values to help debug
@@ -130,11 +130,10 @@ serve(async (req: Request) => {
       'metadata.userId': metadata?.userId
     });
     
-    // Validate required parameters
+    // Validate all three URLs
     if (!priceId || !customerEmail || !returnUrl || !successUrl || !cancelUrl) {
       return new Response(JSON.stringify({ 
-        error: 'Missing required parameters: priceId, customerEmail, returnUrl, successUrl, or cancelUrl',
-        details: { priceId, customerEmail, returnUrl, successUrl, cancelUrl }
+        error: 'Missing required parameters: priceId, customerEmail, returnUrl, successUrl, or cancelUrl' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -179,16 +178,12 @@ serve(async (req: Request) => {
       mode: 'subscription',
       metadata: sessionMetadata,
       allow_promotion_codes: true,
+      customer_email: customerEmail,
+      ui_mode: uiMode,
+      return_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      return_url: returnUrl,
-      ui_mode: uiMode === 'embedded' ? 'embedded' : 'hosted',
     };
-    
-    // Add customer email if provided
-    if (customerEmail) {
-      sessionParams.customer_email = customerEmail;
-    }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
