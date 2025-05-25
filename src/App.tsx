@@ -143,6 +143,9 @@ function App() {
           {/* Public route with conditional display based on auth state */}
           <Route path="/subscription" element={<SubscriptionPage />} />
 
+          {/* Alias route for backwards compatibility */}
+          <Route path="/subscribe" element={<SubscriptionPage />} />
+
           {/* Protected routes - require authentication */}
           <Route
             path="/profile"

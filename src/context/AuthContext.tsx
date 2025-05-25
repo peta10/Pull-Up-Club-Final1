@@ -138,12 +138,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         window.location.href = checkoutUrl;
       } else {
         console.error("[AuthContext] Checkout URL is null or undefined.");
-        navigate("/subscription?error=checkout_url_missing");
+        navigate("/subscribe?error=checkout_url_missing");
         setIsLoading(false);
       }
     } catch (error) {
       console.error("[AuthContext] Post-auth subscription error:", error);
-      navigate("/subscription?error=checkout_failed");
+      navigate("/subscribe?error=checkout_failed");
       setIsLoading(false);
     }
   };
@@ -428,7 +428,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 if (event === 'SIGNED_IN') {
                   if (!isProfileActuallyCompleted) {
                     localStorage.removeItem('pendingSubscriptionPlan');
-                    navigate('/subscription', { replace: true });
+                    navigate('/subscribe', { replace: true });
                   } else {
                     await processPendingSubscription(currentUserFromSession);
                   }
