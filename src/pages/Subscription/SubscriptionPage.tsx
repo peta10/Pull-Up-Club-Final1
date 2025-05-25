@@ -82,7 +82,7 @@ const SubscriptionPage: React.FC = () => {
             <StripePaymentForm
               onPaymentComplete={() => {
                 // When payment succeeds show the success component
-                navigate("/subscribe?success=true&plan=" + (routeState.plan || "monthly"), { replace: true, state: {} });
+                navigate("/subscription?success=true&plan=" + (routeState.plan || "monthly"), { replace: true, state: {} });
               }}
               onPaymentError={(msg) => {
                 // stay on page, maybe show toast (handled in component)

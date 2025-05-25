@@ -42,7 +42,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
       await signUp(email, password);
 
       // Redirect user to subscription flow immediately
-      navigate('/subscribe', {
+      navigate('/subscription', {
         replace: true,
         state: { intendedAction: 'subscribe', plan: intendedPlan || 'monthly' },
       });
