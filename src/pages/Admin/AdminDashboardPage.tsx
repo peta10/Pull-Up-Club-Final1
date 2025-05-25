@@ -8,6 +8,7 @@ import { supabase } from "../../lib/supabase.ts";
 import { useNavigate } from "react-router-dom";
 import { adminApi } from "../../utils/edgeFunctions.ts";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/LoadingState.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 type FilterStatus = "all" | "pending" | "approved" | "rejected";
 
@@ -17,10 +18,16 @@ const AdminDashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, isLoading: authIsLoading, isAdmin } = useAuth();
 
   useEffect(() => {
-    fetchSubmissions();
-  }, []);
+    if (!authIsLoading && user && isAdmin) {
+      fetchSubmissions();
+    } else if (!authIsLoading && (!user || !isAdmin)) {
+      console.log("User is not an admin or not logged in. Redirecting from AdminDashboardPage.");
+      navigate("/login");
+    }
+  }, [authIsLoading, user, isAdmin, navigate]);
 
   const fetchSubmissions = async () => {
     try {
