@@ -9,6 +9,7 @@ import useVideoSubmission from "../../hooks/useVideoSubmission";
 import useSubmissions from "../../hooks/useSubmissions";
 import { Alert } from "../../components/ui/Alert";
 import { LoadingState, EmptyState } from "../../components/ui/LoadingState";
+import { LinkButton } from '../../components/ui/LinkButton';
 
 const VideoSubmissionPage: React.FC = () => {
   const { user } = useAuth();
@@ -122,12 +123,12 @@ const VideoSubmissionPage: React.FC = () => {
             />
             
             <div className="mt-6 flex justify-center space-x-4">
-              <Button as={Link} to="/login">
+              <LinkButton to="/login">
                 Log In
-              </Button>
-              <Button as={Link} to="/create-account" variant="outline">
+              </LinkButton>
+              <LinkButton to="/create-account" variant="outline">
                 Create Account
-              </Button>
+              </LinkButton>
             </div>
           </div>
         </div>
@@ -149,9 +150,9 @@ const VideoSubmissionPage: React.FC = () => {
             <p className="text-gray-300 mb-8">
               Your video has been submitted for review. You'll be notified once it has been approved or if any issues are found.
             </p>
-            <Button as={Link} to="/profile">
+            <LinkButton to="/profile">
               Return to Profile
-            </Button>
+            </LinkButton>
           </div>
         </div>
       </Layout>
@@ -384,9 +385,9 @@ const VideoSubmissionPage: React.FC = () => {
                   ? 'Your current submission is still under review. You can submit a new video once the review is complete.'
                   : `You can submit a new video in ${daysUntilNextSubmission} days. Please check back later.`}
               </p>
-              <Button as={Link} to="/profile" variant="secondary">
+              <LinkButton to="/profile" variant="secondary">
                 Return to Profile
-              </Button>
+              </LinkButton>
             </div>
           )}
 
@@ -448,14 +449,13 @@ const VideoSubmissionPage: React.FC = () => {
               </div>
               {submissions.length >= 3 && (
                 <div className="mt-4 text-center">
-                  <Button 
-                    as={Link} 
+                  <LinkButton 
                     to="/profile" 
                     variant="outline" 
                     size="sm"
                   >
                     View All Submissions
-                  </Button>
+                  </LinkButton>
                 </div>
               )}
             </div>

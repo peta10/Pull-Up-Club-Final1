@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2.38.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 // Initialize Supabase client with service role key for admin access
 const supabaseAdmin = createClient(
@@ -191,8 +191,37 @@ async function handleGetSubmissions(): Promise<Response> {
     }
 
     // Transform the data to match the format expected by the frontend
-    const formattedSubmissions = submissions.map(submission => {
-      const profile = submission.profiles || {};
+    const formattedSubmissions = submissions.map((submission: {
+      id: string;
+      user_id: string;
+      video_url: string;
+      pull_up_count: number;
+      actual_pull_up_count: number | null;
+      status: string;
+      notes: string | null;
+      submitted_at: string;
+      approved_at: string | null;
+      created_at: string;
+      updated_at: string;
+      platform: string;
+      profiles: {
+        email?: string;
+        full_name?: string;
+        age?: number;
+        gender?: string;
+        city?: string;
+        organisation?: string;
+      } | null;
+    }) => {
+      // Type assertion to ensure TypeScript recognizes the properties
+      const profile = (submission.profiles || {}) as {
+        email?: string;
+        full_name?: string;
+        age?: number;
+        gender?: string;
+        city?: string;
+        organisation?: string;
+      };
       
       return {
         id: submission.id,

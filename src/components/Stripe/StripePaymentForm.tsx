@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CardElement, useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '../ui/Button';
 import { AlertTriangle, CreditCard } from 'lucide-react';
 import { createPaymentIntent } from '../../lib/stripe';

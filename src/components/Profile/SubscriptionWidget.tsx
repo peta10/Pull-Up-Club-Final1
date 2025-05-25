@@ -4,6 +4,7 @@ import { CreditCard, Calendar, AlertTriangle, ChevronRight } from 'lucide-react'
 import { Button } from '../ui/Button';
 import { Link } from 'react-router-dom';
 import PaymentStatusBadge, { PaymentStatus } from '../Stripe/PaymentStatusBadge';
+import { LinkButton } from '../ui/LinkButton';
 
 interface SubscriptionWidgetProps {
   compact?: boolean;
@@ -56,9 +57,9 @@ const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false
     return (
       <div className="bg-gray-800 rounded-lg p-5 text-center">
         <p className="text-gray-400 mb-3">No active subscription</p>
-        <Button as={Link} to="/subscription" variant="outline" size="sm">
+        <LinkButton to="/subscription" variant="outline" size="sm">
           View Plans
-        </Button>
+        </LinkButton>
       </div>
     );
   }
@@ -84,9 +85,9 @@ const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false
           </div>
           <p className="text-sm text-gray-400">Next billing: {formattedDate}</p>
         </div>
-        <Button as={Link} to="/subscription" variant="outline" size="sm">
+        <LinkButton to="/subscription" variant="outline" size="sm">
           Manage
-        </Button>
+        </LinkButton>
       </div>
     );
   }
@@ -104,9 +105,9 @@ const SubscriptionWidget: React.FC<SubscriptionWidgetProps> = ({ compact = false
             )}
           </div>
         </div>
-        <Button as={Link} to="/subscription" variant="outline" size="sm">
+        <LinkButton to="/subscription" variant="outline" size="sm">
           Manage
-        </Button>
+        </LinkButton>
       </div>
 
       <div className="space-y-3">

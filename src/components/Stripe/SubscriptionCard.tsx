@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { products } from '../../lib/stripe-config';
-import { CheckCircle2, Shield, CreditCard } from 'lucide-react';
+import { CheckCircle2, CreditCard } from 'lucide-react';
 import StripeCheckout from './StripeCheckout';
 
 interface SubscriptionCardProps {

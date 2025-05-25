@@ -58,7 +58,7 @@ export const handleAuthRedirect = (customPath?: string) => {
 (async () => {
   try {
     console.log('Testing Supabase connection...');
-    const { data, error, count } = await supabase
+    const { error } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true });
     

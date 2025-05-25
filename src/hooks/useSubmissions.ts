@@ -67,6 +67,7 @@ export default function useSubmissions({
           status: item.status.charAt(0).toUpperCase() + item.status.slice(1) as "Approved" | "Pending" | "Rejected",
           featured: item.status === 'approved',
           notes: item.notes,
+          platform: item.platform || 'other',
         };
       });
       

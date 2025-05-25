@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import { createCheckoutSession } from '../../lib/stripe';
 import { products } from '../../lib/stripe-config';
-import { CheckCircle2, ChevronRight, CreditCard, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface StripeCheckoutProps {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout/Layout.tsx";
-import { AlertTriangle, Users, ArrowLeft, Lock, Unlock, UserPlus } from "lucide-react";
+import { Users, ArrowLeft, Lock, Unlock } from "lucide-react";
 import { Button } from "../components/ui/Button.tsx";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase.ts";

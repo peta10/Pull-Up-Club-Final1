@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle, ChevronRight } from 'lucide-react';
-import { Button } from '../ui/Button';
 import { Link } from 'react-router-dom';
+import { LinkButton } from '../ui/LinkButton';
 
 interface CheckoutSuccessProps {
   subscriptionType?: 'monthly' | 'annual';
@@ -54,9 +54,9 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({
         </ul>
       </div>
       
-      <Button as={Link} to={redirectTo} className="w-full">
+      <LinkButton to={redirectTo} className="w-full">
         {redirectLabel} <ChevronRight size={18} className="ml-1" />
-      </Button>
+      </LinkButton>
     </div>
   );
 };
