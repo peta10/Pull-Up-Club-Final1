@@ -2,15 +2,23 @@ import React, { useState, useEffect } from "react";
 import Layout from "../../components/Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
 import SubscriptionPlans from "./SubscriptionPlans";
-import SubscriptionManager from "./SubscriptionManager";
 import { getActiveSubscription } from "../../lib/stripe";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import SubscriptionDetails from "./SubscriptionDetails";
+import PlanComparison from "../../components/Stripe/PlanComparison";
+import PaymentHistory from "../../components/Stripe/PaymentHistory";
+import { useSearchParams } from "react-router-dom";
+import CheckoutSuccess from "../../components/Stripe/CheckoutSuccess";
 
 const SubscriptionPage: React.FC = () => {
   const { user } = useAuth();
   const [hasSubscription, setHasSubscription] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const successParam = searchParams.get("success");
+  const cancelledParam = searchParams.get("cancelled");
+  const planParam = searchParams.get("plan") as "monthly" | "annual" | null;
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -35,6 +43,24 @@ const SubscriptionPage: React.FC = () => {
     checkSubscription();
   }, [user]);
 
+  // Show success page if redirected from successful checkout
+  if (successParam === "true") {
+    return (
+      <Layout>
+        <div className="bg-black min-h-screen py-16 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <CheckoutSuccess 
+              subscriptionType={planParam || "monthly"}
+              customerName={user?.email?.split('@')[0]}
+              redirectTo="/profile"
+              redirectLabel="Go to your profile"
+            />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="bg-black min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -54,14 +80,27 @@ const SubscriptionPage: React.FC = () => {
               <Loader2 className="h-10 w-10 text-[#9b9b6f] animate-spin" />
             </div>
           ) : hasSubscription ? (
-            <div className="max-w-lg mx-auto">
+            <div className="space-y-8 max-w-3xl mx-auto">
+              {cancelledParam === "true" && (
+                <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4 mb-8 flex items-center">
+                  <CheckCircle2 className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0" />
+                  <p className="text-yellow-200">
+                    Your subscription has been set to cancel at the end of your current billing period.
+                    You'll continue to have access until then.
+                  </p>
+                </div>
+              )}
+
               <div className="bg-[#9b9b6f]/20 border border-[#9b9b6f] rounded-lg p-4 mb-8 flex items-center">
                 <CheckCircle2 className="h-5 w-5 text-[#9b9b6f] mr-2 flex-shrink-0" />
                 <p className="text-gray-200">
                   You have an active membership. Manage your subscription below.
                 </p>
               </div>
-              <SubscriptionManager onError={setError} />
+              
+              <SubscriptionDetails userName={user?.email?.split('@')[0]} />
+              
+              <PaymentHistory />
             </div>
           ) : (
             <>
@@ -74,7 +113,21 @@ const SubscriptionPage: React.FC = () => {
                 </div>
               )}
 
-              <SubscriptionPlans />
+              <PlanComparison />
+              
+              <div className="mt-12 text-center text-sm text-gray-500">
+                <p>
+                  By subscribing, you agree to our{' '}
+                  <a href="/terms" className="text-[#9b9b6f] hover:underline">
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a href="/privacy" className="text-[#9b9b6f] hover:underline">
+                    Privacy Policy
+                  </a>
+                  .
+                </p>
+              </div>
             </>
           )}
 

@@ -12,6 +12,7 @@ import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 import { AlertTriangle } from "lucide-react";
 import { Submission } from "../../types";
+import SubscriptionWidget from "../../components/Profile/SubscriptionWidget";
 
 const ProfilePage: React.FC = () => {
   const { user, signOut, isFirstLogin, profile } = useAuth();
@@ -294,6 +295,8 @@ const ProfilePage: React.FC = () => {
             <div className="p-6">
               {activeTab === "submissions" && (
                 <div className="space-y-6">
+                  <SubscriptionWidget compact={true} />
+
                   <SubmissionDashboard submissions={userSubmissions} />
 
                   <div className="p-6 border-t border-gray-800">
@@ -474,53 +477,7 @@ const ProfilePage: React.FC = () => {
                       </div>
                     </div>
 
-                    <SubscriptionStatus />
-
-                    <div className="bg-gray-950 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-white mb-4">
-                        Billing History
-                      </h3>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-800">
-                          <thead>
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Date
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Description
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Amount
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Status
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-800">
-                            {mockBillingHistory.map((payment) => (
-                              <tr key={payment.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                  {new Date(payment.date).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                  {payment.description}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                  {payment.amount}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    {payment.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                    <SubscriptionWidget />
 
                     <div className="bg-gray-950 p-6 rounded-lg">
                       <h3 className="text-lg font-medium text-white mb-4">
