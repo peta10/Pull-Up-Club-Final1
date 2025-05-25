@@ -142,7 +142,7 @@ const SubscriptionPage: React.FC = () => {
             </h1>
             <EmbeddedCheckout 
               priceId={priceId}
-              returnUrl={`${window.location.origin}/return`}
+              returnUrl={`${window.location.origin}/subscription/return`}
               metadata={{
                 userId: user.id,
                 plan: routeState.plan || "monthly",
