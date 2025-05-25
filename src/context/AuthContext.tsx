@@ -392,78 +392,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         // Set up auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-          console.log(
-            `[AuthContext] onAuthStateChange event: ${event}, User: ${session?.user?.email}, Session:`,
-            session
-          );
-          setIsLoading(true);
-
-          if (session?.user) {
-            const currentUserFromSession = {
-              id: session.user.id,
-              email: session.user.email!,
-            };
-            setUser(currentUserFromSession);
-            await fetchProfile(session.user.id);
-
-            // Check admin status after profile fetch is complete - using the updated isAdmin state
-            if (isAdmin) {
-              console.log("[AuthContext] Admin user detected, navigating to admin dashboard");
-              if (event === "SIGNED_IN") {
-                navigate("/admin-dashboard");
-              }
-              setIsLoading(false);
-              return;
-            }
-
-            const { data: profileData } = await supabase
-              .from("profiles")
-              .select("is_profile_completed")
-              .eq("id", session.user.id)
-              .single();
-
-            const isProfileActuallyCompleted = profileData?.is_profile_completed || false;
-            console.log("[AuthContext] Profile data for user:", profileData);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event: AuthChangeEvent, session: Session | null) => {
             console.log(
-              "[AuthContext] Profile completion status:",
-              isProfileActuallyCompleted
+              `[AuthContext] onAuthStateChange event: ${event}, User: ${session?.user?.email}`,
             );
 
-            if (event === "SIGNED_IN") {
-              if (!isProfileActuallyCompleted) {
-                console.log(
-                  "[AuthContext] New user (profile not completed) signed in, redirecting to /subscription"
-                );
-                localStorage.removeItem("pendingSubscriptionPlan");
-                navigate("/subscription", { replace: true });
+            // Ignore INITIAL_SESSION if we've already finished the first recovery to avoid double loading flicker
+            if (event === 'INITIAL_SESSION' && !isLoading) return;
+
+            setIsLoading(true);
+
+            try {
+              if (session?.user) {
+                const currentUserFromSession = {
+                  id: session.user.id,
+                  email: session.user.email!,
+                };
+                setUser(currentUserFromSession);
+                await fetchProfile(session.user.id);
+
+                // After profile fetch, handle admin redirect
+                if (isAdmin) {
+                  if (event === 'SIGNED_IN') navigate('/admin-dashboard');
+                }
+
+                const { data: profileData } = await supabase
+                  .from('profiles')
+                  .select('is_profile_completed')
+                  .eq('id', session.user.id)
+                  .single();
+
+                const isProfileActuallyCompleted = profileData?.is_profile_completed ?? false;
+
+                if (event === 'SIGNED_IN') {
+                  if (!isProfileActuallyCompleted) {
+                    localStorage.removeItem('pendingSubscriptionPlan');
+                    navigate('/subscription', { replace: true });
+                  } else {
+                    await processPendingSubscription(currentUserFromSession);
+                  }
+                }
+              } else if (event === 'SIGNED_OUT') {
+                setUser(null);
+                setProfile(null);
+                setIsFirstLogin(false);
+                setIsAdmin(false);
+                localStorage.removeItem('pendingSubscriptionPlan');
               } else {
-                console.log(
-                  "[AuthContext] Existing user (profile completed) signed in. Processing pending subscription."
-                );
-                await processPendingSubscription(currentUserFromSession);
+                if (!session?.user) {
+                  setUser(null);
+                  setProfile(null);
+                  setIsFirstLogin(false);
+                  setIsAdmin(false);
+                }
               }
+            } catch (err) {
+              console.error('[AuthContext] Error inside onAuthStateChange:', err);
+            } finally {
+              setIsLoading(false);
             }
-          } else if (event === "SIGNED_OUT") {
-            console.log("[AuthContext] SIGNED_OUT event. Clearing user data.");
-            setUser(null);
-            setProfile(null);
-            setIsFirstLogin(false);
-            setIsAdmin(false);
-            localStorage.removeItem("pendingSubscriptionPlan");
-          } else {
-            console.log(
-              `[AuthContext] Auth event ${event} without a new user session or unhandled event.`
-            );
-            if (!session?.user) {
-              setUser(null);
-              setProfile(null);
-              setIsFirstLogin(false);
-              setIsAdmin(false);
-            }
-          }
-          setIsLoading(false);
-        });
+          },
+        );
 
         // Verify session persistence
         const hasPersistedSession = await checkSessionPersistence();
