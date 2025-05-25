@@ -78,4 +78,25 @@ export async function getSessionStatus(sessionId: string) {
     console.error('Unexpected error in getSessionStatus:', err);
     return { error: 'Failed to get session status' };
   }
+}
+
+/**
+ * Creates a Stripe customer portal session for managing subscriptions
+ */
+export async function createPortalSession() {
+  try {
+    const { data, error } = await supabase.functions.invoke('customer-portal', {
+      method: 'POST'
+    });
+
+    if (error) {
+      console.error('Error creating portal session:', error);
+      return { error: error.message };
+    }
+
+    return { url: data.url };
+  } catch (err) {
+    console.error('Unexpected error in createPortalSession:', err);
+    return { error: 'Failed to create portal session' };
+  }
 } 
