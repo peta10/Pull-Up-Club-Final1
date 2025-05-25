@@ -28,8 +28,8 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ useEmbedded = fal
 
     try {
       if (!user) {
-        // Redirect to create account, passing along the plan information
-        navigate("/create-account", {
+        // Redirect to login, passing along the plan information
+        navigate("/login", {
           state: {
             intendedAction: "subscribe",
             plan: selectedPlan,

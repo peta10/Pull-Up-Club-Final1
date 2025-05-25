@@ -276,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           await handlePostAuthSubscription(currentUser, routeState.plan);
           navigate(location.pathname, { replace: true, state: {} });
         } else {
-          const isAuthRoute = location.pathname === "/login" || location.pathname === "/create-account";
+          const isAuthRoute = location.pathname === "/login";
           if (isAuthRoute) {
             navigate("/profile", { replace: true });
           }
@@ -411,7 +411,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           const initialSubState = await evaluateSubscription();
           if (initialSubState === 'unpaid' && location.pathname !== '/subscribe') {
-            navigate('/subscribe', { replace: true });
+            // Prevent redirect loop by checking if user is already on auth-related pages
+            const isAuthOrSubscriptionPage = 
+              location.pathname === '/login' || 
+              location.pathname === '/subscription' || 
+              location.pathname.startsWith('/subscription/');
+            
+            if (!isAuthOrSubscriptionPage) {
+              navigate('/subscribe', { replace: true });
+            }
           }
         } else {
           console.log("[AuthContext] No active session to recover.");
@@ -462,7 +470,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                     await processPendingSubscription(currentUserFromSession);
                     // If profile is complete but subscription unpaid, redirect
                     if (subState === 'unpaid' && location.pathname !== '/subscribe') {
-                      navigate('/subscribe', { replace: true });
+                      // Prevent redirect loop by not redirecting if user is already on auth-related pages
+                      const isAuthOrSubscriptionPage = 
+                        location.pathname === '/login' || 
+                        location.pathname === '/subscription' || 
+                        location.pathname.startsWith('/subscription/');
+                      
+                      if (!isAuthOrSubscriptionPage) {
+                        navigate('/subscribe', { replace: true });
+                      }
                     }
                   }
                 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 import AdminRoute from "./components/Layout/AdminRoute.tsx";
@@ -20,7 +20,6 @@ const RulesPage = lazy(() => import("./pages/Rules/RulesPage.tsx"));
 const FAQPage = lazy(() => import("./pages/FAQ/FAQPage.tsx"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicy/PrivacyPolicyPage.tsx"));
 const CookiesPolicyPage = lazy(() => import("./pages/CookiesPolicy/CookiesPolicyPage.tsx"));
-const CreateAccountPage = lazy(() => import("./pages/CreateAccount/CreateAccountPage.tsx"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPassword/ResetPasswordPage.tsx"));
 const SubscriptionPage = lazy(() => import("./pages/Subscription/SubscriptionPage.tsx"));
 const CheckoutReturn = lazy(() => import("./pages/Subscription/Return/index.tsx"));
@@ -140,13 +139,10 @@ function App() {
               }
             />
 
+            {/* Redirect from /create-account to /login */}
             <Route
               path="/create-account"
-              element={
-                <ProtectedRoute requireAuth={false} redirectTo="/profile">
-                  <CreateAccountPage />
-                </ProtectedRoute>
-              }
+              element={<Navigate to="/login" replace />}
             />
 
             <Route path="/reset-password" element={<ResetPasswordPage />} />

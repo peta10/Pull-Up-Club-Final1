@@ -41,11 +41,13 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
       }
       await signUp(email, password);
 
-      // Redirect user to subscription flow immediately
-      navigate('/subscribe', {
-        replace: true,
-        state: intendedPlan ? { plan: intendedPlan } : undefined,
-      });
+      // Don't redirect - let AuthContext handle the redirection based on subscription state
+      // The redirect will happen in onAuthStateChange after profile is fetched
+      if (intendedPlan) {
+        console.log(`SignUp successful with intended plan: ${intendedPlan}`);
+      } else {
+        console.log("SignUp successful, letting AuthContext handle redirection");
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";

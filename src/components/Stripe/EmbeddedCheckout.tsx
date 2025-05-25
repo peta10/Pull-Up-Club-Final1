@@ -27,7 +27,6 @@ const EmbeddedCheckoutComponent: React.FC<EmbeddedCheckoutComponentProps> = ({
   
   const fetchClientSecret = useCallback(async () => {
     try {
-      // Get the current session to use the access token
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
@@ -36,12 +35,12 @@ const EmbeddedCheckoutComponent: React.FC<EmbeddedCheckoutComponentProps> = ({
       }
       
       const accessToken = sessionData.session.access_token;
-      
-      // Ensure returnUrl is defined and log it
       const finalReturnUrl = returnUrl || `${window.location.origin}/subscription/return`;
-      console.log('Using returnUrl:', finalReturnUrl);
+      const successUrl = `${window.location.origin}/subscription/success`;
+      const cancelUrl = `${window.location.origin}/subscription/cancel`;
       
-      // Create a Checkout Session by calling our Edge Function
+      console.log('Using URLs:', { returnUrl: finalReturnUrl, successUrl, cancelUrl });
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`, {
         method: 'POST',
         headers: {
@@ -52,6 +51,8 @@ const EmbeddedCheckoutComponent: React.FC<EmbeddedCheckoutComponentProps> = ({
           priceId,
           customerEmail: user?.email,
           returnUrl: finalReturnUrl,
+          successUrl,
+          cancelUrl,
           uiMode: 'embedded',
           metadata: {
             ...metadata,

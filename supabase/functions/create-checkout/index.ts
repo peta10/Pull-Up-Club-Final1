@@ -111,48 +111,30 @@ serve(async (req: Request) => {
     // Support both traditional redirect and new embedded checkout
     const { 
       priceId, 
+      customerEmail, 
+      returnUrl, 
       successUrl, 
       cancelUrl, 
-      returnUrl, 
-      customerEmail, 
-      metadata = {},
-      uiMode = 'hosted' // Default to traditional hosted checkout
+      uiMode = 'hosted',
+      metadata = {}
     } = requestBody || {};
     
     // Log the extracted values to help debug
     console.log('Extracted values:', {
       priceId,
+      customerEmail,
+      returnUrl,
       successUrl,
       cancelUrl,
-      returnUrl,
-      customerEmail,
       uiMode,
       'metadata.userId': metadata?.userId
     });
     
     // Validate required parameters
-    if (!priceId) {
-      return new Response(JSON.stringify({ error: 'Missing required parameter: priceId' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    // For embedded mode, we need returnUrl; for hosted mode, we need successUrl and cancelUrl
-    if (uiMode === 'embedded' && !returnUrl) {
-      console.error(`Missing returnUrl parameter for embedded mode: returnUrl=${returnUrl}, uiMode=${uiMode}`);
+    if (!priceId || !customerEmail || !returnUrl || !successUrl || !cancelUrl) {
       return new Response(JSON.stringify({ 
-        error: 'Missing required parameter for embedded mode: returnUrl',
-        details: { returnUrl, uiMode }
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } else if (uiMode === 'hosted' && (!successUrl || !cancelUrl)) {
-      console.error(`Missing URL parameters: successUrl=${successUrl}, cancelUrl=${cancelUrl}, uiMode=${uiMode}`);
-      return new Response(JSON.stringify({ 
-        error: 'Missing required parameters for hosted mode: successUrl or cancelUrl',
-        details: { successUrl, cancelUrl, uiMode }
+        error: 'Missing required parameters: priceId, customerEmail, returnUrl, successUrl, or cancelUrl',
+        details: { priceId, customerEmail, returnUrl, successUrl, cancelUrl }
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -197,21 +179,15 @@ serve(async (req: Request) => {
       mode: 'subscription',
       metadata: sessionMetadata,
       allow_promotion_codes: true,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      return_url: returnUrl,
+      ui_mode: uiMode === 'embedded' ? 'embedded' : 'hosted',
     };
     
     // Add customer email if provided
     if (customerEmail) {
       sessionParams.customer_email = customerEmail;
-    }
-
-    // Configure based on UI mode
-    if (uiMode === 'embedded') {
-      sessionParams.ui_mode = 'embedded';
-      sessionParams.return_url = `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`;
-    } else {
-      // Traditional hosted mode
-      sessionParams.success_url = successUrl;
-      sessionParams.cancel_url = cancelUrl;
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
