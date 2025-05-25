@@ -22,7 +22,7 @@ const SubscriptionPage: React.FC = () => {
     intendedAction?: string;
     plan?: "monthly" | "annual";
   };
-  const [showPaymentForm, setShowPaymentForm] = useState(
+  const [showPaymentForm] = useState(
     routeState?.intendedAction === "subscribe"
   );
   const successParam = searchParams.get("success");

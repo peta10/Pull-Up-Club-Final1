@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { CheckCircle2 } from "lucide-react";
 
@@ -13,6 +13,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   const routeState = location.state as {
     from?: string;
@@ -38,16 +39,14 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
       if (!isPasswordValid) {
         throw new Error("Please ensure your password meets all requirements");
       }
-      if (intendedPlan) {
-        localStorage.setItem("pendingSubscriptionPlan", intendedPlan);
-        console.log(
-          "[SignUpForm] pendingSubscriptionPlan set in localStorage:",
-          intendedPlan
-        );
-      }
       await signUp(email, password);
+
+      // Redirect user to subscription flow immediately
+      navigate('/subscribe', {
+        replace: true,
+        state: { intendedAction: 'subscribe', plan: intendedPlan || 'monthly' },
+      });
     } catch (err) {
-      localStorage.removeItem("pendingSubscriptionPlan");
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
       if (
