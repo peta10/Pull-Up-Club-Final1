@@ -22,20 +22,6 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: true,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            // Group React and related libraries
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            // Group UI components
-            'ui-components': ['lucide-react'],
-            // Group Supabase libraries
-            'supabase-vendor': ['@supabase/supabase-js'],
-            // Group Stripe libraries
-            'stripe-vendor': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
-          },
-        },
-      },
     },
     // Add resolve configuration for TypeScript extensions
     resolve: {

@@ -1,33 +1,29 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { createPortalSession } from '../../lib/api';
+import { createCustomerPortalSession } from '../../lib/stripe';
 
 interface ManageSubscriptionProps {
   customerName?: string;
 }
 
-export default function ManageSubscription({ customerName }: ManageSubscriptionProps) {
+const ManageSubscription: React.FC<ManageSubscriptionProps> = ({ customerName }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleOpenPortal = async () => {
-    setIsLoading(true);
-    setError(null);
+  const handleManageSubscription = async () => {
     try {
-      const { url, error } = await createPortalSession();
-      if (error) {
-        setError(error);
-        return;
-      }
-      
-      if (url) {
-        window.location.href = url;
+      setIsLoading(true);
+      setError(null);
+      const portalUrl = await createCustomerPortalSession();
+      if (portalUrl) {
+        window.location.href = portalUrl;
       } else {
-        setError('Failed to create customer portal session');
+        throw new Error("Failed to create customer portal session");
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
-      console.error('Portal error:', err);
+    } catch (error) {
+      console.error("Error creating portal session:", error);
+      setError("Failed to open customer portal. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -35,37 +31,36 @@ export default function ManageSubscription({ customerName }: ManageSubscriptionP
 
   return (
     <div className="space-y-4">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-medium text-white">
-          {customerName ? `Hello ${customerName}` : 'Manage Your Subscription'}
-        </h3>
-        <p className="text-gray-400 text-sm mt-1">
-          You'll be redirected to the Stripe Customer Portal
+      <div className="text-center">
+        <p className="text-gray-300 mb-4">
+          {customerName ? `Hello ${customerName}! ` : ''}
+          You'll be redirected to Stripe's secure customer portal to manage your subscription.
         </p>
       </div>
 
       <Button
-        onClick={handleOpenPortal}
-        className="w-full"
+        onClick={handleManageSubscription}
         disabled={isLoading}
+        className="w-full bg-[#9b9b6f] hover:bg-[#7a7a58] text-black"
       >
-        {isLoading ? 'Loading...' : 'Manage Billing & Payment Methods'}
-      </Button>
-
-      <Button
-        onClick={handleOpenPortal}
-        variant="outline"
-        className="w-full"
-        disabled={isLoading}
-      >
-        {isLoading ? 'Loading...' : 'Update Plan or Cancel'}
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Redirecting...
+          </>
+        ) : (
+          'Manage in Stripe Portal'
+        )}
       </Button>
 
       {error && (
-        <div className="p-3 bg-red-900/30 border border-red-800 rounded text-red-200 text-sm">
-          {error}
+        <div className="bg-red-900/30 border border-red-800 rounded-lg p-3 text-sm flex items-start">
+          <AlertTriangle className="h-4 w-4 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+          <span className="text-red-200">{error}</span>
         </div>
       )}
     </div>
   );
-} 
+};
+
+export default ManageSubscription; 

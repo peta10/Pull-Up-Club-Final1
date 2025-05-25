@@ -35,9 +35,9 @@ const SuccessPage: React.FC = () => {
             navigate("/profile");
           } else {
             console.warn(
-              `[SuccessPage] User not logged in after payment, redirecting to /login as a fallback. isStripeSuccess=${isStripeSuccess}`
+              `[SuccessPage] User not logged in after payment, redirecting to /create-account as a fallback. isStripeSuccess=${isStripeSuccess}`
             );
-            navigate("/login");
+            navigate("/create-account");
           }
           return 0;
         }

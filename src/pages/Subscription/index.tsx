@@ -1,39 +1,21 @@
 import { useState } from 'react';
-import EmbeddedCheckout from '../../components/Stripe/EmbeddedCheckout';
+
+// Payment links
+const STRIPE_PAYMENT_LINKS = {
+  monthly: "https://buy.stripe.com/dRmdR9dos2kmaQcdHGejK00",
+  annual: "https://buy.stripe.com/28EcN5dosf784rO0UUejK01"
+};
 
 export default function SubscriptionPage() {
-  const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
-  
-  // Replace with your actual Stripe price ID for the $9.99/month subscription
-  const MONTHLY_PRICE_ID = 'price_1RMacXGaHiDfsUfBF4dgFfjO'; // Updated to actual price ID
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   const handleSubscribe = () => {
-    setSelectedPriceId(MONTHLY_PRICE_ID);
+    setIsRedirecting(true);
+    // Redirect to the monthly payment link
+    window.location.href = STRIPE_PAYMENT_LINKS.monthly;
   };
   
-  // If a price is selected, show the embedded checkout
-  if (selectedPriceId) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-center mb-8">Complete Your Subscription</h1>
-        <EmbeddedCheckout 
-          priceId={selectedPriceId}
-          returnUrl={`${window.location.origin}/subscription/return`}
-          metadata={{ selectedPlan: 'monthly' }}
-        />
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => setSelectedPriceId(null)}
-            className="text-blue-600 hover:underline"
-          >
-            Back to plans
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
-  // Otherwise, show the subscription plan selection
+  // Show the subscription plan selection
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-center mb-8">Choose Your Subscription Plan</h1>
@@ -50,9 +32,12 @@ export default function SubscriptionPage() {
             </div>
             <button
               onClick={handleSubscribe}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isRedirecting}
+              className={`px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${
+                isRedirecting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              Subscribe
+              {isRedirecting ? 'Redirecting...' : 'Subscribe'}
             </button>
           </div>
           

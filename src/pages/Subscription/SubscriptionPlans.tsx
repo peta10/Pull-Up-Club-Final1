@@ -3,17 +3,19 @@ import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ChevronRight,
+  CreditCard,
   ShieldCheck,
 } from "lucide-react";
 import { products } from "../../lib/stripe-config";
-import { createCheckoutSession } from "../../lib/stripe";
 import { useAuth } from "../../context/AuthContext";
 
-interface SubscriptionPlansProps {
-  useEmbedded?: boolean;
-}
+// Payment links
+const STRIPE_PAYMENT_LINKS = {
+  monthly: "https://buy.stripe.com/dRmdR9dos2kmaQcdHGejK00",
+  annual: "https://buy.stripe.com/28EcN5dosf784rO0UUejK01"
+};
 
-const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ useEmbedded = false }) => {
+const SubscriptionPlans: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">(
@@ -28,63 +30,35 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ useEmbedded = fal
 
     try {
       if (!user) {
-        // Redirect to login, passing along the plan information
-        navigate("/login", {
+        // Redirect to create account, passing along the plan information
+        navigate("/create-account", {
           state: {
             intendedAction: "subscribe",
             plan: selectedPlan,
             returnTo: "/subscription",
-            useEmbedded, // Pass the embedded checkout preference
           },
         });
         setIsLoading(false);
         return;
       }
 
-      console.log(`Starting checkout process for ${selectedPlan} plan`);
+      console.log(`Redirecting to Stripe payment link for ${selectedPlan} plan`);
       
-      if (useEmbedded) {
-        // Navigate to subscription page with embedded checkout
-        navigate("/subscription", {
-          state: {
-            intendedAction: "subscribe",
-            plan: selectedPlan,
-            useEmbedded: true,
-          }
-        });
-        return;
-      }
+      // Redirect to the appropriate payment link based on the selected plan
+      const paymentLink = selectedPlan === "monthly" 
+        ? STRIPE_PAYMENT_LINKS.monthly 
+        : STRIPE_PAYMENT_LINKS.annual;
       
-      // Use traditional checkout flow
-      const checkoutUrl = await createCheckoutSession(
-        selectedPlan,
-        user.email,
-        { 
-          userId: user.id,
-          selectedPlan,
-          timestamp: new Date().toISOString()
-        }
-      );
-
-      if (checkoutUrl) {
-        console.log(`Redirecting to Stripe checkout: ${checkoutUrl}`);
-        // Redirect to Stripe Checkout
-        window.location.href = checkoutUrl;
-      } else {
-        throw new Error("Failed to create checkout session. Please try again.");
-      }
+      // Redirect to Stripe Payment Link
+      window.location.href = paymentLink;
+      
     } catch (err) {
-      console.error("Checkout error:", err);
+      console.error("Redirect error:", err);
       
-      // Handle different types of errors
-      let errorMessage = "Failed to start checkout process. Please try again.";
+      let errorMessage = "Failed to redirect to payment page. Please try again.";
       
       if (err instanceof Error) {
-        if (err.message.includes("Authentication required")) {
-          errorMessage = "Authentication session expired. Please sign in again.";
-        } else {
-          errorMessage = err.message;
-        }
+        errorMessage = err.message;
       }
       
       setError(errorMessage);
@@ -285,7 +259,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ useEmbedded = fal
                   </span>
                 ) : (
                   <span className="flex items-center">
-                    Start Now <ChevronRight size={18} className="ml-1" />
+                    Get Annual Plan <ChevronRight size={18} className="ml-1" />
                   </span>
                 )}
               </button>
@@ -295,14 +269,19 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ useEmbedded = fal
       </div>
 
       {error && (
-        <div className="mt-6 p-4 bg-red-900/30 border border-red-800 rounded-lg text-red-200 text-center">
+        <div className="mt-6 bg-red-900/50 border border-red-700 text-white p-4 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="flex items-center justify-center mt-8">
-        <ShieldCheck className="h-5 w-5 text-[#9b9b6f] mr-2" />
-        <span className="text-gray-400 text-sm">Secure payment with Stripe</span>
+      <div className="mt-8 flex flex-col items-center">
+        <div className="flex items-center space-x-4 mb-2">
+          <ShieldCheck className="h-5 w-5 text-[#9b9b6f]" />
+          <CreditCard className="h-5 w-5 text-[#9b9b6f]" />
+        </div>
+        <p className="text-sm text-gray-400 text-center">
+          Secure payment processing by Stripe. Cancel your subscription anytime.
+        </p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { CheckCircle2 } from "lucide-react";
 
@@ -13,6 +13,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   const routeState = location.state as {
     from?: string;
@@ -40,13 +41,11 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleForm }) => {
       }
       await signUp(email, password);
 
-      // Don't redirect - let AuthContext handle the redirection based on subscription state
-      // The redirect will happen in onAuthStateChange after profile is fetched
-      if (intendedPlan) {
-        console.log(`SignUp successful with intended plan: ${intendedPlan}`);
-      } else {
-        console.log("SignUp successful, letting AuthContext handle redirection");
-      }
+      // Redirect user to subscription flow immediately
+      navigate('/subscribe', {
+        replace: true,
+        state: intendedPlan ? { plan: intendedPlan } : undefined,
+      });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";

@@ -4,14 +4,14 @@ import { getActiveSubscription } from '../../lib/stripe';
 import { products } from '../../lib/stripe-config';
 import { Button } from '../../components/ui/Button';
 import { Calendar, CreditCard, AlertTriangle } from 'lucide-react';
-import ManageSubscription from '../../components/Stripe/ManageSubscription';
+import ManageSubscription from './SubscriptionManager';
 import { supabase } from '../../lib/supabase';
 
 interface SubscriptionDetailsProps {
-  userName?: string;
+  // No props needed
 }
 
-const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userName }) => {
+const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -150,7 +150,7 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userName }) =
 
       <div className="border-t border-gray-700 pt-6">
         {showManageOptions ? (
-          <ManageSubscription customerName={userName} />
+          <ManageSubscription />
         ) : (
           <Button 
             onClick={() => setShowManageOptions(true)} 

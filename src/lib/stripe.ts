@@ -83,8 +83,6 @@ export async function createCheckoutSession(
       customerEmail,
       successUrl: `${window.location.origin}/success?checkout=completed&plan=${plan}`,
       cancelUrl: `${window.location.origin}/subscription`,
-      returnUrl: `${window.location.origin}/subscription/return`,
-      uiMode: 'hosted',
       metadata: {
         ...metadata,
         userId: session.user.id,
