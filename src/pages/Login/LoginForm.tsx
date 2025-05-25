@@ -118,7 +118,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             >
               {intendedPlan
                 ? "Sign up to Proceed to Payment"
-                : "Sign up, it's free!"}
+                : "Sign up"}
             </button>
           </span>
         </div>
