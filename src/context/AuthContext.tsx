@@ -427,7 +427,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Set up auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event: AuthChangeEvent, session: Session | null) => {
+          (event: AuthChangeEvent, session: Session | null) => {
             console.log(
               `[AuthContext] onAuthStateChange event: ${event}, User: ${session?.user?.email}`,
             );
@@ -437,73 +437,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
             setIsLoading(true);
 
-            try {
-              if (session?.user) {
-                const currentUserFromSession = {
-                  id: session.user.id,
-                  email: session.user.email!,
-                };
-                setUser(currentUserFromSession);
-                await fetchProfile(session.user.id);
+            // Use setTimeout to defer async operations
+            setTimeout(async () => {
+              try {
+                if (session?.user) {
+                  const currentUserFromSession = {
+                    id: session.user.id,
+                    email: session.user.email!,
+                  };
+                  setUser(currentUserFromSession);
+                  await fetchProfile(session.user.id);
 
-                // Always evaluate subscription so we can render pricing if needed
-                const subState = await evaluateSubscription();
+                  // Always evaluate subscription so we can render pricing if needed
+                  const subState = await evaluateSubscription();
 
-                // After profile fetch, handle admin redirect
-                if (isAdmin) {
-                  if (event === 'SIGNED_IN') navigate('/admin-dashboard');
-                }
+                  // After profile fetch, handle admin redirect
+                  if (isAdmin) {
+                    if (event === 'SIGNED_IN') navigate('/admin-dashboard');
+                  }
 
-                const { data: profileData } = await supabase
-                  .from('profiles')
-                  .select('is_profile_completed')
-                  .eq('id', session.user.id)
-                  .single();
+                  const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('is_profile_completed')
+                    .eq('id', session.user.id)
+                    .single();
 
-                const isProfileActuallyCompleted = profileData?.is_profile_completed ?? false;
+                  const isProfileActuallyCompleted = profileData?.is_profile_completed ?? false;
 
-                if (event === 'SIGNED_IN') {
-                  if (!isProfileActuallyCompleted) {
-                    localStorage.removeItem('pendingSubscriptionPlan');
-                    navigate('/subscribe', { replace: true });
-                  } else {
-                    await processPendingSubscription(currentUserFromSession);
-                    // If profile is complete but subscription unpaid, redirect
-                    if (subState === 'unpaid' && location.pathname !== '/subscribe') {
-                      // Prevent redirect loop by not redirecting if user is already on auth-related pages
-                      const isAuthOrSubscriptionPage = 
-                        location.pathname === '/login' || 
-                        location.pathname === '/subscription' || 
-                        location.pathname.startsWith('/subscription/');
-                      
-                      if (!isAuthOrSubscriptionPage) {
-                        navigate('/subscribe', { replace: true });
+                  if (event === 'SIGNED_IN') {
+                    if (!isProfileActuallyCompleted) {
+                      localStorage.removeItem('pendingSubscriptionPlan');
+                      navigate('/subscribe', { replace: true });
+                    } else {
+                      await processPendingSubscription(currentUserFromSession);
+                      // If profile is complete but subscription unpaid, redirect
+                      if (subState === 'unpaid' && location.pathname !== '/subscribe') {
+                        // Prevent redirect loop by not redirecting if user is already on auth-related pages
+                        const isAuthOrSubscriptionPage = 
+                          location.pathname === '/login' || 
+                          location.pathname === '/subscription' || 
+                          location.pathname.startsWith('/subscription/');
+                        
+                        if (!isAuthOrSubscriptionPage) {
+                          navigate('/subscribe', { replace: true });
+                        }
                       }
                     }
                   }
-                }
-              } else if (event === 'SIGNED_OUT') {
-                setUser(null);
-                setProfile(null);
-                setIsFirstLogin(false);
-                setIsAdmin(false);
-                localStorage.removeItem('pendingSubscriptionPlan');
-              } else {
-                if (!session?.user) {
+                } else if (event === 'SIGNED_OUT') {
                   setUser(null);
                   setProfile(null);
                   setIsFirstLogin(false);
                   setIsAdmin(false);
+                  localStorage.removeItem('pendingSubscriptionPlan');
+                } else {
+                  if (!session?.user) {
+                    setUser(null);
+                    setProfile(null);
+                    setIsFirstLogin(false);
+                    setIsAdmin(false);
+                  }
+                }
+              } catch (err) {
+                console.error('[AuthContext] Error inside onAuthStateChange (deferred):', err);
+              } finally {
+                setIsLoading(false);
+                if (subscriptionState === 'loading') {
+                  setSubscriptionState('unpaid');
                 }
               }
-            } catch (err) {
-              console.error('[AuthContext] Error inside onAuthStateChange:', err);
-            } finally {
-              setIsLoading(false);
-              if (subscriptionState === 'loading') {
-                setSubscriptionState('unpaid');
-              }
-            }
+            }, 0);
           },
         );
 
