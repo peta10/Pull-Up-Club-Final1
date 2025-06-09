@@ -8,11 +8,12 @@ import {
 } from "lucide-react";
 import { products } from "../../lib/stripe-config";
 import { useAuth } from "../../context/AuthContext";
+import { trackEvent } from "../../utils/analytics";
 
-// Payment links
+// Payment links - NOTE: Update these in Stripe Dashboard to point to /signup-access?session_id={CHECKOUT_SESSION_ID}
 const STRIPE_PAYMENT_LINKS = {
-  monthly: "https://buy.stripe.com/dRmdR9dos2kmaQcdHGejK00",
-  annual: "https://buy.stripe.com/28EcN5dosf784rO0UUejK01"
+  monthly: "https://buy.stripe.com/test_dRmdR9dos2kmaQcdHGejK00",
+  annual: "https://buy.stripe.com/test_28EcN5dosf784rO0UUejK01"
 };
 
 const SubscriptionPlans: React.FC = () => {
@@ -29,18 +30,12 @@ const SubscriptionPlans: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (!user) {
-        // Redirect to create account, passing along the plan information
-        navigate("/create-account", {
-          state: {
-            intendedAction: "subscribe",
-            plan: selectedPlan,
-            returnTo: "/subscription",
-          },
-        });
-        setIsLoading(false);
-        return;
-      }
+      // Fire analytics for checkout attempt
+      trackEvent({
+        action: 'subscription_plan_selected',
+        category: 'stripe',
+        label: selectedPlan,
+      });
 
       console.log(`Redirecting to Stripe payment link for ${selectedPlan} plan`);
       
@@ -48,6 +43,12 @@ const SubscriptionPlans: React.FC = () => {
       const paymentLink = selectedPlan === "monthly" 
         ? STRIPE_PAYMENT_LINKS.monthly 
         : STRIPE_PAYMENT_LINKS.annual;
+      
+      trackEvent({
+        action: 'stripe_checkout_redirect',
+        category: 'stripe',
+        label: selectedPlan,
+      });
       
       // Redirect to Stripe Payment Link
       window.location.href = paymentLink;
@@ -73,14 +74,11 @@ const SubscriptionPlans: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {!user && (
-        <div className="bg-gray-800 p-4 rounded-lg mb-6 text-center">
-          <p className="text-white">
-            You're not logged in. You'll be prompted to create an account after
-            selecting a plan.
+      <div className="max-w-2xl mx-auto mb-8 bg-gray-800 border border-gray-700 rounded-lg p-4 text-center">
+        <p className="text-gray-300">
+          Choose your plan below. After payment, you'll create your account to access the platform.
           </p>
         </div>
-      )}
 
       <div className="flex justify-center mb-8">
         <div className="bg-gray-800 p-1 rounded-full">
@@ -113,9 +111,9 @@ const SubscriptionPlans: React.FC = () => {
             selectedPlan === "monthly"
               ? "border-2 border-[#9b9b6f] shadow-lg shadow-[#9b9b6f]/20"
               : "border border-gray-700"
-          }`}
+          } flex flex-col h-full`}
         >
-          <div className="bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm p-6">
+          <div className="bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm p-6 flex flex-col h-full">
             <h3 className="text-xl font-bold text-white mb-2">
               Monthly Membership
             </h3>
@@ -126,7 +124,7 @@ const SubscriptionPlans: React.FC = () => {
               <span className="text-gray-400 ml-1">/month</span>
             </div>
 
-            <ul className="space-y-3 mb-6">
+            <ul className="space-y-3 mb-6 flex-grow">
               <li className="flex items-start">
                 <CheckCircle2 className="h-5 w-5 text-[#9b9b6f] mr-2 flex-shrink-0" />
                 <span className="text-gray-300">Leaderboard access</span>
@@ -141,16 +139,22 @@ const SubscriptionPlans: React.FC = () => {
               </li>
             </ul>
 
-            {selectedPlan === "monthly" && (
               <button
-                onClick={handleSubscribe}
+              onClick={() => {
+                setSelectedPlan("monthly");
+                setTimeout(handleSubscribe, 100);
+              }}
                 disabled={isLoading}
-                className="w-full bg-[#9b9b6f] text-black font-medium py-3 rounded-md hover:bg-[#7a7a58] transition flex items-center justify-center"
+              className={`w-full font-medium py-3 rounded-md transition flex items-center justify-center ${
+                selectedPlan === "monthly"
+                  ? "bg-[#9b9b6f] text-black hover:bg-[#7a7a58]"
+                  : "bg-gray-700 text-white hover:bg-gray-600"
+              }`}
               >
-                {isLoading && user ? (
+              {isLoading && selectedPlan === "monthly" ? (
                   <span className="flex items-center">
                     <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-black"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -177,7 +181,6 @@ const SubscriptionPlans: React.FC = () => {
                   </span>
                 )}
               </button>
-            )}
           </div>
         </div>
 
@@ -186,13 +189,13 @@ const SubscriptionPlans: React.FC = () => {
             selectedPlan === "annual"
               ? "border-2 border-[#9b9b6f] shadow-lg shadow-[#9b9b6f]/20"
               : "border border-gray-700"
-          }`}
+          } flex flex-col h-full`}
         >
           <div className="absolute top-0 right-0 bg-[#9b9b6f] text-black px-3 py-1 text-xs font-semibold">
             BEST VALUE
           </div>
 
-          <div className="bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm p-6">
+          <div className="bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm p-6 flex flex-col h-full">
             <h3 className="text-xl font-bold text-white mb-2">
               Annual Membership
             </h3>
@@ -206,7 +209,7 @@ const SubscriptionPlans: React.FC = () => {
               Save ${annualSavings} per year
             </p>
 
-            <ul className="space-y-3 mb-6">
+            <ul className="space-y-3 mb-6 flex-grow">
               <li className="flex items-start">
                 <CheckCircle2 className="h-5 w-5 text-[#9b9b6f] mr-2 flex-shrink-0" />
                 <span className="text-gray-300">
@@ -227,16 +230,22 @@ const SubscriptionPlans: React.FC = () => {
               </li>
             </ul>
 
-            {selectedPlan === "annual" && (
               <button
-                onClick={handleSubscribe}
+              onClick={() => {
+                setSelectedPlan("annual");
+                setTimeout(handleSubscribe, 100);
+              }}
                 disabled={isLoading}
-                className="w-full bg-[#9b9b6f] text-black font-medium py-3 rounded-md hover:bg-[#7a7a58] transition flex items-center justify-center"
+              className={`w-full font-medium py-3 rounded-md transition flex items-center justify-center ${
+                selectedPlan === "annual"
+                  ? "bg-[#9b9b6f] text-black hover:bg-[#7a7a58]"
+                  : "bg-gray-700 text-white hover:bg-gray-600"
+              }`}
               >
-                {isLoading && user ? (
+              {isLoading && selectedPlan === "annual" ? (
                   <span className="flex items-center">
                     <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-black"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -259,11 +268,10 @@ const SubscriptionPlans: React.FC = () => {
                   </span>
                 ) : (
                   <span className="flex items-center">
-                    Get Annual Plan <ChevronRight size={18} className="ml-1" />
+                  Start Now <ChevronRight size={18} className="ml-1" />
                   </span>
                 )}
               </button>
-            )}
           </div>
         </div>
       </div>

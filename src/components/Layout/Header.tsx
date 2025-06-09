@@ -153,13 +153,13 @@ const Header: React.FC = () => {
                   >
                     Sign Up
                   </Link>
-                  <Link 
-                    to="/login" 
-                    className="font-medium hover:text-[#9b9b6f] transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Login
-                  </Link>
+                <Link 
+                  to="/login" 
+                  className="font-medium hover:text-[#9b9b6f] transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
                 </>
               )}
             </nav>

@@ -23,6 +23,7 @@ const CookiesPolicyPage = lazy(() => import("./pages/CookiesPolicy/CookiesPolicy
 const ResetPasswordPage = lazy(() => import("./pages/ResetPassword/ResetPasswordPage.tsx"));
 const SubscriptionPage = lazy(() => import("./pages/Subscription/SubscriptionPage.tsx"));
 const SubscribeRedirect = lazy(() => import("./pages/Subscription/SubscribeRedirect.tsx"));
+const SignupAccessPage = lazy(() => import("./pages/Subscription/SignupAccessPage.tsx"));
 const VideoSubmissionPage = lazy(() => import("./pages/VideoSubmission/VideoSubmissionPage.tsx"));
 const AdminUserManagement = lazy(() => import("./pages/AdminUserManagement.tsx"));
 
@@ -166,6 +167,9 @@ function App() {
 
             {/* New pay-first signup route */}
             <Route path="/signup" element={<SubscribeRedirect />} />
+
+            {/* Secure signup access page */}
+            <Route path="/signup-access" element={<SignupAccessPage />} />
 
             {/* Protected routes - require authentication */}
             <Route

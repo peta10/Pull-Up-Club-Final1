@@ -184,15 +184,6 @@ const SubscriptionPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {!user && (
-                <div className="max-w-2xl mx-auto mb-8 bg-gray-800 border border-gray-700 rounded-lg p-4 text-center">
-                  <p className="text-gray-300">
-                    You're not logged in. You'll be prompted to create an
-                    account after selecting a plan.
-                  </p>
-                </div>
-              )}
-
               <SubscriptionPlans />
               
               <div className="mt-12 text-center text-sm text-gray-500">
