@@ -2,6 +2,7 @@ import { products } from "./stripe-config";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { loadStripe } from '@stripe/stripe-js';
+import { trackEvent } from "../utils/analytics";
 
 // Initialize Stripe with publishable key
 export const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
@@ -308,5 +309,43 @@ export async function getPaymentHistory() {
   } catch (error) {
     console.error('Error in getPaymentHistory:', error);
     return [];
+  }
+}
+
+export async function startCheckout(plan: 'monthly' | 'annual' = 'monthly') {
+  try {
+    // Fire analytics for click
+    trackEvent({
+      action: 'navbar_click_sign_up',
+      category: 'engagement',
+      label: plan,
+    });
+
+    const url = await createCheckoutSession(plan);
+    if (!url) throw new Error('Unable to start checkout');
+
+    trackEvent({
+      action: 'checkout_session_created',
+      category: 'stripe',
+      label: plan,
+    });
+
+    // Redirect the browser
+    trackEvent({
+      action: 'checkout_redirect',
+      category: 'stripe',
+      label: plan,
+    });
+
+    window.location.assign(url);
+  } catch (err: any) {
+    console.error('[startCheckout] Failed to create checkout', err);
+    trackEvent({
+      action: 'checkout_error',
+      category: 'stripe',
+      label: plan,
+      value: 1,
+    });
+    alert('Unable to start checkout. Please try again later.');
   }
 }

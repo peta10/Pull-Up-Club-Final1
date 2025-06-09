@@ -61,7 +61,14 @@ const Header: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <Link to="/login" className="font-medium hover:text-[#9b9b6f] transition-colors">Login</Link>
+              <>
+                <Link to="/subscription" className="font-medium hover:text-[#9b9b6f] transition-colors">
+                  Sign Up
+                </Link>
+                <Link to="/login" className="font-medium hover:text-[#9b9b6f] transition-colors">
+                  Login
+                </Link>
+              </>
             )}
           </nav>
           
@@ -138,13 +145,22 @@ const Header: React.FC = () => {
                   </Button>
                 </>
               ) : (
-                <Link 
-                  to="/login" 
-                  className="font-medium hover:text-[#9b9b6f] transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
+                <>
+                  <Link 
+                    to="/subscription" 
+                    className="font-medium hover:text-[#9b9b6f] transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                  <Link 
+                    to="/login" 
+                    className="font-medium hover:text-[#9b9b6f] transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                </>
               )}
             </nav>
           </div>
