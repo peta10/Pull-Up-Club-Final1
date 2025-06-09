@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ChevronRight,
@@ -7,7 +6,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { products } from "../../lib/stripe-config";
-import { useAuth } from "../../context/AuthContext";
 import { trackEvent } from "../../utils/analytics";
 
 // Payment links - NOTE: Update these in Stripe Dashboard to point to /signup-access?session_id={CHECKOUT_SESSION_ID}
@@ -22,8 +20,7 @@ const SubscriptionPlans: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">(
     "monthly"
   );
-  const { user } = useAuth();
-  const navigate = useNavigate();
+
 
   const handleSubscribe = async () => {
     setError(null);
