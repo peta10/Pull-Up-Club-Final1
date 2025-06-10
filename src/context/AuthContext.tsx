@@ -156,17 +156,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       console.log("[AuthContext] Fetching profile for user:", userId, "retry:", retryCount);
       
-      // First check if user has admin role - changed from .single() to handle no rows gracefully
+      // First check if user has admin role
       const { data: adminData, error: adminError } = await supabase
         .from('admin_roles')
         .select('*')
         .eq('user_id', userId);
 
-      // Check if adminData exists and has at least one row
       const isUserAdmin = !adminError && adminData && adminData.length > 0;
       console.log("[AuthContext] Admin check result:", { isUserAdmin, adminData, adminError });
       
-      // Set admin status immediately
       setIsAdmin(isUserAdmin);
 
       // Then fetch the full profile
@@ -178,11 +176,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (profileError) {
         if (profileError.code === "PGRST116") {
-          // Profile doesn't exist yet - handle gracefully
           console.log("[AuthContext] Profile not found, this might be a new user. Creating fallback profile.");
           
           if (retryCount < 3) {
-            // Retry a few times with exponential backoff
             console.log("[AuthContext] Retrying profile fetch in", (retryCount + 1) * 1000, "ms");
             setTimeout(() => fetchProfile(userId, retryCount + 1), (retryCount + 1) * 1000);
             return;
@@ -190,7 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           
           // After retries, create a fallback profile object
           console.log("[AuthContext] Creating fallback profile after retries");
-          setProfile({
+          const fallbackProfile: Profile = {
             isProfileCompleted: false,
             socialMedia: null,
             streetAddress: null,
@@ -199,19 +195,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             state: null,
             zipCode: null,
             country: null,
-            role: isUserAdmin ? "admin" : "user",
+            role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
             ...defaultSettings
-          });
+          };
+          
+          console.log("[AuthContext] Setting fallback profile:", fallbackProfile);
+          setProfile(fallbackProfile);
           setIsFirstLogin(true);
+          
+          // ✅ CRITICAL FIX: Clear loading state after setting fallback profile
+          console.log("[AuthContext] Clearing loading state after fallback profile");
+          setIsLoading(false);
           return;
         }
         console.error("Error fetching profile:", profileError);
+        // ✅ CRITICAL FIX: Clear loading state on error
+        setIsLoading(false);
         return;
       }
 
       console.log("[AuthContext] Profile data received:", profileData);
 
-      setProfile({
+      const profileObject: Profile = {
         isProfileCompleted: profileData.is_profile_completed || false,
         socialMedia: profileData.social_media,
         streetAddress: profileData.street_address,
@@ -220,16 +225,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         state: profileData.state,
         zipCode: profileData.zip_code,
         country: profileData.country,
-        role: isUserAdmin ? "admin" : "user",
+        role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
         user_settings: profileData.user_settings || defaultSettings.user_settings,
         notification_preferences: profileData.notification_preferences || defaultSettings.notification_preferences,
         theme_preferences: profileData.theme_preferences || defaultSettings.theme_preferences,
         privacy_settings: profileData.privacy_settings || defaultSettings.privacy_settings
-      });
+      };
+
+      console.log("[AuthContext] Setting profile object:", profileObject);
+      setProfile(profileObject);
       setIsFirstLogin(!profileData.is_profile_completed);
 
+      // ✅ CRITICAL FIX: Clear loading state after successful profile fetch
+      console.log("[AuthContext] Profile fetch completed successfully, clearing loading state");
+      setIsLoading(false);
+
       if (user) {
-        // Update user with role information
         const updatedUser: User = {
           ...user,
           role: isUserAdmin ? "admin" : "user"
@@ -239,6 +250,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (err) {
       console.error("Error in fetchProfile:", err);
+      // ✅ CRITICAL FIX: Clear loading state on exception
+      setIsLoading(false);
     }
   };
 
@@ -530,7 +543,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         state: null,
         zipCode: null,
         country: null,
-        role: "user",
+        role: "user" as "user" | "admin",
         ...defaultSettings
       });
       setIsFirstLogin(true);
@@ -606,7 +619,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         state: null,
         zipCode: null,
         country: null,
-        role: "user",
+        role: "user" as "user" | "admin",
         ...defaultSettings
       });
       setIsFirstLogin(true);
