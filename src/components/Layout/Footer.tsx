@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/submit-video"
+                  href="/submit"
                   className="text-gray-400 hover:text-white"
                 >
                   Submit Your Video

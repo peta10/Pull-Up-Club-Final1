@@ -33,8 +33,10 @@ const VideoSubmissionPage: React.FC = () => {
     gender: 'Male' as 'Male' | 'Female' | 'Other',
   });
   const [isChecked, setIsChecked] = useState({
-    videoConfirmed: false,
-    videoAuthenticity: false,
+    checkbox1: false,
+    checkbox2: false,
+    checkbox3: false,
+    checkbox4: false,
   });
   
   const { submissions } = useSubmissions({ 
@@ -116,8 +118,10 @@ const VideoSubmissionPage: React.FC = () => {
     return (
       formData.pullUpCount > 0 &&
       formData.videoFile !== null &&
-      isChecked.videoConfirmed &&
-      isChecked.videoAuthenticity
+      isChecked.checkbox1 &&
+      isChecked.checkbox2 &&
+      isChecked.checkbox3 &&
+      isChecked.checkbox4
     );
   };
 
@@ -308,37 +312,69 @@ const VideoSubmissionPage: React.FC = () => {
                     <div className="flex items-start">
                       <input
                         type="checkbox"
-                        id="videoConfirmed"
-                        name="videoConfirmed"
-                        checked={isChecked.videoConfirmed}
+                        id="checkbox1"
+                        name="checkbox1"
+                        checked={isChecked.checkbox1}
                         onChange={handleInputChange}
                         className="mt-1 h-4 w-4 rounded border-gray-700 text-[#9b9b6f] focus:ring-[#9b9b6f]"
                         required
                       />
-                      <label htmlFor="videoConfirmed" className="ml-2 block text-sm text-gray-300">
-                        I confirm that the video link I have provided is correct and publicly accessible.
+                      <label htmlFor="checkbox1" className="ml-2 block text-sm text-gray-300">
+                        I confirm that my video link is correct and publicly viewable without requiring login or special access. I understand that inaccessible links may lead to disqualification and that submission fees are non-refundable.
                         <span className="text-[#9b9b6f]">*</span>
                       </label>
                     </div>
-
                     <div className="flex items-start">
                       <input
                         type="checkbox"
-                        id="videoAuthenticity"
-                        name="videoAuthenticity"
-                        checked={isChecked.videoAuthenticity}
+                        id="checkbox2"
+                        name="checkbox2"
+                        checked={isChecked.checkbox2}
                         onChange={handleInputChange}
                         className="mt-1 h-4 w-4 rounded border-gray-700 text-[#9b9b6f] focus:ring-[#9b9b6f]"
                         required
                       />
-                      <label htmlFor="videoAuthenticity" className="ml-2 block text-sm text-gray-300">
-                        I confirm this is an authentic video of my performance, with no edits, cuts, or manipulation.
+                      <label htmlFor="checkbox2" className="ml-2 block text-sm text-gray-300">
+                        I confirm this video is authentic and unedited, with no AI or effects used to alter my performance. Any tampering or misrepresentation will result in disqualification and loss of any fees, rankings, or rewards.
+                        <span className="text-[#9b9b6f]">*</span>
+                      </label>
+                    </div>
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        id="checkbox3"
+                        name="checkbox3"
+                        checked={isChecked.checkbox3}
+                        onChange={handleInputChange}
+                        className="mt-1 h-4 w-4 rounded border-gray-700 text-[#9b9b6f] focus:ring-[#9b9b6f]"
+                        required
+                      />
+                      <label htmlFor="checkbox3" className="ml-2 block text-sm text-gray-300">
+                        I grant Pull-Up Club permission to use my submitted videos in current and future marketing efforts—both branded and unbranded—across all platforms, in perpetuity, without limitation or additional compensation.
+                        <span className="text-[#9b9b6f]">*</span>
+                      </label>
+                    </div>
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        id="checkbox4"
+                        name="checkbox4"
+                        checked={isChecked.checkbox4}
+                        onChange={handleInputChange}
+                        className="mt-1 h-4 w-4 rounded border-gray-700 text-[#9b9b6f] focus:ring-[#9b9b6f]"
+                        required
+                      />
+                      <label htmlFor="checkbox4" className="ml-2 block text-sm text-gray-300">
+                        By submitting this form, I agree to be automatically enrolled in Pull-Up Club email and SMS communications. I understand that I can unsubscribe from either channel at any time by following the opt-out instructions included in each message.
                         <span className="text-[#9b9b6f]">*</span>
                       </label>
                     </div>
                   </div>
 
                   <div className="pt-4 border-t border-gray-700">
+                    <p className="text-sm text-gray-400 mb-4 text-center">
+                      Please allow up to 15 days for our team to review and properly assign your submission to the month it was submitted.
+                    </p>
                     <Button
                       type="submit"
                       disabled={!isFormValid() || uploading}

@@ -199,7 +199,7 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
             </p>
           ) : canSubmit ? (
             <>
-              <Link href="/submit-video">
+              <Link href="/submit">
                 <Button variant="secondary" className="mb-6">
                   {hasRejectedSubmission
                     ? "Resubmit Video"
@@ -330,7 +330,7 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
                           ? "Please review the feedback provided above."
                           : "Please review the video requirements and submit a new attempt."}
                       </p>
-                      <Link href="/submit-video">
+                      <Link href="/submit">
                         <Button variant="secondary" size="sm">
                           Submit New Video
                         </Button>
@@ -362,7 +362,7 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
             Ready to show off your pull-up skills? Submit your first video to
             get started!
           </p>
-          <Link href="/submit-video">
+          <Link href="/submit">
             <Button variant="secondary">Submit Your First Video</Button>
           </Link>
         </div>

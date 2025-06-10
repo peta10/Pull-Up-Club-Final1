@@ -184,7 +184,7 @@ function App() {
             <Route path="/success" element={<SuccessPage />} />
 
             <Route
-              path="/submit-video"
+              path="/submit"
               element={
                 <ProtectedRoute>
                   <VideoSubmissionPage />
