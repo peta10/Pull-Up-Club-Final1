@@ -189,7 +189,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           </tr>
         </thead>
         <tbody className="bg-gray-900 divide-y divide-gray-800">
-          {Object.entries(groupedSubmissions).map(([count, group]) =>
+          {Object.entries(groupedSubmissions).map(([, group]) =>
             group.map((submission: Submission, index: number) => (
               <tr
                 key={submission.id}

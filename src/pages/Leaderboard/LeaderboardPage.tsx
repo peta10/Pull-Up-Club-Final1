@@ -3,7 +3,6 @@ import Layout from "../../components/Layout/Layout";
 import LeaderboardFilters from "./LeaderboardFilters";
 import LeaderboardTable from "./LeaderboardTable";
 import BadgeLegend from "./BadgeLegend";
-import { mockSubmissions } from "../../data/mockData";
 import { LeaderboardFilters as FiltersType, Submission } from "../../types";
 import { supabase } from '../../lib/supabase';
 import { LoadingState, ErrorState } from '../../components/ui/LoadingState';

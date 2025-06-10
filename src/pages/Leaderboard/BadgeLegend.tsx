@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { badges } from "../../data/mockData";
+import badges from "../../data/mockData";
 import { ChevronDown, ChevronUp, Award } from "lucide-react";
 
 const BadgeLegend: React.FC = () => {
@@ -28,7 +28,7 @@ const BadgeLegend: React.FC = () => {
 
       {isExpanded && (
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-          {badges.map((badge) => (
+          {badges.map((badge: any) => (
             <div
               key={badge.id}
               className="flex flex-col items-center text-center"

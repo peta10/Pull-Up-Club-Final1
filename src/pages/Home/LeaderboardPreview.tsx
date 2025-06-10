@@ -38,7 +38,7 @@ const LeaderboardPreview: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-800">
                 {topSubmissions.map((submission, index) => {
-                  const badges = getBadgesForSubmission(submission);
+                  const badges = getBadgesForSubmission(submission.pullUpCount);
 
                   return (
                     <tr

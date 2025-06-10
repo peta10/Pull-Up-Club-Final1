@@ -24,6 +24,8 @@ export interface LeaderboardFilters {
   region?: string;
   club?: string;
   timeframe?: string;
+  ageGroup?: string;
+  badge?: string;
 }
 
 export interface Badge {

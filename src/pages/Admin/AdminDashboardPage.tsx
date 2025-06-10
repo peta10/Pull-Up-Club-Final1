@@ -248,7 +248,7 @@ const AdminDashboardPage: React.FC = () => {
                       key={submission.id}
                       submission={submission}
                       onApprove={handleApproveSubmission}
-                      onReject={(id, reason) => handleRejectSubmission(id)}
+                      onReject={handleRejectSubmission}
                     />
                   ))}
                   

@@ -13,7 +13,7 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('submissions');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats] = useState<any>(null);
 
   useEffect(() => {
     fetchSubmissions();

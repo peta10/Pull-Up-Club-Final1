@@ -1,6 +1,6 @@
 import React from 'react';
 import { LeaderboardFilters as FiltersType } from '../../types';
-import { clubs, getAgeGroups, badges, regions } from '../../data/mockData';
+import badges, { clubs, getAgeGroups, regions } from '../../data/mockData';
 
 interface LeaderboardFiltersProps {
   filters: FiltersType;
@@ -105,7 +105,7 @@ const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({ filters, onFilt
             className="w-full bg-gray-950 border border-gray-800 rounded py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
           >
             <option value="">All Badges</option>
-            {badges.map((badge) => (
+            {badges.map((badge: any) => (
               <option key={badge.id} value={badge.id}>
                 {badge.name}
               </option>

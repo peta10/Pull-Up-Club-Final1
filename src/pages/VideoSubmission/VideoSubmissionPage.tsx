@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Layout from '../../components/Layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { AlertTriangle, CheckCircle, Clock, Info, Upload } from 'lucide-react';
+import { AlertTriangle, Clock, Info, Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import useVideoSubmission from '../../hooks/useVideoSubmission';
 import useSubmissions from '../../hooks/useSubmissions';
@@ -36,10 +36,9 @@ const VideoSubmissionPage: React.FC = () => {
     videoConfirmed: false,
     videoAuthenticity: false,
   });
-  const [error, setError] = useState<string | null>(null);
   
   const { submissions } = useSubmissions({ 
-    status: 'pending',
+    status: 'Pending',
     limit: 3  
   });
 
@@ -86,29 +85,18 @@ const VideoSubmissionPage: React.FC = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({ ...prev, videoFile: e.target.files![0] }));
-      setError(null);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     if (!formData.videoFile) {
-      setError('Please select a video file');
       return;
     }
 
     if (formData.pullUpCount < 1) {
-      setError('Please enter a valid number of pull-ups');
       return;
     }
 
     if (!user) {
-      setError('You must be logged in to submit a video');
       return;
     }
 
@@ -400,7 +388,7 @@ const VideoSubmissionPage: React.FC = () => {
                             )}
                           </p>
                           <p className="text-gray-400 text-sm">
-                            Submitted on {new Date(submission.submissionDate).toLocaleDateString()}
+                            Submitted on {new Date(submission.submittedAt).toLocaleDateString()}
                           </p>
                         </div>
                         <div>
@@ -427,7 +415,7 @@ const VideoSubmissionPage: React.FC = () => {
                       
                       <div className="mt-3 flex justify-between">
                         <a
-                          href={submission.videoLink}
+                          href={submission.videoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#9b9b6f] hover:text-[#7a7a58] text-sm flex items-center"

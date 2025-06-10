@@ -5,7 +5,6 @@ import { clubs, regions } from "../../data/mockData";
 import { AlertTriangle, CreditCard } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { createCheckoutSession } from "../../lib/stripe";
-import { products } from "../../stripe-config";
 import { supabase } from "../../lib/supabase";
 
 // Form reducer
@@ -662,7 +661,7 @@ const SubmissionForm: React.FC = () => {
                               Monthly Subscription
                             </span>
                             <span className="text-[#9b9b6f] font-bold">
-                              ${products.pullUpClub.price}/month
+                              $9.99/month
                             </span>
                           </label>
                           <p className="text-gray-400 text-sm mt-1">
@@ -711,7 +710,7 @@ const SubmissionForm: React.FC = () => {
                               Annual Subscription
                             </span>
                             <span className="text-[#9b9b6f] font-bold">
-                              ${products.pullUpClubAnnual.price}/year
+                              $99.99/year
                             </span>
                           </label>
                           <p className="text-gray-400 text-sm mt-1">
