@@ -47,6 +47,7 @@ interface Profile extends ProfileSettings {
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithProvider: (provider: Provider) => Promise<void>;
@@ -62,6 +63,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
+  setProfile: () => {},
   signIn: async () => {},
   signUp: async () => {},
   signInWithProvider: async () => {},
@@ -623,6 +625,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         user,
         profile,
+        setProfile,
         signIn,
         signUp,
         signInWithProvider,

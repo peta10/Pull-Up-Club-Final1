@@ -12,7 +12,7 @@ import { AlertTriangle } from "lucide-react";
 import { Submission } from "../../types";
 
 const ProfilePage: React.FC = () => {
-  const { user, signOut, isFirstLogin, profile } = useAuth();
+  const { user, signOut, isFirstLogin, profile, setProfile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     "submissions" | "rankings" | "personal"
@@ -82,7 +82,15 @@ const ProfilePage: React.FC = () => {
         throw error;
       }
 
-      // Optionally, refetch profile here if needed
+      // Sync the profile state with the saved data
+      if (profile && setProfile) {
+        setProfile({
+          ...profile,
+          socialMedia: formData.socialMedia,
+          isProfileCompleted: true
+        });
+      }
+
       if (isFirstLogin) {
         setActiveTab("submissions");
       }
