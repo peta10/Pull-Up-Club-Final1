@@ -7,9 +7,9 @@ import { Button } from '../../components/ui/Button';
 import useVideoSubmission from '../../hooks/useVideoSubmission';
 import useSubmissions from '../../hooks/useSubmissions';
 import { Alert } from '../../components/ui/Alert';
-import { LoadingState } from '../../components/ui/LoadingState';
 import { LinkButton } from '../../components/ui/LinkButton';
 import { useNavigate } from 'react-router-dom';
+import type { Submission } from '../../types';
 
 interface FormData {
   videoFile: File | null;
@@ -375,7 +375,7 @@ const VideoSubmissionPage: React.FC = () => {
               <div className="mt-12">
                 <h2 className="text-xl font-bold text-white mb-6">Recent Submissions</h2>
                 <div className="space-y-4">
-                  {submissions.map((submission) => (
+                  {submissions.map((submission: Submission) => (
                     <div key={submission.id} className="bg-gray-800 p-4 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
@@ -448,7 +448,7 @@ const VideoSubmissionPage: React.FC = () => {
   return (
     <Layout>
       <div className="bg-black min-h-screen py-16 px-4 sm:px-6 lg:px-8">
-        <LoadingState message="Checking submission eligibility..." />
+        <div className="text-white text-center py-12">Checking submission eligibility...</div>
       </div>
     </Layout>
   );

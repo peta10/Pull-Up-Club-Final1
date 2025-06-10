@@ -11,7 +11,6 @@ import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 import { AlertTriangle } from "lucide-react";
 import { Submission } from "../../types";
-import SubscriptionWidget from "../../components/Profile/SubscriptionWidget";
 
 const ProfilePage: React.FC = () => {
   const { user, signOut, isFirstLogin, profile } = useAuth();
@@ -79,12 +78,11 @@ const ProfilePage: React.FC = () => {
         .eq("id", user?.id)
         .single();
 
-      let updateData;
       let updateError;
 
       if (!existingProfile) {
         // Profile doesn't exist, create it first
-        const { data: insertData, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from("profiles")
           .insert({
             id: user?.id,
@@ -98,11 +96,10 @@ const ProfilePage: React.FC = () => {
           })
           .select()
           .single();
-        updateData = insertData;
         updateError = insertError;
       } else {
         // Profile exists, update it
-        const { data: updatedData, error: updatedError } = await supabase
+        const { error: updatedError } = await supabase
           .from("profiles")
           .update({
             social_media: formData.socialMedia || null,
@@ -112,7 +109,6 @@ const ProfilePage: React.FC = () => {
           .eq("id", user?.id)
           .select()
           .single();
-        updateData = updatedData;
         updateError = updatedError;
       }
       if (updateError) throw updateError;
