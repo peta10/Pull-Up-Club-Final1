@@ -6,7 +6,6 @@ import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import SubmissionDashboard from "./SubmissionDashboard";
 import PatchProgress from "./PatchProgress";
-import RankingsTab from "./RankingsTab";
 import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 import { AlertTriangle } from "lucide-react";
@@ -71,47 +70,19 @@ const ProfilePage: React.FC = () => {
     setIsSaving(true);
     setError(null);
     try {
-      // First check if profile exists
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user?.id)
-        .single();
+      // Use the custom RPC function
+      const { data, error } = await supabase.rpc('update_user_profile', {
+        profile_user_id: user?.id,
+        social_media_handle: formData.socialMedia,
+        profile_completed: true
+      });
 
-      let updateError;
-
-      if (!existingProfile) {
-        // Profile doesn't exist, create it first
-        const { error: insertError } = await supabase
-          .from("profiles")
-          .insert({
-            id: user?.id,
-            email: user?.email,
-            social_media: formData.socialMedia || null,
-            is_profile_completed: true,
-            role: 'user',
-            is_paid: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-        updateError = insertError;
-      } else {
-        // Profile exists, update it
-        const { error: updatedError } = await supabase
-          .from("profiles")
-          .update({
-            social_media: formData.socialMedia || null,
-            is_profile_completed: true,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", user?.id)
-          .select()
-          .single();
-        updateError = updatedError;
+      if (error) {
+        console.error('RPC error:', error);
+        throw error;
       }
-      if (updateError) throw updateError;
+
+      // Optionally, refetch profile here if needed
       if (isFirstLogin) {
         setActiveTab("submissions");
       }
@@ -223,23 +194,6 @@ const ProfilePage: React.FC = () => {
                   Submissions
                 </button>
                 <button
-                  onClick={() => setActiveTab("rankings")}
-                  className={`px-6 py-3 text-sm font-medium ${
-                    activeTab === "rankings"
-                      ? "text-white border-b-2 border-[#9b9b6f]"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                  disabled={
-                    !!(
-                      profile &&
-                      !profile.isProfileCompleted &&
-                      activeTab !== "personal"
-                    )
-                  }
-                >
-                  Your Direct Competitors
-                </button>
-                <button
                   onClick={() => setActiveTab("personal")}
                   className={`px-6 py-3 text-sm font-medium ${
                     activeTab === "personal"
@@ -280,9 +234,6 @@ const ProfilePage: React.FC = () => {
                     <PatchProgress />
                   </div>
                 </div>
-              )}
-              {activeTab === "rankings" && (
-                <RankingsTab userEmail={user.email} />
               )}
               {activeTab === "personal" && (
                 <div className="space-y-6">

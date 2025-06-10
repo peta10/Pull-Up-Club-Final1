@@ -316,24 +316,18 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateProfileSettings = async (settingType: keyof ProfileSettings, newValues: any) => {
     if (!user) return;
-
     try {
-      const { data, error } = await supabase.rpc('update_profile_settings', {
-        setting_type: settingType,
-        new_values: newValues
-      });
-
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ [settingType]: newValues, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
       if (error) throw error;
-
-      // Update local state
       if (profile) {
         setProfile({
           ...profile,
           [settingType]: { ...profile[settingType], ...newValues }
         });
       }
-
-      return data;
     } catch (error) {
       console.error(`Error updating ${settingType}:`, error);
       throw error;
