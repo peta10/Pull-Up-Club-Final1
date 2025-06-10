@@ -56,7 +56,9 @@ const VideoSubmissionPage: React.FC = () => {
 
       try {
         // Call the submission eligibility function
-        const { data, error } = await supabase.rpc('get_submission_status', { user_id: user.id });
+        const { data, error } = await supabase.rpc('get_submission_status', { 
+          input_user_id: user.id
+        });
         
         if (error) throw error;
         
