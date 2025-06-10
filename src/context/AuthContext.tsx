@@ -108,17 +108,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>('loading');
+  const [hasInitialized, setHasInitialized] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // TEMPORARY: Force clear loading after 5 seconds
-  useEffect(() => {
-    const forceTimeout = setTimeout(() => {
-      console.log("[DEBUG] Forcing loading false");
-      setIsLoading(false);
-    }, 5000);
-    return () => clearTimeout(forceTimeout);
-  }, []);
 
   // Safety net: Force clear loading after 10 seconds
   useEffect(() => {
@@ -128,7 +120,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsLoading(false);
       }
     }, 10000);
-
     return () => clearTimeout(timeout);
   }, [isLoading]);
 
@@ -367,63 +358,70 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
+    if (hasInitialized) {
+      console.log("[AuthContext] Already initialized, skipping");
+      return;
+    }
+    setHasInitialized(true);
+
+    let subscription: { unsubscribe: () => void } | null = null;
+
     const initAuth = async () => {
       console.log("[AuthContext] initAuth started.");
       setIsLoading(true);
-      
       try {
         // Set up auth state change listener FIRST
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
           async (event: AuthChangeEvent, session: Session | null) => {
             console.log(
               `[AuthContext] onAuthStateChange event: ${event}, User: ${session?.user?.email}`,
             );
-
-            if (session?.user) {
+            if (event === 'SIGNED_IN' && session?.user) {
               const currentUser = {
                 id: session.user.id,
                 email: session.user.email!,
               };
               setUser(currentUser);
               await fetchProfile(session.user.id);
-              
-              // Handle subscription logic here
               await evaluateSubscription();
-              
-              // Handle post-auth flows
-              if (event === 'SIGNED_IN') {
-                await processPendingSubscription(currentUser);
-              }
-            } else {
+              await processPendingSubscription(currentUser);
+              setIsLoading(false);
+            } else if (event === 'SIGNED_OUT') {
               setUser(null);
               setProfile(null);
               setIsFirstLogin(false);
               setIsAdmin(false);
+              setIsLoading(false);
             }
-            
-            setIsLoading(false); // Always clear loading here
+            // Ignore other events (INITIAL_SESSION, TOKEN_REFRESHED, etc.)
           }
         );
+        subscription = sub;
 
-        // Get initial session WITHOUT manual recovery
+        // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
-        
-        // If no session, just clear loading
-        if (!session) {
-          setIsLoading(false);
+        if (session?.user) {
+          const currentUser = {
+            id: session.user.id,
+            email: session.user.email!,
+          };
+          setUser(currentUser);
+          await fetchProfile(session.user.id);
+          await evaluateSubscription();
+          // Do not process pending subscription here, only on SIGNED_IN
         }
-
-        return () => {
-          subscription.unsubscribe();
-        };
+        setIsLoading(false);
       } catch (error) {
         console.error("[AuthContext] Error in initAuth:", error);
-        setIsLoading(false); // Always clear loading on error
+        setIsLoading(false);
       }
     };
 
     initAuth();
-  }, []); // Remove all dependencies to prevent re-runs
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
+  }, [hasInitialized]);
 
   const signIn = async (email: string, password: string) => {
     console.log("[AuthContext] signIn called for:", email);
