@@ -594,6 +594,18 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     navigate("/"); // Redirect to home page after sign out
   };
 
+  // Debug log to see what is blocking render
+  console.log('AuthProvider render:', { isLoading, subscriptionState, user, profile });
+
+  // TEMP: Force loading state to false after 2 seconds for diagnosis
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+      setSubscriptionState('active');
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   if (isLoading || subscriptionState === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen">
