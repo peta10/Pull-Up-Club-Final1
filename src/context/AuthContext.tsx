@@ -186,6 +186,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .eq("id", userId)
         .single();
 
+      console.log("[AuthContext] Raw profile data from DB:", profileData);
+      if (profileData) {
+        console.log("[AuthContext] Social media from DB:", profileData.social_media);
+      }
+
       if (profileError) {
         if (profileError.code === "PGRST116") {
           console.log("[AuthContext] Profile not found, this might be a new user. Creating fallback profile.");
