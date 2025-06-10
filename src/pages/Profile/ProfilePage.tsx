@@ -71,7 +71,7 @@ const ProfilePage: React.FC = () => {
     setError(null);
     try {
       // Use the custom RPC function
-      const { data, error } = await supabase.rpc('update_user_profile', {
+      const { error } = await supabase.rpc('update_user_profile', {
         profile_user_id: user?.id,
         social_media_handle: formData.socialMedia,
         profile_completed: true

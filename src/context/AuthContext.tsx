@@ -317,7 +317,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateProfileSettings = async (settingType: keyof ProfileSettings, newValues: any) => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ [settingType]: newValues, updated_at: new Date().toISOString() })
         .eq('id', user.id);
