@@ -24,12 +24,6 @@ const ProfilePage: React.FC = () => {
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     socialMedia: "",
-    streetAddress: "",
-    apartment: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,12 +38,6 @@ const ProfilePage: React.FC = () => {
     if (profile) {
       setFormData({
         socialMedia: profile.socialMedia || "",
-        streetAddress: profile.streetAddress || "",
-        apartment: profile.apartment || "",
-        city: profile.city || "",
-        state: profile.state || "",
-        zipCode: profile.zipCode || "",
-        country: profile.country || "",
       });
     }
   }, [profile]);
@@ -83,19 +71,6 @@ const ProfilePage: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
-
-    if (
-      !formData.streetAddress ||
-      !formData.city ||
-      !formData.state ||
-      !formData.zipCode ||
-      !formData.country
-    ) {
-      setError("Please fill in all required address fields (*).");
-      setIsSaving(false);
-      return;
-    }
-
     try {
       // First check if profile exists
       const { data: existingProfile } = await supabase
@@ -109,19 +84,12 @@ const ProfilePage: React.FC = () => {
 
       if (!existingProfile) {
         // Profile doesn't exist, create it first
-        console.log("Profile doesn't exist, creating new profile for user:", user?.id);
         const { data: insertData, error: insertError } = await supabase
           .from("profiles")
           .insert({
             id: user?.id,
             email: user?.email,
             social_media: formData.socialMedia || null,
-            street_address: formData.streetAddress,
-            apartment: formData.apartment || null,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            country: formData.country,
             is_profile_completed: true,
             role: 'user',
             is_paid: false,
@@ -130,7 +98,6 @@ const ProfilePage: React.FC = () => {
           })
           .select()
           .single();
-
         updateData = insertData;
         updateError = insertError;
       } else {
@@ -139,31 +106,20 @@ const ProfilePage: React.FC = () => {
           .from("profiles")
           .update({
             social_media: formData.socialMedia || null,
-            street_address: formData.streetAddress,
-            apartment: formData.apartment || null,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            country: formData.country,
             is_profile_completed: true,
             updated_at: new Date().toISOString(),
           })
           .eq("id", user?.id)
           .select()
           .single();
-
         updateData = updatedData;
         updateError = updatedError;
       }
-
       if (updateError) throw updateError;
-
-      console.log("Profile saved:", updateData);
       if (isFirstLogin) {
         setActiveTab("submissions");
       }
     } catch (err) {
-      console.error("Error saving profile:", err);
       setError(err instanceof Error ? err.message : "Failed to save profile");
     } finally {
       setIsSaving(false);
@@ -227,6 +183,9 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // Helper: Only show patch/portal buttons for US users
+  const isUSUser = profile && profile.country && ["united states", "usa", "us"].includes(profile.country.trim().toLowerCase());
+
   if (!user) {
     navigate("/login");
     return null;
@@ -243,23 +202,6 @@ const ProfilePage: React.FC = () => {
                 <p className="text-gray-400 mt-1">{user.email}</p>
               </div>
               <div className="flex items-center space-x-4">
-                <div className="bg-gray-800 px-4 py-2 rounded-lg">
-                  <span className="text-sm font-medium text-white">
-                    {profile?.isProfileCompleted ? (
-                      <>
-                        Subscription Status:{" "}
-                        <span className="text-green-400">Active</span>
-                      </>
-                    ) : (
-                      <>
-                        Subscription Status:{" "}
-                        <span className="text-yellow-400">
-                          Pending Profile Completion
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </div>
                 {eliteBadge && (
                   <Badge variant="elite" className="text-sm">
                     {eliteBadge.name}
@@ -320,10 +262,28 @@ const ProfilePage: React.FC = () => {
             <div className="p-6">
               {activeTab === "submissions" && (
                 <div className="space-y-6">
-                  <SubscriptionWidget compact={true} />
-
+                  {/* Patch claim and Stripe portal buttons for US users only */}
+                  {isUSUser && (
+                    <div className="flex flex-col md:flex-row gap-4 mb-4">
+                      <a
+                        href="https://shop.thebattlebunker.com/checkouts/cn/Z2NwLXVzLWNlbnRyYWwxOjAxSlhCMDJBTkVaOENFOFpTQlM2N1RTM0tR?auto_redirect=false&cart_link_id=MbgRQA7E&discount=PULLUPCLUB100&edge_redirect=true&locale=en-US&skip_shop_pay=true"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#9b9b6f] bg-[#9b9b6f] text-black hover:bg-[#7a7a58] text-sm px-4 py-2 w-full md:w-auto"
+                      >
+                        Claim your patch (US only)
+                      </a>
+                      <a
+                        href="https://billing.stripe.com/p/login/test_dRmdR9dos2kmaQcdHGejK00"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#9b9b6f] bg-white/10 text-white hover:bg-white/20 text-sm px-4 py-2 w-full md:w-auto"
+                      >
+                        Manage Subscription
+                      </a>
+                    </div>
+                  )}
                   <SubmissionDashboard submissions={userSubmissions} />
-
                   <div className="p-6 border-t border-gray-800">
                     <PatchProgress />
                   </div>
@@ -344,14 +304,12 @@ const ProfilePage: React.FC = () => {
                       </p>
                     </div>
                   )}
-
                   {error && (
                     <div className="bg-red-900 border border-red-700 text-white p-4 rounded-lg flex items-center">
                       <AlertTriangle size={20} className="mr-2" />
                       <span>{error}</span>
                     </div>
                   )}
-
                   <form onSubmit={handleSavePersonalInfo} className="space-y-6">
                     <div className="bg-gray-950 p-6 rounded-lg">
                       <h3 className="text-lg font-medium text-white mb-4">
@@ -379,136 +337,10 @@ const ProfilePage: React.FC = () => {
                         </p>
                       </div>
                     </div>
-
-                    <div className="bg-gray-950 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-white mb-4">
-                        Shipping Address
-                      </h3>
-                      <div className="grid grid-cols-1 gap-6">
-                        <div>
-                          <label
-                            htmlFor="streetAddress"
-                            className="block text-sm font-medium text-gray-400"
-                          >
-                            Street Address{" "}
-                            <span className="text-[#9b9b6f]">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            id="streetAddress"
-                            name="streetAddress"
-                            value={formData.streetAddress}
-                            onChange={handleInputChange}
-                            required
-                            className="mt-1 block w-full rounded-md bg-gray-900 border border-gray-800 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <label
-                            htmlFor="apartment"
-                            className="block text-sm font-medium text-gray-400"
-                          >
-                            Apartment/Suite/Unit{" "}
-                            <span className="text-gray-600">(optional)</span>
-                          </label>
-                          <input
-                            type="text"
-                            id="apartment"
-                            name="apartment"
-                            value={formData.apartment}
-                            onChange={handleInputChange}
-                            className="mt-1 block w-full rounded-md bg-gray-900 border border-gray-800 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label
-                              htmlFor="city"
-                              className="block text-sm font-medium text-gray-400"
-                            >
-                              City <span className="text-[#9b9b6f]">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="city"
-                              name="city"
-                              value={formData.city}
-                              onChange={handleInputChange}
-                              required
-                              className="mt-1 block w-full rounded-md bg-gray-900 border border-gray-800 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            />
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor="state"
-                              className="block text-sm font-medium text-gray-400"
-                            >
-                              State/Province{" "}
-                              <span className="text-[#9b9b6f]">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="state"
-                              name="state"
-                              value={formData.state}
-                              onChange={handleInputChange}
-                              required
-                              className="mt-1 block w-full rounded-md bg-gray-900 border border-gray-800 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label
-                              htmlFor="zipCode"
-                              className="block text-sm font-medium text-gray-400"
-                            >
-                              ZIP/Postal Code{" "}
-                              <span className="text-[#9b9b6f]">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="zipCode"
-                              name="zipCode"
-                              value={formData.zipCode}
-                              onChange={handleInputChange}
-                              required
-                              className="mt-1 block w-full rounded-md bg-gray-900 border border-gray-800 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            />
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor="country"
-                              className="block text-sm font-medium text-gray-400"
-                            >
-                              Country <span className="text-[#9b9b6f]">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="country"
-                              name="country"
-                              value={formData.country}
-                              onChange={handleInputChange}
-                              required
-                              className="mt-1 block w-full rounded-md bg-gray-900 border border-gray-800 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <SubscriptionWidget />
-
                     <div className="bg-gray-950 p-6 rounded-lg">
                       <h3 className="text-lg font-medium text-white mb-4">
                         Account Settings
                       </h3>
-
                       <div className="space-y-4">
                         <div className="border-t border-gray-800 pt-4">
                           <h4 className="text-red-500 font-medium mb-2">
@@ -519,14 +351,12 @@ const ProfilePage: React.FC = () => {
                             recovered. All your data will be permanently
                             deleted.
                           </p>
-
                           {deactivateError && (
                             <div className="mb-4 p-4 bg-red-900/50 border border-red-700 rounded-lg flex items-center text-red-200">
                               <AlertTriangle size={20} className="mr-2" />
                               <span>{deactivateError}</span>
                             </div>
                           )}
-
                           {showDeactivateConfirm ? (
                             <div className="bg-gray-900 p-4 rounded-lg border border-red-500">
                               <p className="text-white mb-4">
@@ -563,7 +393,6 @@ const ProfilePage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-
                     <div className="flex justify-end">
                       <Button type="submit" isLoading={isSaving}>
                         Save Changes
@@ -573,7 +402,6 @@ const ProfilePage: React.FC = () => {
                 </div>
               )}
             </div>
-
             <div className="px-6 py-4 bg-gray-950 border-t border-gray-800">
               <div className="flex justify-end">
                 <Button
