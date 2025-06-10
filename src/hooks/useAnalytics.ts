@@ -1,59 +1,32 @@
-import { useCallback, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { AnalyticsEvent } from '../types';
+import { useCallback } from 'react';
+import { trackEvent as analyticsTrackEvent } from '../utils/analytics';
 
-// Declare global gtag function
-declare global {
-  interface Window {
-    gtag: (
-      command: string, 
-      targetId: string, 
-      params?: Record<string, any>
-    ) => void;
-    dataLayer: any[];
-  }
+interface AnalyticsEventParams {
+  category: string;
+  action: string;
+  label?: string;
+  value?: number;
 }
 
-/**
- * Custom hook for Google Analytics tracking
- * Automatically tracks page views when location changes
- * Provides a function to track custom events
- */
 const useAnalytics = () => {
-  const location = useLocation();
-
-  // Track page views
-  useEffect(() => {
-    const pageName = location.pathname;
-    trackPageView(pageName);
-  }, [location]);
-
-  // Track page view
-  const trackPageView = useCallback((pageName: string) => {
+  const logEvent = useCallback((params: AnalyticsEventParams) => {
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('config', import.meta.env.VITE_GA_MEASUREMENT_ID || '', {
-        page_path: pageName,
+      window.gtag('event', params.action, {
+        event_category: params.category,
+        event_label: params.label,
+        value: params.value
       });
-      console.log(`[Analytics] Page view: ${pageName}`);
     }
   }, []);
 
-  // Track custom events
-  const trackEvent = useCallback((event: AnalyticsEvent) => {
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', event.action, {
-        event_category: event.category,
-        event_label: event.label,
-        value: event.value,
-      });
-      console.log(`[Analytics] Event: ${event.action} (${event.category})`);
-    }
+  const trackEvent = useCallback((category: string, action: string, label?: string, value?: number) => {
+    analyticsTrackEvent({ category, action, label: label || category, value });
   }, []);
 
   return {
-    trackPageView,
-    trackEvent,
+    logEvent,
+    trackEvent
   };
 };
 
-export default useAnalytics;
+export default useAnalytics; 

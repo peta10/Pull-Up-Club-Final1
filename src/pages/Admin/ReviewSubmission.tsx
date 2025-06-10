@@ -1,156 +1,77 @@
-import React, { useState } from "react";
-import { Submission } from "../../types/index.ts";
-import { Button } from "../../components/ui/Button";
-import { Badge } from "../../components/ui/Badge";
-import { getStatusInfo, getBadgesForSubmission } from "../../data/mockData";
-import { Check, X, ExternalLink } from "lucide-react";
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { getStatusInfo } from '../../data/mockData';
+import { Button } from '../../components/ui/Button';
 
-interface ReviewSubmissionProps {
-  submission: Submission;
-  onApprove: (id: string, actualCount: number) => void;
-  onReject: (id: string) => void;
+interface Submission {
+  id: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  videoUrl: string;
+  pullUpCount: number;
+  notes?: string;
 }
 
-const ReviewSubmission: React.FC<ReviewSubmissionProps> = ({
-  submission,
-  onApprove,
-  onReject,
-}) => {
-  const [actualCount, setActualCount] = useState(submission.pullUpCount);
-  const { text, color } = getStatusInfo(submission.status);
-  const badges = getBadgesForSubmission(submission);
+const ReviewSubmission: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [submission, setSubmission] = React.useState<Submission | null>(null);
+
+  React.useEffect(() => {
+    // Fetch submission details
+    // This is a placeholder - implement actual fetch logic
+    setSubmission({
+      id: id || '',
+      status: 'Pending',
+      videoUrl: 'https://example.com/video',
+      pullUpCount: 10
+    });
+  }, [id]);
+
+  if (!submission) {
+    return <div>Loading...</div>;
+  }
+
+  const { label, color, description } = getStatusInfo(submission.status);
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg mb-6">
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-white text-xl font-bold">
-              {submission.fullName}
-            </h3>
-            <p className="text-gray-400">
-              Submitted on{" "}
-              {new Date(submission.submissionDate).toLocaleDateString()}
-            </p>
-          </div>
-          <div
-            className={`${color} text-white text-sm font-medium px-3 py-1 rounded-full`}
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Review Submission #{submission.id}</h1>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex items-center mb-4">
+          <div className={`w-3 h-3 rounded-full ${color} mr-2`} />
+          <span className="font-medium">{label}</span>
+        </div>
+        
+        <p className="text-gray-600 mb-4">{description}</p>
+        
+        <div className="mb-4">
+          <h3 className="font-medium mb-2">Video Submission</h3>
+          <a
+            href={submission.videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
           >
-            {text}
-          </div>
+            View Video
+          </a>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="text-gray-300 font-medium mb-2">
-              Submission Details
-            </h4>
-            <div className="bg-gray-700 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Email:</span>
-                <span className="text-white">{submission.email}</span>
-              </div>
-
-              {submission.phone && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Phone:</span>
-                  <span className="text-white">{submission.phone}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between">
-                <span className="text-gray-400">Age:</span>
-                <span className="text-white">{submission.age}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-400">Gender:</span>
-                <span className="text-white">{submission.gender}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-400">Club:</span>
-                <span className="text-white">
-                  {submission.clubAffiliation || "None"}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-400">Claimed Pull-Up Count:</span>
-                <span className="text-white font-bold">
-                  {submission.pullUpCount}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-gray-300 font-medium mb-2">Video</h4>
-            <div className="bg-gray-700 rounded-lg p-4">
-              <div className="mb-4 aspect-video bg-gray-800 flex items-center justify-center">
-                <a
-                  href={submission.videoLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center text-red-400 hover:text-red-300"
-                >
-                  <ExternalLink size={40} />
-                  <span className="mt-2">View Video</span>
-                </a>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-2">
-                <p className="text-gray-400 text-sm">Eligible badges:</p>
-                {badges.length > 0 ? (
-                  badges.map((badge) => (
-                    <Badge
-                      key={badge.id}
-                      variant={badge.id === "elite" ? "elite" : "default"}
-                      className={
-                        badge.id === "elite" ? "" : "bg-gray-600 text-white"
-                      }
-                    >
-                      {badge.name}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-gray-500 text-sm">None</span>
-                )}
-              </div>
-            </div>
-          </div>
+        
+        <div className="mb-4">
+          <h3 className="font-medium mb-2">Pull-up Count</h3>
+          <p>{submission.pullUpCount}</p>
         </div>
-
-        {submission.status === "Pending" && (
-          <div className="flex justify-end space-x-4 mt-6 items-center">
-            <div className="flex items-center space-x-2">
-              <label htmlFor="actualCount" className="text-gray-300">
-                Actual Pull-Up Count:
-              </label>
-              <input
-                type="number"
-                id="actualCount"
-                value={actualCount}
-                onChange={(e) => setActualCount(Number(e.target.value))}
-                min="0"
-                className="w-20 px-2 py-1 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-              />
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => onReject(submission.id)}
-              className="flex items-center"
-            >
-              <X size={18} className="mr-2" />
-              Reject
-            </Button>
-            <Button
-              onClick={() => onApprove(submission.id, actualCount)}
-              className="flex items-center"
-            >
-              <Check size={18} className="mr-2" />
-              Approve
-            </Button>
+        
+        {submission.notes && (
+          <div className="mb-4">
+            <h3 className="font-medium mb-2">Notes</h3>
+            <p className="text-gray-600">{submission.notes}</p>
+          </div>
+        )}
+        
+        {submission.status === 'Pending' && (
+          <div className="flex gap-2">
+            <Button variant="primary">Approve</Button>
+            <Button variant="danger">Reject</Button>
           </div>
         )}
       </div>

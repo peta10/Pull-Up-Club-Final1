@@ -56,8 +56,8 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
   const lastSubmissionDate =
     lastPendingSubmission || lastApprovedSubmission
       ? new Date(
-          lastPendingSubmission?.submissionDate ||
-            lastApprovedSubmission?.submissionDate ||
+          lastPendingSubmission?.submittedAt ||
+            lastApprovedSubmission?.submittedAt ||
             ""
         )
       : null;
@@ -97,20 +97,20 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
           userId: submission.user_id,
           fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
           email: submission.email || 'unknown@example.com',
+          phone: submission.phone ?? undefined,
+          age: submission.age ?? 0,
+          gender: (submission.gender as "Male" | "Female" | "Other") || "Other",
+          region: submission.region || 'Unknown Region',
+          clubAffiliation: submission.club_affiliation || 'None',
           pullUpCount: submission.pull_up_count,
           actualPullUpCount: submission.actual_pull_up_count ?? undefined,
-          videoLink: submission.video_url,
-          status:
-            (submission.status.charAt(0).toUpperCase() +
-            submission.status.slice(1)) as "Pending" | "Approved" | "Rejected",
-          submissionDate: submission.created_at,
+          videoUrl: submission.video_url,
+          status: (submission.status.charAt(0).toUpperCase() + submission.status.slice(1)) as "Pending" | "Approved" | "Rejected",
+          submittedAt: submission.created_at,
+          approvedAt: submission.approved_at || undefined,
           notes: submission.notes ?? undefined,
-          gender: (submission.gender as "Male" | "Female" | "Other") || "Other",
-          clubAffiliation: submission.club_affiliation || 'None',
-          region: submission.region || 'Unknown Region',
           featured: submission.status === 'approved',
-          age: submission.age ?? 0,
-          phone: submission.phone ?? undefined,
+          socialHandle: submission.social_handle
         }));
 
         setSubmissions(formattedSubmissions);
@@ -192,7 +192,7 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
             <p className="text-sm opacity-90 max-w-md">
               Your submission from{" "}
               {new Date(
-                lastPendingSubmission.submissionDate
+                lastPendingSubmission.submittedAt
               ).toLocaleDateString()}
               is currently being reviewed. We'll notify you once it's approved
               or if additional information is needed.
@@ -232,7 +232,7 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
           </h2>
           <div className="space-y-4">
             {submissions.map((submission) => {
-              const badges = getBadgesForSubmission(submission);
+              const badges = getBadgesForSubmission(submission.actualPullUpCount ?? submission.pullUpCount);
               const actualCount =
                 submission.actualPullUpCount ?? submission.pullUpCount;
 
@@ -243,7 +243,7 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
                       <h3 className="text-lg font-medium text-white">
                         Submission from{" "}
                         {new Date(
-                          submission.submissionDate
+                          submission.submittedAt
                         ).toLocaleDateString()}
                       </h3>
                       <p className="text-gray-400 mt-1">
@@ -262,7 +262,7 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
                       </p>
                     </div>
                     <a
-                      href={submission.videoLink}
+                      href={submission.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#9b9b6f] hover:text-[#7a7a58] flex items-center"

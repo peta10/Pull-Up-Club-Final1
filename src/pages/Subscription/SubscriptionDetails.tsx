@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { getActiveSubscription } from '../../lib/stripe';
-import { products } from '../../lib/stripe-config';
+import { products } from '../../lib/stripe-config.ts';
 import { Button } from '../../components/ui/Button';
 import { Calendar, CreditCard, AlertTriangle } from 'lucide-react';
 import ManageSubscription from './SubscriptionManager';

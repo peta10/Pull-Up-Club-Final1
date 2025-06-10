@@ -67,7 +67,7 @@ const ProfilePage: React.FC = () => {
   }, null);
 
   const userBadges = highestSubmission
-    ? getBadgesForSubmission(highestSubmission)
+    ? getBadgesForSubmission(highestSubmission.actualPullUpCount ?? highestSubmission.pullUpCount)
     : [];
   const eliteBadge = userBadges.find((badge) => badge.id === "elite");
 

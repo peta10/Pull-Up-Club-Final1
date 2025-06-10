@@ -1,71 +1,147 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs';
 import AdminStats from './AdminStats';
 import SubmissionReview from './SubmissionReview';
 import UserManagement from './UserManagement';
-import useAdmin from '../../hooks/useAdmin';
 import { Alert } from '../ui/Alert';
+import { LoadingState } from '../ui/LoadingState';
+import { Submission } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 const AdminDashboard: React.FC = () => {
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [activeTab, setActiveTab] = useState('submissions');
-  const { isAdmin, isLoading, error, stats, refreshStats } = useAdmin();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<any>(null);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9b9b6f]"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
+
+  const getSubmissions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('*, profiles(email, full_name, age, gender, city, organisation)')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { submissions: data };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error fetching submissions');
+      return null;
+    }
+  };
+
+  const fetchSubmissions = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getSubmissions();
+      if (data) {
+        // Transform the data to match the Submission interface
+        const transformedSubmissions: Submission[] = data.submissions.map((submission: any) => ({
+          id: submission.id,
+          userId: submission.user_id,
+          fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
+          email: submission.email || 'unknown@example.com',
+          phone: submission.phone,
+          age: submission.age || 0,
+          gender: (submission.gender as 'Male' | 'Female' | 'Other') || 'Other',
+          region: submission.region || 'Unknown Region',
+          clubAffiliation: submission.club_affiliation || 'None',
+          pullUpCount: submission.pull_up_count,
+          actualPullUpCount: submission.actual_pull_up_count || undefined,
+          videoUrl: submission.video_url,
+          status: submission.status.charAt(0).toUpperCase() + submission.status.slice(1) as 'Pending' | 'Approved' | 'Rejected',
+          submittedAt: submission.created_at,
+          approvedAt: submission.approved_at || undefined,
+          notes: submission.notes || undefined,
+          featured: submission.status === 'approved',
+          socialHandle: submission.social_handle
+        }));
+        setSubmissions(transformedSubmissions);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error fetching submissions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const approveSubmission = async (submissionId: string, actualCount: number) => {
+    try {
+      const { error } = await supabase.functions.invoke('admin-submissions', {
+        body: {
+          action: 'approve',
+          submissionId,
+          actualCount
+        }
+      });
+
+      if (error) throw error;
+      await fetchSubmissions();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error approving submission');
+    }
+  };
+
+  const rejectSubmission = async (submissionId: string, reason: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('admin-submissions', {
+        body: {
+          action: 'reject',
+          submissionId,
+          reason
+        }
+      });
+
+      if (error) throw error;
+      await fetchSubmissions();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error rejecting submission');
+    }
+  };
+
+  const refreshStats = async () => {
+    // Implement stats refresh logic here
+  };
+
+  if (isLoading) return <LoadingState message="Loading dashboard..." />;
 
   if (error) {
     return (
-      <Alert variant="error" title="Error" description={error} />
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <Alert 
+      <Alert
         variant="error"
-        title="Access Denied" 
-        description="You don't have permission to access the admin dashboard." 
+        title="Error"
+        description={error}
       />
     );
   }
 
   return (
-    <div className="space-y-6">
-      <AdminStats stats={stats} onRefresh={refreshStats} />
-      
+    <div className="container mx-auto px-4 py-8">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 w-full mb-6">
-          <TabsTrigger value="submissions" className="text-sm">
-            Submissions {stats?.pendingSubmissions ? `(${stats.pendingSubmissions})` : ''}
-          </TabsTrigger>
-          <TabsTrigger value="users" className="text-sm">
-            Users
-          </TabsTrigger>
-          <TabsTrigger value="badges" className="text-sm">
-            Badges
-          </TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="submissions">Submissions</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="stats">Stats</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="submissions" className="space-y-6">
-          <SubmissionReview />
+
+        <TabsContent value="submissions">
+          <SubmissionReview
+            submission={submissions[0]} // Pass the first submission for now
+            onApprove={approveSubmission}
+            onReject={rejectSubmission}
+          />
         </TabsContent>
-        
-        <TabsContent value="users" className="space-y-6">
+
+        <TabsContent value="users">
           <UserManagement />
         </TabsContent>
-        
-        <TabsContent value="badges" className="space-y-6">
-          <div className="p-6 bg-gray-800 rounded-lg">
-            <h2 className="text-xl font-bold text-white mb-4">Badge Management</h2>
-            <p className="text-gray-400">
-              Badge management functionality is under development.
-            </p>
-          </div>
+
+        <TabsContent value="stats">
+          <AdminStats stats={stats} onRefresh={refreshStats} />
         </TabsContent>
       </Tabs>
     </div>

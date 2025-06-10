@@ -1,22 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import Layout from "../../components/Layout/Layout";
 import LeaderboardFilters from "./LeaderboardFilters";
 import LeaderboardTable from "./LeaderboardTable";
 import BadgeLegend from "./BadgeLegend";
 import { mockSubmissions } from "../../data/mockData";
-import { LeaderboardFilters as FiltersType } from "../../types";
+import { LeaderboardFilters as FiltersType, Submission } from "../../types";
+import { supabase } from '../../lib/supabase';
+import { LoadingState, ErrorState } from '../../components/ui/LoadingState';
 
 const LeaderboardPage: React.FC = () => {
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FiltersType>({});
 
-  // Only show approved submissions
-  const approvedSubmissions = mockSubmissions.filter(
-    (submission) => submission.status === "Approved" && submission.featured
-  );
+  useEffect(() => {
+    fetchLeaderboardData();
+  }, []);
+
+  const fetchLeaderboardData = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('*, profiles(email, full_name, age, gender, city, organisation)')
+        .eq('status', 'approved')
+        .order('actual_pull_up_count', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform the data to match the Submission interface
+      const transformedSubmissions: Submission[] = (data || []).map(record => ({
+        id: record.id,
+        userId: record.user_id,
+        fullName: record.profiles?.full_name || 'Unknown User',
+        email: record.profiles?.email || 'unknown@example.com',
+        phone: record.profiles?.phone,
+        age: record.profiles?.age || 0,
+        gender: (record.profiles?.gender as 'Male' | 'Female' | 'Other') || 'Other',
+        region: record.profiles?.city || 'Unknown Region',
+        clubAffiliation: record.profiles?.organisation || 'None',
+        pullUpCount: record.pull_up_count,
+        actualPullUpCount: record.actual_pull_up_count || undefined,
+        videoUrl: record.video_url,
+        status: 'Approved',
+        submittedAt: record.created_at,
+        approvedAt: record.approved_at || undefined,
+        notes: record.notes || undefined,
+        featured: true,
+        socialHandle: record.social_handle
+      }));
+
+      setSubmissions(transformedSubmissions);
+    } catch (err) {
+      console.error('Error fetching leaderboard data:', err);
+      setError('Failed to load leaderboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFilterChange = (newFilters: FiltersType) => {
     setFilters(newFilters);
   };
+
+  if (loading) return <LoadingState message="Loading leaderboard..." />;
+  if (error) return <ErrorState message={error} />;
 
   return (
     <Layout>
@@ -38,7 +87,7 @@ const LeaderboardPage: React.FC = () => {
           <BadgeLegend />
 
           <LeaderboardTable
-            submissions={approvedSubmissions}
+            submissions={submissions}
             filters={filters}
           />
         </div>

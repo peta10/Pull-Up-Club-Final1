@@ -1,88 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getActiveSubscription } from '../../lib/stripe';
-import { products } from '../../stripe-config';
+import { useNavigate } from 'react-router-dom';
+import { products } from '../../lib/stripe-config';
+import { Button } from '../../components/ui/Button';
 
-const SubscriptionStatus: React.FC = () => {
+interface SubscriptionStatusProps {
+  isPaid: boolean;
+  onManageClick: () => void;
+}
+
+const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ isPaid, onManageClick }) => {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    async function fetchSubscription() {
-      if (user) {
-        try {
-          const sub = await getActiveSubscription();
-          setSubscription(sub);
-        } catch (error) {
-          console.error('Error fetching subscription:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    fetchSubscription();
-  }, [user]);
-
-  if (isLoading) {
-    return (
-      <div className="bg-gray-950 p-6 rounded-lg">
-        <h3 className="text-lg font-medium text-white mb-4">Subscription Status</h3>
-        <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-800 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-800 rounded w-1/2"></div>
-          <div className="h-4 bg-gray-800 rounded w-2/3"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!subscription) {
-    return (
-      <div className="bg-gray-950 p-6 rounded-lg">
-        <h3 className="text-lg font-medium text-white mb-4">Subscription Status</h3>
-        <p className="text-red-400">No active subscription found</p>
-      </div>
-    );
-  }
-
-  const isAnnual = subscription.price_id === products.pullUpClubAnnual.priceId;
-  const product = isAnnual ? products.pullUpClubAnnual : products.pullUpClub;
+  if (!user) return null;
 
   return (
-    <div className="bg-gray-950 p-6 rounded-lg">
-      <h3 className="text-lg font-medium text-white mb-4">Subscription Status</h3>
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <span className="text-gray-400">Plan:</span>
-          <span className="text-white font-medium">{product.name}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-400">Status:</span>
-          <span className="text-green-400 font-medium">
-            {subscription.subscription_status === 'active' ? 'Active' : subscription.subscription_status}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-400">Billing Period:</span>
-          <span className="text-white">{isAnnual ? 'Yearly' : 'Monthly'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-400">Next Payment:</span>
-          <span className="text-white">
-            {new Date(subscription.current_period_end * 1000).toLocaleDateString()}
-          </span>
-        </div>
-        {subscription.payment_method_brand && (
-          <div className="flex justify-between">
-            <span className="text-gray-400">Payment Method:</span>
-            <span className="text-white">
-              {subscription.payment_method_brand.toUpperCase()} •••• {subscription.payment_method_last4}
-            </span>
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-2xl font-bold mb-4">Subscription Status</h2>
+      
+      {isPaid ? (
+        <>
+          <div className="flex items-center mb-4">
+            <div className="w-3 h-3 bg-green-500 rounded-full mr-2" />
+            <p className="text-lg">Active Subscription</p>
           </div>
-        )}
-      </div>
+          <p className="text-gray-600 mb-4">
+            You're subscribed to Pull-Up Club at {products.pullUpClub.name} ({(products.pullUpClub.price).toFixed(2)} USD/month)
+          </p>
+          <Button onClick={onManageClick} variant="outline">
+            Manage Subscription
+          </Button>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center mb-4">
+            <div className="w-3 h-3 bg-red-500 rounded-full mr-2" />
+            <p className="text-lg">No Active Subscription</p>
+          </div>
+          <p className="text-gray-600 mb-4">
+            Subscribe to access all features and submit your pull-up videos
+          </p>
+          <Button onClick={() => navigate('/subscription')}>
+            Subscribe Now
+          </Button>
+        </>
+      )}
     </div>
   );
 };

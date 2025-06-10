@@ -1,162 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { supabase } from './supabase';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 const DebugConnection: React.FC = () => {
-  const [connectionStatus, setConnectionStatus] = useState<
-    'checking' | 'connected' | 'error'
-  >('checking');
-  const [authStatus, setAuthStatus] = useState<
-    'checking' | 'authenticated' | 'unauthenticated' | 'error'
-  >('checking');
-  const [adminStatus, setAdminStatus] = useState<
-    'checking' | 'admin' | 'not-admin' | 'error'
-  >('checking');
-  const [errorDetails, setErrorDetails] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [status, setStatus] = React.useState<'connected' | 'disconnected' | 'checking'>('checking');
+  const [lastChecked, setLastChecked] = React.useState<Date | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
-    // Check database connection
+  React.useEffect(() => {
     const checkConnection = async () => {
       try {
-        // Check if Supabase is accessible
-        const { error } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        
-        if (error) {
-          setConnectionStatus('error');
-          return;
-        }
-        
-        setConnectionStatus('connected');
+        const { error } = await supabase.from('profiles').select('id').limit(1);
+        if (error) throw error;
+        setStatus('connected');
+        setError(null);
       } catch (err) {
-        setConnectionStatus('error');
+        console.error('Database connection error:', err);
+        setStatus('disconnected');
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      } finally {
+        setLastChecked(new Date());
       }
     };
-    
-    // Check auth status
-    const checkAuth = async () => {
-      try {
-        console.log('Checking authentication status...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (session) {
-          setAuthStatus('authenticated');
-          setUserId(session.user.id);
-          
-          // Only check admin status if authenticated
-          await checkAdminStatus();
-        } else {
-          setAuthStatus('unauthenticated');
-          setAdminStatus('not-admin'); // Not authenticated means not admin
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-        setAuthStatus('error');
-        setErrorDetails(error instanceof Error ? error.message : 'Unknown auth error');
-      }
-    };
-    
-    // Check admin status
-    const checkAdminStatus = async (): Promise<boolean> => {
-      try {
-        console.log('Checking admin status...');
-        
-        // Use a direct Edge Function call to bypass RLS issues
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-auth-status`, {
-          headers: {
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Admin check failed: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.user?.isAdmin) {
-          setAdminStatus('admin');
-          return true;
-        } else {
-          setAdminStatus('not-admin');
-          return false;
-        }
-      } catch (error) {
-        console.error('Admin status check error:', error);
-        setAdminStatus('error');
-        setErrorDetails(error instanceof Error ? error.message : 'Unknown admin check error');
-        return false;
-      }
-    };
-    
+
+    // Check connection immediately and then every 30 seconds
     checkConnection();
-    checkAuth();
+    const interval = setInterval(checkConnection, 30000);
+
+    return () => clearInterval(interval);
   }, []);
-  
-  if (connectionStatus === 'checking' || authStatus === 'checking' || adminStatus === 'checking') {
-    return (
-      <div className="fixed bottom-4 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50 max-w-md">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#9b9b6f] mr-3"></div>
-          <p className="text-white">Checking connection status...</p>
-        </div>
-      </div>
-    );
+
+  if (status === 'checking') {
+    return null;
   }
-  
-  if (connectionStatus === 'error' || authStatus === 'error' || adminStatus === 'error') {
-    return (
-      <div className="fixed bottom-4 right-4 bg-red-900/80 p-4 rounded-lg shadow-lg z-50 max-w-md">
+
+  if (status === 'connected') {
+    return null;
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 max-w-md">
+      <div className="bg-red-900/30 border border-red-800 rounded-lg p-4 text-sm">
         <div className="flex items-start">
-          <AlertTriangle className="h-6 w-6 text-red-400 mr-3 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
           <div>
-            <h3 className="text-white font-medium">Connection Error</h3>
-            <p className="text-red-200 text-sm mt-1">
-              {errorDetails || 'An error occurred connecting to the database.'}
+            <h3 className="font-medium text-red-300">Connection Error</h3>
+            <p className="text-red-200 mt-1">
+              {error || 'Unable to connect to the database. Some features may not work correctly.'}
             </p>
-            <div className="mt-2 text-xs text-red-200">
-              <p>Connection: {connectionStatus}</p>
-              <p>Auth: {authStatus}</p>
-              <p>Admin: {adminStatus}</p>
-              {userId && <p>User ID: {userId}</p>}
-            </div>
-            <button 
-              className="mt-2 px-3 py-1 bg-red-700 text-white text-sm rounded-md hover:bg-red-600"
-              onClick={() => window.location.reload()}
-            >
-              Refresh Page
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (import.meta.env.DEV) {
-    return (
-      <div className="fixed bottom-4 right-4 bg-green-900/50 p-3 rounded-lg shadow-lg z-50 text-sm border border-green-800">
-        <div className="flex items-center">
-          <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-          <div>
-            <p className="text-green-200">
-              Connected to Supabase {authStatus === 'authenticated' ? '(Authenticated)' : '(Not logged in)'}
-            </p>
-            {adminStatus === 'admin' && (
-              <p className="text-green-300 text-xs">Admin privileges detected</p>
+            {lastChecked && (
+              <p className="text-red-400 text-xs mt-2">
+                Last checked: {lastChecked.toLocaleTimeString()}
+              </p>
             )}
           </div>
         </div>
       </div>
-    );
-  }
-  
-  return null; // In production, don't show anything when connected properly
+    </div>
+  );
 };
 
-export default DebugConnection;
+export default DebugConnection; 

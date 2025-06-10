@@ -99,7 +99,7 @@ const defaultSettings: ProfileSettings = {
 // Track subscription state explicitly so unpaid users don't get stuck on a spinner
 type SubscriptionState = 'loading' | 'active' | 'unpaid';
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -110,6 +110,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>('loading');
   const navigate = useNavigate();
   const location = useLocation();
+
+  // TEMPORARY: Force clear loading after 5 seconds
+  useEffect(() => {
+    const forceTimeout = setTimeout(() => {
+      console.log("[DEBUG] Forcing loading false");
+      setIsLoading(false);
+    }, 5000);
+    return () => clearTimeout(forceTimeout);
+  }, []);
+
+  // Safety net: Force clear loading after 10 seconds
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn("[AuthContext] Forcing loading to false after timeout");
+        setIsLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
 
   const handlePostAuthSubscription = async (
     authedUser: User,
@@ -328,67 +349,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const handleAuthError = async (error: any) => {
-    console.error('[AuthContext] Auth error:', error);
-    
-    if (error.message.includes('Invalid Refresh Token')) {
-      // Clear invalid session
-      await supabase.auth.signOut();
-      
-      // Clear local storage
-      localStorage.clear();
-      
-      // Redirect to login
-      navigate('/login');
-    }
-  };
-
-  const recoverSession = async () => {
-    try {
-      // First try to get the current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) throw sessionError;
-      
-      if (session) {
-        console.log('[AuthContext] Active session found:', session.user.email);
-        return session;
-      }
-      
-      // If no session, don't try to refresh as it will cause an AuthSessionMissingError
-      console.log('[AuthContext] No active session found, skipping refresh attempt');
-      return null;
-    } catch (error) {
-      console.error('[AuthContext] Session recovery failed:', error);
-      // Clear any potentially corrupted session data
-      await supabase.auth.signOut();
-      localStorage.clear();
-      return null;
-    }
-  };
-
-  const checkSessionPersistence = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.log('[AuthContext] No active session found');
-        return false;
-      }
-
-      // Verify session expiry
-      if (new Date(session.expires_at!) < new Date()) {
-        console.log('[AuthContext] Session expired, attempting refresh...');
-        const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
-        return !!refreshedSession;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('[AuthContext] Error checking session persistence:', error);
-      return false;
-    }
-  };
-
   /**
    * Determine whether the current user has an active Stripe subscription.
    * Treat any failure or missing subscription as "unpaid" so the UI can continue.
@@ -410,124 +370,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const initAuth = async () => {
       console.log("[AuthContext] initAuth started.");
       setIsLoading(true);
+      
       try {
-        // First try to recover any existing session
-        const recoveredSession = await recoverSession();
-        
-        if (recoveredSession?.user) {
-          console.log("[AuthContext] Recovered session for user:", recoveredSession.user.email);
-          const currentUser = {
-            id: recoveredSession.user.id,
-            email: recoveredSession.user.email!,
-          };
-          setUser(currentUser);
-          await fetchProfile(recoveredSession.user.id);
-          await processPendingSubscription(currentUser);
-
-          const initialSubState = await evaluateSubscription();
-          if (initialSubState === 'unpaid' && location.pathname !== '/subscribe') {
-            navigate('/subscribe', { replace: true });
-          }
-        } else {
-          console.log("[AuthContext] No active session to recover.");
-        }
-
-        // Set up auth state change listener
+        // Set up auth state change listener FIRST
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event: AuthChangeEvent, session: Session | null) => {
             console.log(
               `[AuthContext] onAuthStateChange event: ${event}, User: ${session?.user?.email}`,
             );
 
-            // Ignore INITIAL_SESSION if we've already finished the first recovery to avoid double loading flicker
-            if (event === 'INITIAL_SESSION' && !isLoading) return;
-
-            setIsLoading(true);
-
-            try {
-              if (session?.user) {
-                const currentUserFromSession = {
-                  id: session.user.id,
-                  email: session.user.email!,
-                };
-                setUser(currentUserFromSession);
-                await fetchProfile(session.user.id);
-
-                // Always evaluate subscription so we can render pricing if needed
-                const subState = await evaluateSubscription();
-
-                // After profile fetch, handle admin redirect
-                if (isAdmin) {
-                  if (event === 'SIGNED_IN') navigate('/admin-dashboard');
-                }
-
-                const { data: profileData } = await supabase
-                  .from('profiles')
-                  .select('is_profile_completed')
-                  .eq('id', session.user.id)
-                  .single();
-
-                const isProfileActuallyCompleted = profileData?.is_profile_completed ?? false;
-
-                if (event === 'SIGNED_IN') {
-                  if (!isProfileActuallyCompleted) {
-                    localStorage.removeItem('pendingSubscriptionPlan');
-                    navigate('/subscribe', { replace: true });
-                  } else {
-                    await processPendingSubscription(currentUserFromSession);
-                    // If profile is complete but subscription unpaid, redirect
-                    if (subState === 'unpaid' && location.pathname !== '/subscribe') {
-                      navigate('/subscribe', { replace: true });
-                    }
-                  }
-                }
-              } else if (event === 'SIGNED_OUT') {
-                setUser(null);
-                setProfile(null);
-                setIsFirstLogin(false);
-                setIsAdmin(false);
-                localStorage.removeItem('pendingSubscriptionPlan');
-              } else {
-                if (!session?.user) {
-                  setUser(null);
-                  setProfile(null);
-                  setIsFirstLogin(false);
-                  setIsAdmin(false);
-                }
+            if (session?.user) {
+              const currentUser = {
+                id: session.user.id,
+                email: session.user.email!,
+              };
+              setUser(currentUser);
+              await fetchProfile(session.user.id);
+              
+              // Handle subscription logic here
+              await evaluateSubscription();
+              
+              // Handle post-auth flows
+              if (event === 'SIGNED_IN') {
+                await processPendingSubscription(currentUser);
               }
-            } catch (err) {
-              console.error('[AuthContext] Error inside onAuthStateChange:', err);
-            } finally {
-              setIsLoading(false);
-              if (subscriptionState === 'loading') {
-                setSubscriptionState('unpaid');
-              }
+            } else {
+              setUser(null);
+              setProfile(null);
+              setIsFirstLogin(false);
+              setIsAdmin(false);
             }
-          },
+            
+            setIsLoading(false); // Always clear loading here
+          }
         );
 
-        // Verify session persistence
-        const hasPersistedSession = await checkSessionPersistence();
-        if (!hasPersistedSession) {
-          console.log('[AuthContext] No valid persisted session found');
+        // Get initial session WITHOUT manual recovery
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // If no session, just clear loading
+        if (!session) {
+          setIsLoading(false);
         }
 
         return () => {
-          console.log("[AuthContext] Unsubscribing from onAuthStateChange.");
           subscription.unsubscribe();
         };
       } catch (error) {
         console.error("[AuthContext] Error in initAuth:", error);
-        await handleAuthError(error);
-      } finally {
-        console.log("[AuthContext] initAuth finished.");
-        setIsLoading(false);
+        setIsLoading(false); // Always clear loading on error
       }
     };
 
     initAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Remove all dependencies to prevent re-runs
 
   const signIn = async (email: string, password: string) => {
     console.log("[AuthContext] signIn called for:", email);
@@ -729,6 +625,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     </AuthContext.Provider>
   );
 };
+
+export { AuthProvider };
 
 export function useAuth() {
   const context = useContext(AuthContext);

@@ -1,4 +1,4 @@
-import { products } from "./stripe-config";
+import { products, productIds } from "./stripe-config.ts";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { loadStripe } from '@stripe/stripe-js';
@@ -67,8 +67,8 @@ export async function createCheckoutSession(
 
     // Determine which product to use - get the exact price ID from our config
     const priceId = plan === 'monthly' 
-      ? products.pullUpClub.priceId 
-      : products.pullUpClubAnnual.priceId;
+      ? productIds.monthly
+      : productIds.annual;
 
     console.log(`Creating checkout session with priceId: ${priceId}, plan: ${plan}`);
     

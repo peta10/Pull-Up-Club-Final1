@@ -1,105 +1,46 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { SubmitVideoParams } from '../types';
 
-interface SubmissionData {
-  pullUpCount: number;
-  videoUrl: string;
-  platform?: 'youtube' | 'instagram' | 'tiktok' | 'other';
-  gender?: string;
-  region?: string;
-  clubAffiliation?: string;
+interface SubmitVideoResult {
+  success: boolean;
+  error?: string;
 }
 
-interface UseVideoSubmissionReturn {
-  isSubmitting: boolean;
-  submitVideo: (data: SubmissionData) => Promise<{ success: boolean; error?: string }>;
-  validateVideoUrl: (url: string) => { isValid: boolean; platform: string | null };
-  error: string | null;
-}
-
-export default function useVideoSubmission(): UseVideoSubmissionReturn {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const useVideoSubmission = () => {
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
 
-  const validateVideoUrl = (url: string): { isValid: boolean; platform: string | null } => {
+  const submitVideo = async ({ videoFile, pullUpCount, userId }: SubmitVideoParams): Promise<SubmitVideoResult> => {
     try {
-      // Ensure URL has a protocol
-      let videoUrl = url;
-      if (!url.match(/^https?:\/\//)) {
-        videoUrl = `https://${url}`;
-      }
+      setUploading(true);
+      setError(null);
 
-      const parsedUrl = new URL(videoUrl);
-      
-      // YouTube URL patterns
-      if (parsedUrl.hostname.includes('youtube.com') || parsedUrl.hostname.includes('youtu.be')) {
-        return { isValid: true, platform: 'youtube' };
-      }
-      
-      // TikTok URL pattern
-      if (parsedUrl.hostname.includes('tiktok.com')) {
-        return { isValid: true, platform: 'tiktok' };
-      }
+      // Upload video to Supabase Storage
+      const fileExt = videoFile.name.split('.').pop();
+      const filePath = `${userId}/${Date.now()}.${fileExt}`;
 
-      // Instagram URL pattern
-      if (parsedUrl.hostname.includes('instagram.com')) {
-        return { isValid: true, platform: 'instagram' };
-      }
+      const { error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(filePath, videoFile);
 
-      // If it's a valid URL but not a recognized platform
-      return { isValid: true, platform: 'other' };
-      
-    } catch (e) {
-      // Invalid URL
-      return { isValid: false, platform: null };
-    }
-  };
+      if (uploadError) throw uploadError;
 
-  const submitVideo = async (data: SubmissionData): Promise<{ success: boolean; error?: string }> => {
-    if (!user) {
-      return { success: false, error: 'You must be logged in to submit a video' };
-    }
+      // Get the public URL for the uploaded video
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(filePath);
 
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      // Validate URL
-      const { isValid, platform } = validateVideoUrl(data.videoUrl);
-      
-      if (!isValid) {
-        throw new Error('Please enter a valid video URL');
-      }
-
-      // Submit to database
-      const { error: submissionError } = await supabase.from('submissions').insert([
-        {
-          user_id: user.id,
-          pull_up_count: data.pullUpCount,
-          video_url: data.videoUrl,
-          platform: platform || 'other',
-          gender: data.gender,
-          region: data.region,
-          club_affiliation: data.clubAffiliation,
-          status: 'pending'
+      // Create submission record
+      const { error: submissionError } = await supabase.functions.invoke('video-submission', {
+        body: {
+          videoUrl: publicUrl,
+          pullUpCount,
+          userId
         }
-      ]);
+      });
 
-      if (submissionError) {
-        // Check for cooldown error
-        if (submissionError.message.includes('wait 30 days')) {
-          throw new Error('You must wait 30 days between submissions');
-        }
-        
-        // Check for pending submissions
-        if (submissionError.code === '23505') { // Unique constraint violation
-          throw new Error('You already have a pending submission');
-        }
-        
-        throw submissionError;
-      }
+      if (submissionError) throw submissionError;
 
       return { success: true };
     } catch (err) {
@@ -107,14 +48,15 @@ export default function useVideoSubmission(): UseVideoSubmissionReturn {
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
-      setIsSubmitting(false);
+      setUploading(false);
     }
   };
 
   return {
-    isSubmitting,
     submitVideo,
-    validateVideoUrl,
+    uploading,
     error
   };
-}
+};
+
+export default useVideoSubmission; 

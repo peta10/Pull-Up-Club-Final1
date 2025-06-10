@@ -1,264 +1,212 @@
-// Import the Badge and Submission types
-import { Badge, Submission } from '../types/index.ts';
+import { Submission, Badge } from '../types';
 
-// Mock clubs data
 export const clubs = [
-  'Battle Bunker Elite',
+  'Elite Fitness',
+  'Power Gym',
+  'Dragon Fitness',
+  'Aussie Strength',
+  'Power House',
   'CrossFit Central',
   'Iron Warriors',
-  'No Affiliation',
-  'Pull-Up Kings',
-  'Strength Academy',
-  'Tactical Fitness'
+  'Strength Lab',
+  'Peak Performance',
+  'Fitness First'
 ];
 
-// Mock regions data
 export const regions = [
   'North America',
   'South America',
   'Europe',
   'Asia',
   'Africa',
-  'Oceania',
+  'Australia',
   'Middle East'
 ];
 
-// Female badge URLs
-const femaleBadgeUrls = {
-  'recruit': 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Recruit_-_Female.png?v=1747583270',
-  'proven': 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Proven_-_Female.png?v=1747583270',
-  'hardened': 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Hardened_1_-_Female.png?v=1747583270',
-  'operator': 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Operator_-_Female.png?v=1747583270',
-  'elite': 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Elite_Female.png?v=1747583270'
-};
+export const getAgeGroups = () => [
+  '18-24',
+  '25-34',
+  '35-44',
+  '45-54',
+  '55+'
+];
 
-// Mock badges data
-export const badges: Badge[] = [
+export const mockSubmissions: Submission[] = [
+  {
+    id: '1',
+    userId: 'user1',
+    fullName: 'John Smith',
+    email: 'john@example.com',
+    age: 25,
+    gender: 'Male',
+    region: 'North America',
+    clubAffiliation: 'Elite Fitness',
+    pullUpCount: 50,
+    actualPullUpCount: 50,
+    videoUrl: 'https://youtube.com/watch?v=123',
+    status: 'Approved',
+    submittedAt: '2025-01-01',
+    approvedAt: '2025-01-02',
+    notes: 'Great form!'
+  },
+  {
+    id: '2',
+    userId: 'user2',
+    fullName: 'Sarah Johnson',
+    email: 'sarah@example.com',
+    age: 28,
+    gender: 'Female',
+    region: 'Europe',
+    clubAffiliation: 'Power Gym',
+    pullUpCount: 45,
+    actualPullUpCount: 45,
+    videoUrl: 'https://youtube.com/watch?v=456',
+    status: 'Approved',
+    submittedAt: '2025-01-02',
+    approvedAt: '2025-01-03',
+    notes: 'Excellent performance'
+  },
+  {
+    id: '3',
+    userId: 'user3',
+    fullName: 'Mike Wilson',
+    email: 'mike@example.com',
+    age: 32,
+    gender: 'Male',
+    region: 'Asia',
+    clubAffiliation: 'Dragon Fitness',
+    pullUpCount: 40,
+    actualPullUpCount: 40,
+    videoUrl: 'https://youtube.com/watch?v=789',
+    status: 'Approved',
+    submittedAt: '2025-01-03',
+    approvedAt: '2025-01-04',
+    notes: 'Perfect execution'
+  },
+  {
+    id: '4',
+    userId: 'user4',
+    fullName: 'Emma Davis',
+    email: 'emma@example.com',
+    age: 27,
+    gender: 'Female',
+    region: 'Australia',
+    clubAffiliation: 'Aussie Strength',
+    pullUpCount: 35,
+    actualPullUpCount: 35,
+    videoUrl: 'https://youtube.com/watch?v=012',
+    status: 'Approved',
+    submittedAt: '2025-01-04',
+    approvedAt: '2025-01-05',
+    notes: 'Outstanding effort'
+  },
+  {
+    id: '5',
+    userId: 'user5',
+    fullName: 'James Brown',
+    email: 'james@example.com',
+    age: 30,
+    gender: 'Male',
+    region: 'South America',
+    clubAffiliation: 'Power House',
+    pullUpCount: 30,
+    actualPullUpCount: 30,
+    videoUrl: 'https://youtube.com/watch?v=345',
+    status: 'Approved',
+    submittedAt: '2025-01-05',
+    approvedAt: '2025-01-06',
+    notes: 'Great technique'
+  },
+];
+
+const badges: Badge[] = [
   {
     id: 'recruit',
     name: 'Recruit',
-    description: 'Achieved 5-9 pull-ups',
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Recruit.png?v=1746488886',
+    description: 'Completed 5 pull-ups',
+    imageUrl: '/Male-Badges/Recruit.png',
     criteria: {
       type: 'pullUps',
-      value: 5,
-    },
+      value: 5
+    }
   },
   {
     id: 'proven',
     name: 'Proven',
-    description: 'Achieved 10-14 pull-ups',
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Proven.png?v=1746488886',
+    description: 'Completed 10 pull-ups',
+    imageUrl: '/Male-Badges/Proven.png',
     criteria: {
       type: 'pullUps',
-      value: 10,
-    },
+      value: 10
+    }
   },
   {
     id: 'hardened',
     name: 'Hardened',
-    description: 'Achieved 15-19 pull-ups',
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Hardened.png?v=1746488887',
+    description: 'Completed 15 pull-ups',
+    imageUrl: '/Male-Badges/Hardened.png',
     criteria: {
       type: 'pullUps',
-      value: 15,
-    },
+      value: 15
+    }
   },
   {
     id: 'operator',
     name: 'Operator',
-    description: 'Achieved 20-24 pull-ups',
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Operator.png?v=1746488886',
+    description: 'Completed 20 pull-ups',
+    imageUrl: '/Male-Badges/Operator.png',
     criteria: {
       type: 'pullUps',
-      value: 20,
-    },
+      value: 20
+    }
   },
   {
     id: 'elite',
     name: 'Elite',
-    description: 'Achieved 25+ pull-ups',
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0567/5237/3945/files/Elite.png?v=1746488886',
+    description: 'Completed 25 pull-ups',
+    imageUrl: '/Male-Badges/Elite.png',
     criteria: {
       type: 'pullUps',
-      value: 25,
-    },
-  },
+      value: 25
+    }
+  }
 ];
 
-// Mock submissions data
-export const mockSubmissions: Submission[] = [
-  {
-    id: '1',
-    userId: 'user-1',
-    fullName: 'John Smith',
-    email: 'john@example.com',
-    age: 28,
-    gender: 'Male',
-    region: 'North America',
-    clubAffiliation: 'Battle Bunker Elite',
-    pullUpCount: 30,
-    videoLink: 'https://youtube.com/watch?v=abc123',
-    submissionDate: '2025-06-12T14:30:00Z',
-    status: 'Approved',
-    featured: true,
-  },
-  {
-    id: '2',
-    userId: 'user-2',
-    fullName: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    phone: '555-123-4567',
-    age: 32,
-    gender: 'Female',
-    region: 'Europe',
-    clubAffiliation: 'Iron Warriors',
-    pullUpCount: 25,
-    videoLink: 'https://instagram.com/p/xyz789',
-    submissionDate: '2025-06-12T16:45:00Z',
-    status: 'Approved',
-    featured: true,
-  },
-  {
-    id: '3',
-    userId: 'user-3',
-    fullName: 'Mike Williams',
-    email: 'mike@example.com',
-    age: 35,
-    gender: 'Male',
-    region: 'North America',
-    clubAffiliation: 'CrossFit Central',
-    pullUpCount: 28,
-    videoLink: 'https://youtube.com/watch?v=def456',
-    submissionDate: '2025-06-11T10:15:00Z',
-    status: 'Approved',
-    featured: true,
-  },
-  {
-    id: '4',
-    userId: 'user-4',
-    fullName: 'Emily Davis',
-    email: 'emily@example.com',
-    phone: '555-987-6543',
-    age: 29,
-    gender: 'Female',
-    region: 'Asia',
-    clubAffiliation: 'Battle Bunker Elite',
-    pullUpCount: 22,
-    videoLink: 'https://tiktok.com/@user/video/456789',
-    submissionDate: '2025-06-11T09:30:00Z',
-    status: 'Approved',
-    featured: true,
-  },
-  {
-    id: '5',
-    userId: 'user-5',
-    fullName: 'Alex Chen',
-    email: 'alex@example.com',
-    age: 27,
-    gender: 'Male',
-    region: 'Asia',
-    clubAffiliation: 'No Affiliation',
-    pullUpCount: 20,
-    videoLink: 'https://youtube.com/watch?v=ghi789',
-    submissionDate: '2025-06-10T14:00:00Z',
-    status: 'Approved',
-    featured: true,
-  },
-  // More submissions with identical scores (to demonstrate grouping)
-  ...Array.from({ length: 10 }, (_, i) => ({
-    id: `${i + 6}`,
-    userId: `user-${i + 6}`,
-    fullName: `Contestant ${i + 6}`,
-    email: `contestant${i + 6}@example.com`,
-    age: 25 + i,
-    gender: i % 2 === 0 ? 'Male' as "Male" : 'Female' as "Female",
-    region: regions[i % regions.length],
-    clubAffiliation: clubs[i % clubs.length],
-    pullUpCount: 15, // Same pull-up count to demonstrate grouping
-    videoLink: `https://youtube.com/watch?v=abc${i + 100}`,
-    submissionDate: `2025-06-0${9 - (i % 9)}T${10 + i}:00:00Z`,
-    status: 'Approved' as "Approved" | "Pending" | "Rejected",
-    featured: true,
-  })),
-  {
-    id: '16',
-    userId: 'user-16',
-    fullName: 'Taylor Reed',
-    email: 'taylor@example.com',
-    phone: '555-111-2222',
-    age: 31,
-    gender: 'Other',
-    region: 'Oceania',
-    clubAffiliation: 'Tactical Fitness',
-    pullUpCount: 23,
-    videoLink: 'https://instagram.com/p/abc123',
-    submissionDate: '2025-06-09T11:30:00Z',
-    status: 'Pending',
-    featured: false,
-  },
-  {
-    id: '17',
-    userId: 'user-17',
-    fullName: 'Jordan Lee',
-    email: 'jordan@example.com',
-    age: 29,
-    gender: 'Male',
-    region: 'Middle East',
-    clubAffiliation: 'Pull-Up Kings',
-    pullUpCount: 18,
-    videoLink: 'https://tiktok.com/@user/video/123456',
-    submissionDate: '2025-06-08T16:15:00Z',
-    status: 'Rejected',
-    featured: false,
-  },
-];
+export const getBadgesForSubmission = (pullUpCount: number): Badge[] => {
+  return badges.filter(badge => badge.criteria.value <= pullUpCount);
+};
 
-// Helper function to get age groups
-export const getAgeGroups = () => [
-  'Under 18',
-  '18-24',
-  '25-29',
-  '30-39',
-  '40-49',
-  '50+'
-];
+export default badges;
 
-// Helper function to get submission status text and color
-export const getStatusInfo = (status: 'Pending' | 'Approved' | 'Rejected') => {
-  switch (status) {
-    case 'Approved':
-      return { text: 'Approved', color: 'bg-green-500' };
-    case 'Rejected':
-      return { text: 'Rejected', color: 'bg-red-500' };
+export const getStatusInfo = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return {
+        label: 'Pending Review',
+        color: 'bg-yellow-500',
+        textColor: 'text-yellow-500',
+        description: 'Your submission is being reviewed by our team.'
+      };
+    case 'approved':
+      return {
+        label: 'Approved',
+        color: 'bg-green-500',
+        textColor: 'text-green-500',
+        description: 'Your submission has been approved!'
+      };
+    case 'rejected':
+      return {
+        label: 'Rejected',
+        color: 'bg-red-500',
+        textColor: 'text-red-500',
+        description: 'Your submission was not approved. Please check the feedback and try again.'
+      };
     default:
-      return { text: 'Pending Review', color: 'bg-yellow-500' };
+      return {
+        label: 'Unknown',
+        color: 'bg-gray-500',
+        textColor: 'text-gray-500',
+        description: 'Status unknown'
+      };
   }
-};
-
-// Helper function to determine badges for a submission
-export const getBadgesForSubmission = (submission: Submission) => {
-  const pullUps = submission.actualPullUpCount ?? submission.pullUpCount;
-  
-  // Determine which badge to display
-  let badgeId: string | null = null;
-  if (pullUps >= 25) badgeId = 'elite';
-  else if (pullUps >= 20) badgeId = 'operator';
-  else if (pullUps >= 15) badgeId = 'hardened';
-  else if (pullUps >= 10) badgeId = 'proven';
-  else if (pullUps >= 5) badgeId = 'recruit';
-  else return [];
-  
-  // Find the base badge
-  const badge = badges.find(b => b.id === badgeId)!;
-  
-  // Create a copy of the badge with the gender-specific image URL
-  const badgeCopy = { ...badge };
-  
-  // Use female badge image URL if the submitter is female
-  if (submission.gender === 'Female' && badgeId in femaleBadgeUrls) {
-    badgeCopy.imageUrl = femaleBadgeUrls[badgeId as keyof typeof femaleBadgeUrls];
-  }
-  
-  return [badgeCopy];
-};
+}; 

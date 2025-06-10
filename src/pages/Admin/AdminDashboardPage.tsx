@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../../components/Layout/Layout.tsx";
-import ReviewSubmission from "./ReviewSubmission.tsx";
+import SubmissionReview from "../../components/Admin/SubmissionReview";
 import { Submission } from "../../types/index.ts";
 import { Button } from "../../components/ui/Button.tsx";
 import { LogOut, Users } from "lucide-react";
@@ -67,26 +67,28 @@ const AdminDashboardPage: React.FC = () => {
       const formattedSubmissions: Submission[] = (data as SubmissionData[]).map((submission) => {
         // Helper function to validate gender
         const validateGender = (gender: string | undefined): "Male" | "Female" | "Other" => {
-          if (!gender) return "Other"; // Default to "Other" or handle as an error
+          if (!gender) return "Other";
           return ["Male", "Female", "Other"].includes(gender) ? gender as "Male" | "Female" | "Other" : "Other";
         };
-
         return {
           id: submission.id.toString(),
-          userId: submission.user_id, // Assumed to be always present
+          userId: submission.user_id,
           fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
           email: submission.email || 'unknown@example.com',
+          phone: undefined,
           age: submission.age ?? 0,
           gender: validateGender(submission.gender),
           region: submission.region || 'Unknown Region',
           clubAffiliation: submission.club_affiliation || 'None',
           pullUpCount: submission.pull_up_count,
           actualPullUpCount: submission.actual_pull_up_count ?? undefined,
-          videoLink: submission.video_url,
-          submissionDate: submission.created_at,
+          videoUrl: submission.video_url,
           status: (submission.status.charAt(0).toUpperCase() + submission.status.slice(1)) as "Pending" | "Approved" | "Rejected",
+          submittedAt: submission.created_at,
+          approvedAt: submission.approved_at || undefined,
+          notes: submission.notes ?? undefined,
           featured: submission.status === 'approved',
-          notes: submission.notes ?? undefined
+          socialHandle: undefined
         };
       });
 
@@ -242,11 +244,11 @@ const AdminDashboardPage: React.FC = () => {
               {filteredSubmissions.length > 0 ? (
                 <>
                   {filteredSubmissions.map((submission) => (
-                    <ReviewSubmission
+                    <SubmissionReview
                       key={submission.id}
                       submission={submission}
                       onApprove={handleApproveSubmission}
-                      onReject={handleRejectSubmission}
+                      onReject={(id, reason) => handleRejectSubmission(id)}
                     />
                   ))}
                   

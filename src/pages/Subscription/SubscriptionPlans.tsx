@@ -118,7 +118,7 @@ const SubscriptionPlans: React.FC = () => {
               <span className="text-3xl font-bold text-white">
                 ${products.pullUpClub.price}
               </span>
-              <span className="text-gray-400 ml-1">/month</span>
+              <span className="text-gray-400 ml-1">/month (USD)</span>
             </div>
 
             <ul className="space-y-3 mb-6 flex-grow">
@@ -200,7 +200,7 @@ const SubscriptionPlans: React.FC = () => {
               <span className="text-3xl font-bold text-white">
                 ${products.pullUpClubAnnual.price}
               </span>
-              <span className="text-gray-400 ml-1">/year</span>
+              <span className="text-gray-400 ml-1">/year (USD)</span>
             </div>
             <p className="text-green-400 text-sm mb-4">
               Save ${annualSavings} per year

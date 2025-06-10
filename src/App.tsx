@@ -6,7 +6,7 @@ import AdminRoute from "./components/Layout/AdminRoute.tsx";
 import { supabase } from "./lib/supabase.ts";
 import Lenis from "lenis";
 import StripeProvider from "./lib/StripeProvider.tsx";
-import DebugConnection from "./lib/DebugConnection.tsx";
+import DebugConnection from './lib/DebugConnection';
 
 // Lazy-loaded components
 const Home = lazy(() => import("./pages/Home/Home.tsx"));

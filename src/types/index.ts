@@ -4,26 +4,26 @@ export interface Submission {
   fullName: string;
   email: string;
   phone?: string;
-  age?: number;
-  gender: "Male" | "Female" | "Other";
+  age: number;
+  gender: 'Male' | 'Female' | 'Other';
   region: string;
   clubAffiliation: string;
   pullUpCount: number;
   actualPullUpCount?: number;
-  videoLink: string;
-  submissionDate: string;
-  status: "Pending" | "Approved" | "Rejected";
-  featured: boolean;
-  socialHandle?: string;
+  videoUrl: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  submittedAt: string;
+  approvedAt?: string;
   notes?: string;
+  featured?: boolean;
+  socialHandle?: string;
 }
 
 export interface LeaderboardFilters {
-  club?: string;
-  ageGroup?: string;
   gender?: string;
-  badge?: string;
   region?: string;
+  club?: string;
+  timeframe?: string;
 }
 
 export interface Badge {
@@ -32,8 +32,8 @@ export interface Badge {
   description: string;
   imageUrl: string;
   criteria: {
-    type: "pullUps" | "age" | "club";
-    value: string | number;
+    type: string;
+    value: number;
   };
 }
 
@@ -57,4 +57,63 @@ export interface FormState {
   paymentStatus: "idle" | "processing" | "completed" | "failed";
   errorMessage: string;
   subscriptionType: "monthly" | "annual";
+}
+
+export interface Profile {
+  id: string;
+  userId: string;
+  email: string;
+  fullName: string;
+  age?: number;
+  gender?: string;
+  club?: string;
+  stripeCustomerId?: string;
+  isPaid: boolean;
+  role: 'user' | 'admin';
+  badges: Badge[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  interval: 'month' | 'year';
+  features: string[];
+}
+
+export interface PaymentHistory {
+  id: string;
+  userId: string;
+  amount: number;
+  status: 'succeeded' | 'failed' | 'pending';
+  createdAt: string;
+}
+
+export interface EventParams {
+  category: string;
+  action: string;
+  label?: string;
+  value?: number;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  paidUsers: number;
+  pendingSubmissions: number;
+  approvedSubmissions: number;
+  rejectedSubmissions: number;
+}
+
+export interface SubmitVideoParams {
+  videoFile: File;
+  pullUpCount: number;
+  userId: string;
+}
+
+export interface UseSubmissionsOptions {
+  status?: 'Pending' | 'Approved' | 'Rejected' | 'all';
+  limit?: number;
 }

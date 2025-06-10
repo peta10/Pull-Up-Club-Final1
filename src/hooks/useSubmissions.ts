@@ -1,146 +1,107 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Submission } from '../types';
+import type { Submission, UseSubmissionsOptions } from '../types';
 
-interface UseSubmissionsProps {
-  userId?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'all';
-  limit?: number;
-  isAdmin?: boolean;
-}
-
-export default function useSubmissions({ 
-  userId, 
-  status = 'all', 
-  limit = 10,
-  isAdmin = false
-}: UseSubmissionsProps = {}) {
+const useSubmissions = (options: UseSubmissionsOptions = {}) => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchSubmissions = useCallback(async () => {
+  const fetchSubmissions = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      
-      let query = supabase.from('submissions').select('*, profiles:user_id (full_name, email, gender, region, organisation)', { count: 'exact' });
-      
-      // Add filters
-      if (userId) {
-        query = query.eq('user_id', userId);
+      setLoading(true);
+      let query = supabase
+        .from('submissions')
+        .select('*, profiles(email, full_name, age, gender, city, organisation)')
+        .order('created_at', { ascending: false });
+
+      if (options.status && options.status !== 'all') {
+        query = query.eq('status', options.status.toLowerCase());
       }
-      
-      if (status !== 'all') {
-        query = query.eq('status', status);
+
+      if (options.limit) {
+        query = query.limit(options.limit);
       }
-      
-      // Limit results (unless we want all for an admin)
-      if (limit > 0) {
-        query = query.limit(limit);
-      }
-      
-      // Order by newest first
-      query = query.order('created_at', { ascending: false });
-      
-      const { data, error: fetchError, count } = await query;
-      
-      if (fetchError) throw fetchError;
-      
-      // Format the submissions for our frontend
-      const formattedSubmissions: Submission[] = data.map(item => {
-        const profile = item.profiles || {};
-        
-        return {
-          id: item.id,
-          userId: item.user_id,
-          fullName: profile.full_name || 'Unknown User',
-          email: profile.email || 'unknown@example.com',
-          gender: profile.gender || 'Other',
-          region: profile.region || 'Unknown',
-          clubAffiliation: profile.organisation || 'None',
-          pullUpCount: item.pull_up_count,
-          actualPullUpCount: item.actual_pull_up_count,
-          videoLink: item.video_url,
-          submissionDate: item.created_at,
-          status: item.status.charAt(0).toUpperCase() + item.status.slice(1) as "Approved" | "Pending" | "Rejected",
-          featured: item.status === 'approved',
-          notes: item.notes,
-          platform: item.platform || 'other',
-        };
-      });
-      
-      setSubmissions(formattedSubmissions);
-      if (count !== null) setTotalCount(count);
-      
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const transformedData: Submission[] = (data || []).map(record => ({
+        id: record.id,
+        userId: record.user_id,
+        fullName: record.profiles?.full_name || 'Unknown User',
+        email: record.profiles?.email || 'unknown@example.com',
+        phone: record.profiles?.phone,
+        age: record.profiles?.age || 0,
+        gender: (record.profiles?.gender as 'Male' | 'Female' | 'Other') || 'Other',
+        region: record.profiles?.city || 'Unknown Region',
+        clubAffiliation: record.profiles?.organisation || 'None',
+        pullUpCount: record.pull_up_count,
+        actualPullUpCount: record.actual_pull_up_count || undefined,
+        videoUrl: record.video_url,
+        status: record.status.charAt(0).toUpperCase() + record.status.slice(1) as 'Pending' | 'Approved' | 'Rejected',
+        submittedAt: record.created_at,
+        approvedAt: record.approved_at || undefined,
+        notes: record.notes || undefined,
+        featured: record.status === 'approved',
+        socialHandle: record.social_handle
+      }));
+
+      setSubmissions(transformedData);
     } catch (err) {
-      console.error('Error fetching submissions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load submissions');
+      setError(err instanceof Error ? err.message : 'Error fetching submissions');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [userId, status, limit, isAdmin]);
+  };
 
-  const approveSubmission = async (submissionId: string, actualPullUpCount: number) => {
+  const approveSubmission = async (submissionId: string, actualCount?: number) => {
     try {
-      // Use Edge Function to approve submission
       const { error } = await supabase.functions.invoke('admin-submissions', {
         body: {
           action: 'approve',
           submissionId,
-          actualPullUpCount
+          actualCount
         }
       });
-      
+
       if (error) throw error;
-      
-      // Refetch submissions
-      fetchSubmissions();
-      
-      return { success: true };
+      await fetchSubmissions();
     } catch (err) {
-      console.error("Error approving submission:", err);
-      setError(err instanceof Error ? err.message : 'Failed to approve submission');
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to approve submission' };
+      setError(err instanceof Error ? err.message : 'Error approving submission');
     }
   };
-  
-  const rejectSubmission = async (submissionId: string, notes?: string) => {
+
+  const rejectSubmission = async (submissionId: string, reason?: string) => {
     try {
-      // Use Edge Function to reject submission
       const { error } = await supabase.functions.invoke('admin-submissions', {
         body: {
           action: 'reject',
           submissionId,
-          notes
+          reason
         }
       });
-      
+
       if (error) throw error;
-      
-      // Refetch submissions
-      fetchSubmissions();
-      
-      return { success: true };
+      await fetchSubmissions();
     } catch (err) {
-      console.error("Error rejecting submission:", err);
-      setError(err instanceof Error ? err.message : 'Failed to reject submission');
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to reject submission' };
+      setError(err instanceof Error ? err.message : 'Error rejecting submission');
     }
   };
 
   useEffect(() => {
     fetchSubmissions();
-  }, [fetchSubmissions]);
+  }, [options.status, options.limit]);
 
-  return { 
-    submissions, 
-    isLoading, 
-    error, 
-    totalCount,
+  return {
+    submissions,
+    loading,
+    error,
     refetch: fetchSubmissions,
     approveSubmission,
     rejectSubmission
   };
-}
+};
+
+export default useSubmissions; 

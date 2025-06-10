@@ -1,6 +1,6 @@
 import React, { ButtonHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
-import useAnalytics from "../../hooks/useAnalytics";
+import useAnalytics from '../../hooks/useAnalytics';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger' | 'default';
@@ -9,9 +9,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   children: React.ReactNode;
   analyticsEvent?: {
-    action: string;
     category: string;
-    label: string;
+    action: string;
+    label?: string;
     value?: number;
   };
 }
@@ -54,12 +54,10 @@ export const Button: React.FC<ButtonProps> = ({
   const sizeStyles = variant === 'link' ? '' : sizes[size];
   
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Track analytics event if provided
     if (analyticsEvent) {
-      trackEvent(analyticsEvent);
+      const { category, action, label, value } = analyticsEvent;
+      trackEvent(category, action, label, value);
     }
-
-    // Call original onClick handler if provided
     if (props.onClick) {
       props.onClick(e);
     }

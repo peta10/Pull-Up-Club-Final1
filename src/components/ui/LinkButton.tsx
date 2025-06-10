@@ -1,82 +1,66 @@
 import React from 'react';
-import { Link, LinkProps } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
-import useAnalytics from "../../hooks/useAnalytics";
+import { Link } from 'react-router-dom';
+import useAnalytics from '../../hooks/useAnalytics';
 
-export interface LinkButtonProps extends Omit<LinkProps, 'className'> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger' | 'default';
-  size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
-  fullWidth?: boolean;
+interface LinkButtonProps {
+  to: string;
   children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
   analyticsEvent?: {
-    action: string;
     category: string;
-    label: string;
+    action: string;
+    label?: string;
     value?: number;
   };
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export const LinkButton: React.FC<LinkButtonProps> = ({
+const LinkButton: React.FC<LinkButtonProps> = ({
+  to,
   children,
   variant = 'primary',
   size = 'md',
-  isLoading = false,
-  fullWidth = false,
   className = '',
   analyticsEvent,
-  to,
+  onClick,
   ...props
 }) => {
   const { trackEvent } = useAnalytics();
 
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#9b9b6f]';
-  
-  const variants = {
-    primary: 'bg-[#9b9b6f] text-black hover:bg-[#7a7a58]',
-    secondary: 'bg-white/10 text-white hover:bg-white/20',
-    outline: 'border border-[#9b9b6f] text-[#9b9b6f] hover:bg-[#9b9b6f]/10',
-    ghost: 'bg-transparent text-white hover:bg-white/10',
-    link: 'bg-transparent text-[#9b9b6f] hover:underline p-0',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
-    default: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-  };
-  
-  const sizes = {
-    sm: 'text-xs px-3 py-1',
-    md: 'text-sm px-4 py-2',
-    lg: 'text-base px-6 py-3',
-  };
-  
-  const widths = fullWidth ? 'w-full' : '';
-  
-  const variantStyles = variants[variant];
-  const sizeStyles = variant === 'link' ? '' : sizes[size];
-  
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Track analytics event if provided
     if (analyticsEvent) {
-      trackEvent(analyticsEvent);
+      const { category, action, label, value } = analyticsEvent;
+      trackEvent(category, action, label, value);
     }
+    onClick?.(e);
+  };
 
-    // Call original onClick handler if provided
-    if (props.onClick) {
-      props.onClick(e);
-    }
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors';
+  const sizeStyles = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-base',
+    lg: 'px-6 py-3 text-lg'
+  };
+  const variantStyles = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    secondary: 'bg-gray-600 text-white hover:bg-gray-700',
+    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',
+    success: 'bg-green-600 text-white hover:bg-green-700',
+    danger: 'bg-red-600 text-white hover:bg-red-700'
   };
 
   return (
     <Link
       to={to}
-      className={`${baseStyles} ${variantStyles} ${sizeStyles} ${widths} ${className} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
       onClick={handleClick}
       {...props}
     >
-      {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
       {children}
     </Link>
   );
 };
 
-export default LinkButton; 
+export { LinkButton }; 
