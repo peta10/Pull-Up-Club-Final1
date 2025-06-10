@@ -128,8 +128,11 @@ const SignupAccessPage: React.FC = () => {
       // Account created successfully
       console.log('Account created successfully:', authData);
       
-      // Redirect to success page or dashboard
-      navigate('/success?account=created');
+      // Wait a moment for the trigger to create the profile, then redirect
+      setTimeout(() => {
+        console.log('Redirecting to profile page...');
+        navigate('/profile');
+      }, 1500);
 
     } catch (error) {
       console.error('Error creating account:', error);

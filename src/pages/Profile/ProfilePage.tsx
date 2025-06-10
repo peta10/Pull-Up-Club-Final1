@@ -97,26 +97,68 @@ const ProfilePage: React.FC = () => {
     }
 
     try {
-      const { data: updateData, error: updateError } = await supabase
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
         .from("profiles")
-        .update({
-          social_media: formData.socialMedia || null,
-          street_address: formData.streetAddress,
-          apartment: formData.apartment || null,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zipCode,
-          country: formData.country,
-          is_profile_completed: true,
-          updated_at: new Date().toISOString(),
-        })
+        .select("id")
         .eq("id", user?.id)
-        .select()
         .single();
+
+      let updateData;
+      let updateError;
+
+      if (!existingProfile) {
+        // Profile doesn't exist, create it first
+        console.log("Profile doesn't exist, creating new profile for user:", user?.id);
+        const { data: insertData, error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            id: user?.id,
+            email: user?.email,
+            social_media: formData.socialMedia || null,
+            street_address: formData.streetAddress,
+            apartment: formData.apartment || null,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            country: formData.country,
+            is_profile_completed: true,
+            role: 'user',
+            is_paid: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        updateData = insertData;
+        updateError = insertError;
+      } else {
+        // Profile exists, update it
+        const { data: updatedData, error: updatedError } = await supabase
+          .from("profiles")
+          .update({
+            social_media: formData.socialMedia || null,
+            street_address: formData.streetAddress,
+            apartment: formData.apartment || null,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            country: formData.country,
+            is_profile_completed: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user?.id)
+          .select()
+          .single();
+
+        updateData = updatedData;
+        updateError = updatedError;
+      }
 
       if (updateError) throw updateError;
 
-      console.log("Profile updated:", updateData);
+      console.log("Profile saved:", updateData);
       if (isFirstLogin) {
         setActiveTab("submissions");
       }

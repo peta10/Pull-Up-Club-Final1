@@ -152,9 +152,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retryCount = 0) => {
     try {
-      console.log("[AuthContext] Fetching profile for user:", userId);
+      console.log("[AuthContext] Fetching profile for user:", userId, "retry:", retryCount);
       
       // First check if user has admin role - changed from .single() to handle no rows gracefully
       const { data: adminData, error: adminError } = await supabase
@@ -178,29 +178,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (profileError) {
         if (profileError.code === "PGRST116") {
+          // Profile doesn't exist yet - handle gracefully
+          console.log("[AuthContext] Profile not found, this might be a new user. Creating fallback profile.");
+          
+          if (retryCount < 3) {
+            // Retry a few times with exponential backoff
+            console.log("[AuthContext] Retrying profile fetch in", (retryCount + 1) * 1000, "ms");
+            setTimeout(() => fetchProfile(userId, retryCount + 1), (retryCount + 1) * 1000);
+            return;
+          }
+          
+          // After retries, create a fallback profile object
+          console.log("[AuthContext] Creating fallback profile after retries");
+          setProfile({
+            isProfileCompleted: false,
+            socialMedia: null,
+            streetAddress: null,
+            apartment: null,
+            city: null,
+            state: null,
+            zipCode: null,
+            country: null,
+            role: isUserAdmin ? "admin" : "user",
+            ...defaultSettings
+          });
           setIsFirstLogin(true);
-          setTimeout(async () => {
-            const { data: retryData } = await supabase
-              .from("profiles")
-              .select("*")
-              .eq("id", userId)
-              .single();
-
-            if (retryData) {
-              setProfile({
-                isProfileCompleted: false,
-                socialMedia: null,
-                streetAddress: null,
-                apartment: null,
-                city: null,
-                state: null,
-                zipCode: null,
-                country: null,
-                role: isUserAdmin ? "admin" : "user",
-                ...defaultSettings
-              });
-            }
-          }, 1500);
           return;
         }
         console.error("Error fetching profile:", profileError);
@@ -550,6 +552,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     console.log("[AuthContext] Supabase signIn successful. Session:", session);
   };
 
+  const ensureProfileExists = async (userId: string, email: string): Promise<boolean> => {
+    try {
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+
+      if (existingProfile) {
+        return true; // Profile exists
+      }
+
+      // Create profile if it doesn't exist
+      console.log("[AuthContext] Creating missing profile for user:", userId);
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert({
+          id: userId,
+          email: email,
+          role: 'user',
+          is_paid: false,
+          is_profile_completed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (insertError) {
+        console.error("[AuthContext] Error creating profile:", insertError);
+        return false;
+      }
+
+      console.log("[AuthContext] Profile created successfully for user:", userId);
+      return true;
+    } catch (error) {
+      console.error("[AuthContext] Error in ensureProfileExists:", error);
+      return false;
+    }
+  };
+
   const signUp = async (email: string, password: string) => {
     console.log("[AuthContext] signUp called for:", email);
     if (isDevelopment && email === "dev@example.com" && password === "dev123") {
@@ -596,6 +638,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       const newUser = { id: data.user.id, email: data.user.email! };
       setUser(newUser);
+      
+      // Ensure profile exists before proceeding
+      await ensureProfileExists(newUser.id, newUser.email);
       await fetchProfile(newUser.id);
       setIsFirstLogin(true);
       await processPendingSubscription(newUser);
