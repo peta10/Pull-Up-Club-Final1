@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../ui/Button.tsx';
 import { useAuth } from '../../context/AuthContext.tsx';
-import { User, Menu, X, Trophy, Home, ShoppingBag } from 'lucide-react';
+import { User, Menu, X, Trophy, Home, ShoppingBag, UserPlus, LogIn, LogOut } from 'lucide-react';
 
 const Header: React.FC = () => {
   const { user, signOut, isAdmin } = useAuth();
@@ -52,20 +51,23 @@ const Header: React.FC = () => {
                     Admin
                   </Link>
                 )}
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  onClick={() => signOut()}
+                <button
+                  className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center bg-transparent border-none outline-none cursor-pointer p-0"
+                  onClick={signOut}
+                  type="button"
                 >
+                  <LogOut className="h-4 w-4 mr-1" />
                   Logout
-                </Button>
+                </button>
               </div>
             ) : (
               <>
-                <Link to="/subscription" className="font-medium hover:text-[#9b9b6f] transition-colors">
+                <Link to="/subscription" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
+                  <UserPlus className="h-4 w-4 mr-1" />
                   Sign Up
                 </Link>
-                <Link to="/login" className="font-medium hover:text-[#9b9b6f] transition-colors">
+                <Link to="/login" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
+                  <LogIn className="h-4 w-4 mr-1" />
                   Login
                 </Link>
               </>
@@ -107,11 +109,12 @@ const Header: React.FC = () => {
               </Link>
               <a 
                 href="https://shop.thebattlebunker.com/?srsltid=AfmBOooA1PK269tAblC8AjIUZIdGUa5gd65im0ovz5pqv5tcrV319AlX"
-                className="font-medium hover:text-[#9b9b6f] transition-colors"
+                className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                <ShoppingBag className="h-4 w-4 mr-1" />
                 Shop
               </a>
               {user ? (
@@ -133,33 +136,36 @@ const Header: React.FC = () => {
                       Admin
                     </Link>
                   )}
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
+                  <button
+                    className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center bg-transparent border-none outline-none cursor-pointer p-0"
                     onClick={() => {
                       signOut();
                       setIsMobileMenuOpen(false);
                     }}
+                    type="button"
                   >
+                    <LogOut className="h-4 w-4 mr-1" />
                     Logout
-                  </Button>
+                  </button>
                 </>
               ) : (
                 <>
                   <Link 
                     to="/subscription" 
-                    className="font-medium hover:text-[#9b9b6f] transition-colors"
+                    className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
+                    <UserPlus className="h-4 w-4 mr-1" />
                     Sign Up
                   </Link>
-                <Link 
-                  to="/login" 
-                  className="font-medium hover:text-[#9b9b6f] transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
+                  <Link 
+                    to="/login" 
+                    className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <LogIn className="h-4 w-4 mr-1" />
+                    Login
+                  </Link>
                 </>
               )}
             </nav>
