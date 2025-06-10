@@ -6,7 +6,6 @@ import { Button } from "../../components/ui/Button.tsx";
 import { LogOut, Users } from "lucide-react";
 import { supabase } from "../../lib/supabase.ts";
 import { useNavigate } from "react-router-dom";
-import { adminApi } from "../../utils/edgeFunctions.ts";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/LoadingState.tsx";
 import { useAuth } from "../../context/AuthContext.tsx";
 
@@ -34,50 +33,37 @@ const AdminDashboardPage: React.FC = () => {
       setIsLoading(true);
       setLoadingError(null);
 
-      // Use our adminApi utility
-      const data = await adminApi.getSubmissions();
+      // Direct Supabase query - no Edge Functions needed
+      const { data, error } = await supabase
+        .from('submissions')
+        .select(`
+          *,
+          profiles:user_id (
+            email,
+            full_name,
+            age,
+            gender,
+            organization
+          )
+        `)
+        .order('created_at', { ascending: false });
 
-      interface SubmissionData {
-        id: string;
-        user_id: string;
-        video_url: string;
-        pull_up_count: number;
-        actual_pull_up_count: number | null;
-        status: string;
-        notes: string | null;
-        submitted_at: string;
-        approved_at: string | null;
-        created_at: string;
-        updated_at: string;
-        platform: string | null;
-        email: string | null;
-        full_name: string | null;
-        age?: number;
-        gender?: string;
-        region?: string;
-        club_affiliation?: string;
-      }
+      if (error) throw error;
 
-      // Check if data is an array
-      if (!Array.isArray(data)) {
-        console.error("Expected array of submissions, got:", data);
-        throw new Error("Invalid response format from server");
-      }
-
-      const formattedSubmissions: Submission[] = (data as SubmissionData[]).map((submission) => {
-        // Helper function to validate gender
+      const formattedSubmissions: Submission[] = data.map((submission: any) => {
         const validateGender = (gender: string | undefined): "Male" | "Female" | "Other" => {
           if (!gender) return "Other";
           return ["Male", "Female", "Other"].includes(gender) ? gender as "Male" | "Female" | "Other" : "Other";
         };
+
         return {
           id: submission.id.toString(),
           userId: submission.user_id,
-          fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
-          email: submission.email || 'unknown@example.com',
+          fullName: submission.profiles?.full_name || submission.profiles?.email?.split('@')[0] || 'Unknown User',
+          email: submission.profiles?.email || 'unknown@example.com',
           phone: undefined,
-          age: submission.age ?? 0,
-          gender: validateGender(submission.gender),
+          age: submission.profiles?.age ?? 0,
+          gender: validateGender(submission.profiles?.gender),
           region: submission.region || 'Unknown Region',
           clubAffiliation: submission.club_affiliation || 'None',
           pullUpCount: submission.pull_up_count,
@@ -95,9 +81,7 @@ const AdminDashboardPage: React.FC = () => {
       setSubmissions(formattedSubmissions);
     } catch (err) {
       console.error("Error fetching submissions:", err);
-      setLoadingError(
-        err instanceof Error ? err.message : 'Failed to fetch submissions'
-      );
+      setLoadingError(err instanceof Error ? err.message : 'Failed to fetch submissions');
     } finally {
       setIsLoading(false);
     }
@@ -111,16 +95,23 @@ const AdminDashboardPage: React.FC = () => {
   const handleApproveSubmission = async (id: string, actualCount: number) => {
     try {
       setIsLoading(true);
-      // Use our adminApi utility
-      await adminApi.approveSubmission(id, actualCount);
       
-      // Refresh submissions after update
+      const { error } = await supabase
+        .from('submissions')
+        .update({ 
+          status: 'approved',
+          actual_pull_up_count: actualCount,
+          approved_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
       await fetchSubmissions();
     } catch (err) {
       console.error("Error approving submission:", err);
-      setLoadingError(
-        err instanceof Error ? err.message : "Failed to approve submission"
-      );
+      setLoadingError(err instanceof Error ? err.message : "Failed to approve submission");
       setIsLoading(false);
     }
   };
@@ -128,16 +119,21 @@ const AdminDashboardPage: React.FC = () => {
   const handleRejectSubmission = async (id: string) => {
     try {
       setIsLoading(true);
-      // Use our adminApi utility
-      await adminApi.rejectSubmission(id);
       
-      // Refresh submissions after update
+      const { error } = await supabase
+        .from('submissions')
+        .update({ 
+          status: 'rejected',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
       await fetchSubmissions();
     } catch (err) {
       console.error("Error rejecting submission:", err);
-      setLoadingError(
-        err instanceof Error ? err.message : "Failed to reject submission"
-      );
+      setLoadingError(err instanceof Error ? err.message : "Failed to reject submission");
       setIsLoading(false);
     }
   };
