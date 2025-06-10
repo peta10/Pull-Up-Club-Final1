@@ -457,6 +457,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       throw error;
     }
     console.log("[AuthContext] Supabase signIn successful. Session:", session);
+    // Immediately update user and fetch profile after successful sign in
+    if (session?.user) {
+      setUser({ id: session.user.id, email: session.user.email! });
+      await fetchProfile(session.user.id);
+    }
   };
 
   const ensureProfileExists = async (userId: string, email: string): Promise<boolean> => {
