@@ -12,12 +12,12 @@ const LoginPage: React.FC = () => {
   const [showResetForm, setShowResetForm] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  const { user } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (user) {
+    if (!isLoading && user && profile) {
       const routeState = location.state as {
         from?: string;
         intendedAction?: string;
@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
       }
       return;
     }
-  }, [navigate, user, location.state]);
+  }, [navigate, user, profile, isLoading, location.state]);
 
   const handleToggleForm = () => {
     setIsSignUp(!isSignUp);

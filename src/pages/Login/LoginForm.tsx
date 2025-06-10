@@ -39,7 +39,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
         );
       }
       await signIn(email, password);
-      // Redirect to dashboard after successful login
       navigate("/profile", { replace: true });
     } catch (err) {
       localStorage.removeItem("pendingSubscriptionPlan");
