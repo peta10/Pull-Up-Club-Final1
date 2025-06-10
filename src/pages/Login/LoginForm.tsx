@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 interface LoginFormProps {
@@ -17,6 +17,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [error, setError] = useState("");
   const { signIn } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const routeState = location.state as {
     from?: string;
     intendedAction?: string;
@@ -38,6 +39,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
         );
       }
       await signIn(email, password);
+      // Redirect to dashboard after successful login
+      navigate("/profile", { replace: true });
     } catch (err) {
       localStorage.removeItem("pendingSubscriptionPlan");
       const errorMessage =
