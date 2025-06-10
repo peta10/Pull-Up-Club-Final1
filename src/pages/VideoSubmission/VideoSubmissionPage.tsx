@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 import type { Submission } from '../../types';
 
 interface FormData {
-  videoFile: File | null;
   pullUpCount: number;
   videoUrl: string;
   clubAffiliation: string;
@@ -25,7 +24,6 @@ const VideoSubmissionPage: React.FC = () => {
   const { submitVideo, uploading, error: submitError } = useVideoSubmission();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
-    videoFile: null,
     pullUpCount: 0,
     videoUrl: '',
     clubAffiliation: '',
@@ -92,10 +90,6 @@ const VideoSubmissionPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.videoFile) {
-      return;
-    }
-
     if (formData.pullUpCount < 1) {
       return;
     }
@@ -105,7 +99,7 @@ const VideoSubmissionPage: React.FC = () => {
     }
 
     const result = await submitVideo({
-      videoFile: formData.videoFile,
+      videoUrl: formData.videoUrl,
       pullUpCount: formData.pullUpCount,
       userId: user.id
     });
@@ -119,7 +113,7 @@ const VideoSubmissionPage: React.FC = () => {
   const isFormValid = () => {
     return (
       formData.pullUpCount > 0 &&
-      formData.videoFile !== null &&
+      formData.videoUrl.trim() !== '' &&
       isChecked.checkbox1 &&
       isChecked.checkbox2 &&
       isChecked.checkbox3 &&

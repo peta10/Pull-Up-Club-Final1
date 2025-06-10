@@ -110,7 +110,7 @@ export interface AdminStats {
 }
 
 export interface SubmitVideoParams {
-  videoFile: File;
+  videoUrl: string;
   pullUpCount: number;
   userId: string;
 }

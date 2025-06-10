@@ -11,44 +11,30 @@ export const useVideoSubmission = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submitVideo = async ({ videoFile, pullUpCount, userId }: SubmitVideoParams): Promise<SubmitVideoResult> => {
+  const submitVideo = async ({ videoUrl, pullUpCount, userId }: SubmitVideoParams): Promise<SubmitVideoResult> => {
     try {
       setUploading(true);
       setError(null);
 
-      // Upload video to Supabase Storage
-      const fileExt = videoFile.name.split('.').pop();
-      const filePath = `${userId}/${Date.now()}.${fileExt}`;
+      // Insert submission with videoUrl
+      const { error } = await supabase.from('submissions').insert([
+        {
+          user_id: userId,
+          video_url: videoUrl,
+          pull_up_count: pullUpCount,
+          status: 'pending',
+          submitted_at: new Date().toISOString(),
+        },
+      ]);
 
-      const { error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(filePath, videoFile);
+      if (error) throw error;
 
-      if (uploadError) throw uploadError;
-
-      // Get the public URL for the uploaded video
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
-        .getPublicUrl(filePath);
-
-      // Create submission record
-      const { error: submissionError } = await supabase.functions.invoke('video-submission', {
-        body: {
-          videoUrl: publicUrl,
-          pullUpCount,
-          userId
-        }
-      });
-
-      if (submissionError) throw submissionError;
-
-      return { success: true };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to submit video';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
       setUploading(false);
+      return { success: true };
+    } catch (err: any) {
+      setUploading(false);
+      setError(err.message || 'Submission failed');
+      return { success: false, error: err.message };
     }
   };
 
