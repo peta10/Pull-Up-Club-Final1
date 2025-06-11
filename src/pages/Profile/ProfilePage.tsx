@@ -17,9 +17,6 @@ const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "submissions" | "rankings" | "personal"
   >("submissions");
-  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
-  const [isDeactivating, setIsDeactivating] = useState(false);
-  const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     socialMedia: "",
@@ -43,15 +40,15 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        fullName: profile.fullName || "",
-        socialMedia: profile.socialMedia || "",
-        age: profile.age?.toString() || "",
-        gender: profile.gender || "",
-        organization: profile.organization || "",
-        city: profile.city || "",
-        state: profile.state || "",
-        country: profile.country || "United States",
-        phone: profile.phone || "",
+        fullName: profile.user_settings?.fullName ?? "",
+        socialMedia: profile.socialMedia ?? "",
+        age: profile.user_settings?.age !== undefined && profile.user_settings?.age !== null ? String(profile.user_settings?.age) : "",
+        gender: profile.user_settings?.gender ?? "",
+        organization: profile.user_settings?.organization ?? "",
+        city: profile.city ?? "",
+        state: profile.state ?? "",
+        country: profile.country ?? "United States",
+        phone: profile.user_settings?.phone ?? "",
       });
     }
   }, [profile]);
@@ -88,18 +85,17 @@ const ProfilePage: React.FC = () => {
     setIsSaving(true);
     setError(null);
     try {
-      // Use the custom RPC function
       const { error } = await supabase.rpc('update_user_profile', {
         profile_user_id: user?.id,
         full_name: formData.fullName,
         social_media_handle: formData.socialMedia,
-        age: formData.age,
-        gender: formData.gender,
-        organization: formData.organization,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        phone: formData.phone,
+        age_value: formData.age ? parseInt(formData.age) : null,
+        gender_value: formData.gender,
+        organization_value: formData.organization,
+        city_value: formData.city,
+        state_value: formData.state,
+        country_value: formData.country,
+        phone_value: formData.phone,
         profile_completed: true
       });
 
@@ -108,21 +104,24 @@ const ProfilePage: React.FC = () => {
         throw error;
       }
 
-      // Sync the profile state with the saved data
       if (profile && setProfile) {
-        setProfile({
+        const updatedProfile = {
           ...profile,
-          fullName: formData.fullName,
           socialMedia: formData.socialMedia,
-          age: formData.age,
-          gender: formData.gender,
-          organization: formData.organization,
           city: formData.city,
           state: formData.state,
           country: formData.country,
-          phone: formData.phone,
-          isProfileCompleted: true
-        });
+          isProfileCompleted: true,
+          user_settings: {
+            ...profile.user_settings,
+            fullName: formData.fullName,
+            age: formData.age ? parseInt(formData.age) : profile.user_settings?.age,
+            gender: formData.gender,
+            organization: formData.organization,
+            phone: formData.phone,
+          },
+        };
+        setProfile(updatedProfile);
       }
 
       if (isFirstLogin) {
@@ -132,63 +131,6 @@ const ProfilePage: React.FC = () => {
       setError(err instanceof Error ? err.message : "Failed to save profile");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleDeactivateAccount = async () => {
-    setIsDeactivating(true);
-    setDeactivateError(null);
-
-    try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError || !session) {
-        throw new Error(
-          sessionError?.message ||
-            "User not authenticated to get session for function call."
-        );
-      }
-
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_SUPABASE_URL
-        }/functions/v1/cancel-stripe-subscription`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ userId: user!.id }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Stripe cancellation error response:", errorData);
-        throw new Error(
-          errorData.error ||
-            errorData.message ||
-            "Failed to cancel Stripe subscription"
-        );
-      }
-      console.log("Stripe subscription cancellation successful");
-
-      console.warn(
-        "User deletion from auth schema should be handled by a secure backend function."
-      );
-
-      await signOut();
-      navigate("/");
-    } catch (err) {
-      console.error("Deactivation error:", err);
-      setDeactivateError(
-        err instanceof Error ? err.message : "Failed to deactivate account"
-      );
-      setIsDeactivating(false);
     }
   };
 
