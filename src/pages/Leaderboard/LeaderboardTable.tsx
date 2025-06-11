@@ -92,26 +92,39 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
     );
   };
 
+  // Sort by pullUpCount DESC, then approvedAt ASC (for tie-breaker)
   const sortedSubmissions = [...submissions].sort((a, b) => {
-    if (sortConfig.key === "pullUpCount") {
+    const aCount = a.actualPullUpCount ?? a.pullUpCount;
+    const bCount = b.actualPullUpCount ?? b.pullUpCount;
+    if (aCount !== bCount) {
       return sortConfig.direction === "asc"
-        ? a.pullUpCount - b.pullUpCount
-        : b.pullUpCount - a.pullUpCount;
+        ? aCount - bCount
+        : bCount - aCount;
+    }
+    // Tie-breaker: earlier approvedAt wins
+    if (a.approvedAt && b.approvedAt) {
+      return new Date(a.approvedAt).getTime() - new Date(b.approvedAt).getTime();
     }
     return 0;
   });
 
-  const groupedSubmissions = sortedSubmissions.reduce<GroupedSubmissions>(
-    (acc, submission) => {
-      const count = submission.pullUpCount;
-      if (!acc[count]) {
-        acc[count] = [];
-      }
-      acc[count].push(submission);
-      return acc;
-    },
-    {}
-  );
+  // Assign ranks (ties share the same rank, next rank skips accordingly)
+  let lastCount: number | null = null;
+  let lastRank = 0;
+  let skip = 1;
+  const rankedSubmissions = sortedSubmissions.map((submission, idx) => {
+    const count = submission.actualPullUpCount ?? submission.pullUpCount;
+    let rank = lastRank + skip;
+    if (lastCount !== null && count === lastCount) {
+      rank = lastRank;
+      skip += 1;
+    } else {
+      skip = 1;
+    }
+    lastCount = count;
+    lastRank = rank;
+    return { ...submission, rank };
+  });
 
   const renderBadges = (submission: Submission) => {
     const badges = getBadgesForSubmission(submission.actualPullUpCount ?? submission.pullUpCount);
@@ -189,43 +202,41 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           </tr>
         </thead>
         <tbody className="bg-gray-900 divide-y divide-gray-800">
-          {Object.entries(groupedSubmissions).map(([, group]) =>
-            group.map((submission: Submission, index: number) => (
-              <tr
-                key={submission.id}
-                className={index % 2 === 0 ? "bg-gray-900" : "bg-gray-850"}
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {index + 1}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="text-sm font-medium text-gray-200">
-                      {submission.fullName}
+          {rankedSubmissions.map((submission, index) => (
+            <tr
+              key={submission.id}
+              className={index % 2 === 0 ? "bg-gray-900" : "bg-gray-850"}
+            >
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                {submission.rank}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center">
+                  <div className="text-sm font-medium text-gray-200">
+                    {submission.fullName}
+                  </div>
+                  {submission.socialHandle && (
+                    <div className="text-xs text-blue-400 ml-2">
+                      <a href={`https://instagram.com/${submission.socialHandle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer">
+                        @{submission.socialHandle}
+                      </a>
                     </div>
-                    {submission.socialHandle && (
-                      <div className="text-xs text-blue-400 ml-2">
-                        <a href={`https://instagram.com/${submission.socialHandle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer">
-                          @{submission.socialHandle}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {submission.clubAffiliation}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-200">
-                    {submission.pullUpCount}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {renderBadges(submission)}
-                </td>
-              </tr>
-            ))
-          )}
+                  )}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                {submission.clubAffiliation}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-200">
+                  {submission.pullUpCount}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {renderBadges(submission)}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
