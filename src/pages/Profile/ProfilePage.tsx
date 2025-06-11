@@ -8,7 +8,7 @@ import SubmissionDashboard from "./SubmissionDashboard";
 import PatchProgress from "./PatchProgress";
 import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, User, Building, Globe, Calendar, Users, MapPin } from "lucide-react";
 import { Submission } from "../../types";
 
 const ProfilePage: React.FC = () => {
@@ -21,7 +21,15 @@ const ProfilePage: React.FC = () => {
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
+    fullName: "",
     socialMedia: "",
+    age: "",
+    gender: "",
+    organization: "",
+    city: "",
+    state: "",
+    country: "United States",
+    phone: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +43,15 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
+        fullName: profile.fullName || "",
         socialMedia: profile.socialMedia || "",
+        age: profile.age || "",
+        gender: profile.gender || "",
+        organization: profile.organization || "",
+        city: profile.city || "",
+        state: profile.state || "",
+        country: profile.country || "United States",
+        phone: profile.phone || "",
       });
     }
   }, [profile]);
@@ -73,7 +89,15 @@ const ProfilePage: React.FC = () => {
       // Use the custom RPC function
       const { error } = await supabase.rpc('update_user_profile', {
         profile_user_id: user?.id,
+        full_name: formData.fullName,
         social_media_handle: formData.socialMedia,
+        age: formData.age,
+        gender: formData.gender,
+        organization: formData.organization,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        phone: formData.phone,
         profile_completed: true
       });
 
@@ -86,7 +110,15 @@ const ProfilePage: React.FC = () => {
       if (profile && setProfile) {
         setProfile({
           ...profile,
+          fullName: formData.fullName,
           socialMedia: formData.socialMedia,
+          age: formData.age,
+          gender: formData.gender,
+          organization: formData.organization,
+          city: formData.city,
+          state: formData.state,
+          country: formData.country,
+          phone: formData.phone,
           isProfileCompleted: true
         });
       }
@@ -283,91 +315,163 @@ const ProfilePage: React.FC = () => {
                   )}
                   <form onSubmit={handleSavePersonalInfo} className="space-y-6">
                     <div className="bg-gray-950 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-white mb-4">
-                        Social Media
-                      </h3>
-                      <div>
-                        <label
-                          htmlFor="socialMedia"
-                          className="block text-sm font-medium text-gray-400"
-                        >
-                          Social Media Handle{" "}
-                          <span className="text-gray-600">(optional)</span>
-                        </label>
-                        <input
-                          type="text"
-                          id="socialMedia"
-                          name="socialMedia"
-                          value={formData.socialMedia}
-                          onChange={handleInputChange}
-                          placeholder="@yourusername"
-                          className="mt-1 block w-full rounded-md bg-gray-900 border border-gray-800 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                        />
-                        <p className="mt-1 text-sm text-gray-500">
-                          This will be displayed on the leaderboard if provided.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-gray-950 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-white mb-4">
-                        Account Settings
-                      </h3>
-                      <div className="space-y-4">
-                        <div className="border-t border-gray-800 pt-4">
-                          <h4 className="text-red-500 font-medium mb-2">
-                            Danger Zone
-                          </h4>
-                          <p className="text-gray-400 text-sm mb-4">
-                            Once you deactivate your account, it cannot be
-                            recovered. All your data will be permanently
-                            deleted.
-                          </p>
-                          {deactivateError && (
-                            <div className="mb-4 p-4 bg-red-900/50 border border-red-700 rounded-lg flex items-center text-red-200">
-                              <AlertTriangle size={20} className="mr-2" />
-                              <span>{deactivateError}</span>
-                            </div>
-                          )}
-                          {showDeactivateConfirm ? (
-                            <div className="bg-gray-900 p-4 rounded-lg border border-red-500">
-                              <p className="text-white mb-4">
-                                Are you sure you want to deactivate your
-                                account? This action cannot be undone.
-                              </p>
-                              <div className="flex space-x-4">
-                                <Button
-                                  variant="danger"
-                                  onClick={handleDeactivateAccount}
-                                  isLoading={isDeactivating}
-                                >
-                                  Yes, Deactivate My Account
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  onClick={() =>
-                                    setShowDeactivateConfirm(false)
-                                  }
-                                  disabled={isDeactivating}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <Button
-                              variant="danger"
-                              onClick={() => setShowDeactivateConfirm(true)}
-                            >
-                              Deactivate Account
-                            </Button>
-                          )}
+                      <h3 className="text-lg font-medium text-white mb-4">Profile Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <User className="inline h-4 w-4 mr-1" />
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            name="fullName"
+                            value={formData.fullName}
+                            onChange={handleInputChange}
+                            required
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                            placeholder="Enter your full name"
+                          />
+                          <p className="text-xs text-gray-400 mt-1">This will be displayed on the leaderboard</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <Globe className="inline h-4 w-4 mr-1" />
+                            Social Media Handle
+                          </label>
+                          <input
+                            type="text"
+                            name="socialMedia"
+                            value={formData.socialMedia}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                            placeholder="@yourusername"
+                          />
+                          <p className="text-xs text-gray-400 mt-1">Displayed on leaderboard for social connections</p>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button type="submit" isLoading={isSaving}>
-                        Save Changes
-                      </Button>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <Calendar className="inline h-4 w-4 mr-1" />
+                            Age *
+                          </label>
+                          <input
+                            type="number"
+                            name="age"
+                            value={formData.age}
+                            onChange={handleInputChange}
+                            required
+                            min="13"
+                            max="100"
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                            placeholder="25"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <Users className="inline h-4 w-4 mr-1" />
+                            Gender *
+                          </label>
+                          <select
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleInputChange}
+                            required
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <Building className="inline h-4 w-4 mr-1" />
+                            Club/Organization
+                          </label>
+                          <input
+                            type="text"
+                            name="organization"
+                            value={formData.organization}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                            placeholder="Your gym, team, or club"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <MapPin className="inline h-4 w-4 mr-1" />
+                            City *
+                          </label>
+                          <input
+                            type="text"
+                            name="city"
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            required
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                            placeholder="Your city"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            State/Province *
+                          </label>
+                          <input
+                            type="text"
+                            name="state"
+                            value={formData.state}
+                            onChange={handleInputChange}
+                            required
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                            placeholder="State or Province"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            Country
+                          </label>
+                          <select
+                            name="country"
+                            value={formData.country}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                          >
+                            <option value="United States">United States</option>
+                            <option value="Canada">Canada</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="Australia">Australia</option>
+                            <option value="Germany">Germany</option>
+                            <option value="France">France</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                          Phone Number (Optional)
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
+                          placeholder="+1 (555) 123-4567"
+                        />
+                      </div>
+                      <div className="pt-4">
+                        <Button
+                          type="submit"
+                          disabled={isSaving}
+                          className="w-full bg-[#9b9b6f] hover:bg-[#8a8a63] text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                        >
+                          {isSaving ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                      </div>
                     </div>
                   </form>
                 </div>

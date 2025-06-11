@@ -203,6 +203,13 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                     <div className="text-sm font-medium text-gray-200">
                       {submission.fullName}
                     </div>
+                    {submission.socialHandle && (
+                      <div className="text-xs text-blue-400 ml-2">
+                        <a href={`https://instagram.com/${submission.socialHandle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer">
+                          @{submission.socialHandle}
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">

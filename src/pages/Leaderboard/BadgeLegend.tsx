@@ -55,6 +55,8 @@ const BadgeLegend: React.FC = () => {
           Click to learn about our badge system and what each badge represents.
         </p>
       )}
+
+      <p className="text-gray-400 text-sm mt-2">Social handles (if provided) are displayed on the leaderboard for community connection.</p>
     </div>
   );
 };
