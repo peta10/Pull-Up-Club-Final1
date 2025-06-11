@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  Submission,
-  LeaderboardFilters,
-  Badge,
-} from "../../types/index";
+import { Submission, LeaderboardFilters, Badge } from "../../types/index";
 import { getBadgesForSubmission } from "../../data/mockData";
 import {
   ChevronDown,
@@ -13,10 +9,6 @@ import {
 interface LeaderboardTableProps {
   submissions: Submission[];
   filters: LeaderboardFilters;
-}
-
-interface GroupedSubmissions {
-  [key: number]: Submission[];
 }
 
 interface BadgeTooltipProps {
@@ -112,7 +104,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   let lastCount: number | null = null;
   let lastRank = 0;
   let skip = 1;
-  const rankedSubmissions = sortedSubmissions.map((submission, idx) => {
+  const rankedSubmissions = sortedSubmissions.map((submission) => {
     const count = submission.actualPullUpCount ?? submission.pullUpCount;
     let rank = lastRank + skip;
     if (lastCount !== null && count === lastCount) {
