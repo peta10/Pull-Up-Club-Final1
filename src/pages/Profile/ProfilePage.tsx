@@ -45,7 +45,7 @@ const ProfilePage: React.FC = () => {
       setFormData({
         fullName: profile.fullName || "",
         socialMedia: profile.socialMedia || "",
-        age: profile.age || "",
+        age: profile.age?.toString() || "",
         gender: profile.gender || "",
         organization: profile.organization || "",
         city: profile.city || "",
@@ -73,7 +73,9 @@ const ProfilePage: React.FC = () => {
     : [];
   const eliteBadge = userBadges.find((badge) => badge.id === "elite");
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,

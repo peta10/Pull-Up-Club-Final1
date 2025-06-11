@@ -65,9 +65,15 @@ export interface Profile {
   id: string;
   userId: string;
   email: string;
-  fullName: string;
+  fullName?: string;
+  socialMedia?: string;
   age?: number;
   gender?: string;
+  organization?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  phone?: string;
   club?: string;
   stripeCustomerId?: string;
   isPaid: boolean;
@@ -75,6 +81,7 @@ export interface Profile {
   badges: Badge[];
   createdAt: string;
   updatedAt: string;
+  isProfileCompleted?: boolean;
 }
 
 export interface SubscriptionPlan {

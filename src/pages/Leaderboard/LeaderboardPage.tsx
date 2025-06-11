@@ -43,23 +43,27 @@ const LeaderboardPage: React.FC = () => {
 
       if (error) throw error;
 
-      const formatted = (data || []).map((record) => ({
+      const formatted: Submission[] = (data || []).map((record: any) => ({
         id: record.id,
-        name: record.profiles?.full_name || 'Unknown User',
-        socialHandle: record.profiles?.social_media || null,
-        club: record.club_affiliation || record.profiles?.organization || 'None',
-        pullUps: record.actual_pull_up_count || record.pull_up_count,
-        region: [record.profiles?.city, record.profiles?.state, record.profiles?.country].filter(Boolean).join(', '),
+        userId: record.user_id,
+        fullName: record.profiles?.full_name || 'Unknown User',
+        email: record.profiles?.email || 'unknown@example.com',
+        phone: record.profiles?.phone || '',
         age: record.profiles?.age || 0,
-        gender: record.profiles?.gender || 'Other',
-        badges: [], // Add badge logic if needed
+        gender: (record.profiles?.gender as 'Male' | 'Female' | 'Other') || 'Other',
+        region: [record.profiles?.city, record.profiles?.state, record.profiles?.country].filter(Boolean).join(', ') || 'Unknown Region',
+        clubAffiliation: record.club_affiliation || record.profiles?.organization || 'None',
+        pullUpCount: record.actual_pull_up_count || record.pull_up_count,
+        actualPullUpCount: record.actual_pull_up_count,
+        videoUrl: record.video_url,
+        status: 'Approved',
+        submittedAt: record.created_at,
+        approvedAt: record.approved_at || undefined,
+        notes: record.notes || undefined,
+        featured: true,
+        socialHandle: record.profiles?.social_media || undefined
       }));
-
-      // Sort by pullUps descending
-      const ranked = formatted.sort((a, b) => b.pullUps - a.pullUps)
-        .map((item, idx) => ({ ...item, rank: idx + 1 }));
-
-      setSubmissions(ranked);
+      setSubmissions(formatted);
     } catch (err) {
       console.error('Error fetching leaderboard data:', err);
       setError('Failed to load leaderboard data');
