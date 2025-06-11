@@ -1,0 +1,6 @@
+{
+  "title": "Leaderboard",
+  "subtitle": "See how you stack up against the competition. Our leaderboard shows the top performers in the Pull-Up Club Challenge.",
+  "loading": "Loading leaderboard...",
+  "error": "Failed to load leaderboard data"
+} 

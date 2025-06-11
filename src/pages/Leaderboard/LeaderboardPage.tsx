@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import Layout from "../../components/Layout/Layout";
-import LeaderboardFilters from "./LeaderboardFilters";
-import LeaderboardTable from "./LeaderboardTable";
 import BadgeLegend from "./BadgeLegend";
+import LeaderboardTable from "../../components/Leaderboard/LeaderboardTable";
 import { LeaderboardFilters as FiltersType, Submission } from "../../types";
 import { supabase } from '../../lib/supabase';
 import { LoadingState, ErrorState } from '../../components/ui/LoadingState';
+import { useTranslation } from 'react-i18next';
 
 const LeaderboardPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FiltersType>({});
+  const { t } = useTranslation('leaderboard');
 
   useEffect(() => {
     fetchLeaderboardData();
-  }, []);
+  }, [filters]);
 
   const fetchLeaderboardData = async () => {
     try {
@@ -23,26 +24,11 @@ const LeaderboardPage: React.FC = () => {
       setError(null);
       const { data, error } = await supabase
         .from('submissions')
-        .select(`
-          *,
-          profiles:user_id (
-            email,
-            full_name,
-            age,
-            gender,
-            organization,
-            social_media,
-            city,
-            state,
-            country
-          )
-        `)
+        .select(`*, profiles:user_id (email, full_name, age, gender, organization, social_media, city, state, country)`)
         .eq('status', 'approved')
         .not('actual_pull_up_count', 'is', null)
         .order('actual_pull_up_count', { ascending: false });
-
       if (error) throw error;
-
       const formatted: Submission[] = (data || []).map((record: any) => ({
         id: record.id,
         userId: record.user_id,
@@ -66,7 +52,7 @@ const LeaderboardPage: React.FC = () => {
       setSubmissions(formatted);
     } catch (err) {
       console.error('Error fetching leaderboard data:', err);
-      setError('Failed to load leaderboard data');
+      setError(t('error'));
     } finally {
       setLoading(false);
     }
@@ -76,31 +62,29 @@ const LeaderboardPage: React.FC = () => {
     setFilters(newFilters);
   };
 
-  if (loading) return <LoadingState message="Loading leaderboard..." />;
+  if (loading) return <LoadingState message={t('loading')} />;
   if (error) return <ErrorState message={error} />;
 
   return (
     <Layout>
       <div className="bg-black py-10">
         <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center mb-8">
+            <img src="/PUClogo (1).webp" alt="Pull-Up Club Logo" className="h-10 w-auto mr-3" />
+            <h1 className="text-3xl font-bold text-white">{t('title')}</h1>
+          </div>
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
             <p className="mt-2 text-gray-400 max-w-2xl mx-auto">
-              See how you stack up against the competition. Our leaderboard
-              shows the top performers in the Pull-Up Club Challenge.
+              {t('subtitle')}
             </p>
           </div>
-
-          <LeaderboardFilters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-          />
-
           <BadgeLegend />
-
           <LeaderboardTable
             submissions={submissions}
+            showPagination={true}
+            showFilters={true}
             filters={filters}
+            onFilterChange={handleFilterChange}
           />
         </div>
       </div>

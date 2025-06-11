@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "home": "Home",
+    "leaderboard": "Leaderboard",
+    "ethos": "Our Ethos",
+    "shop": "Shop",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign Up"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "edit": "Edit",
+    "delete": "Delete",
+    "approve": "Approve",
+    "reject": "Reject",
+    "viewVideo": "View Video",
+    "loadMore": "Load More",
+    "resetFilters": "Reset Filters"
+  },
+  "labels": {
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "age": "Age",
+    "gender": "Gender",
+    "city": "City",
+    "state": "State",
+    "country": "Country",
+    "club": "Club",
+    "organization": "Organization",
+    "socialHandle": "Social Handle",
+    "phone": "Phone Number"
+  }
+} 

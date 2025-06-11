@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { User, Menu, X, Trophy, Home, ShoppingBag, UserPlus, LogIn, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSelector } from '../LanguageSelector';
 
 const Header: React.FC = () => {
   const { user, signOut, isAdmin } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { t, i18n } = useTranslation('common');
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -17,8 +20,8 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-2 text-[#9b9b6f] hover:text-[#7a7a58] transition-colors">
             <img 
-              src={import.meta.env.VITE_LOGO_URL || "https://cdn.shopify.com/s/files/1/0567/5237/3945/files/png_bb_logo.png?v=1746303427"} 
-              alt="Battle Bunker Logo" 
+              src={"/NewWebp-Pics/png_bb_logo.webp"}
+              alt="Pull-Up Club Logo"
               className="h-8 w-auto"
             />
             <span className="text-xl font-bold tracking-wider"></span>
@@ -27,28 +30,32 @@ const Header: React.FC = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link to="/" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
               <Home className="h-4 w-4 mr-1" />
-              Home
+              {t('nav.home')}
             </Link>
             <Link to="/leaderboard" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
               <Trophy className="h-4 w-4 mr-1" />
-              Leaderboard
+              {t('nav.leaderboard')}
+            </Link>
+            <Link to="/ethos" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
+              <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 4h9" /><path strokeLinecap="round" strokeLinejoin="round" d="M4 6v12a2 2 0 002 2h8V4H6a2 2 0 00-2 2z" /></svg>
+              {t('nav.ethos')}
             </Link>
             <a href="https://shop.thebattlebunker.com/?srsltid=AfmBOooA1PK269tAblC8AjIUZIdGUa5gd65im0ovz5pqv5tcrV319AlX" 
                className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
                target="_blank"
                rel="noopener noreferrer">
               <ShoppingBag className="h-4 w-4 mr-1" />
-              Shop
+              {t('nav.shop')}
             </a>
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link to="/profile" className="flex items-center space-x-2 font-medium hover:text-[#9b9b6f] transition-colors">
                   <User size={20} />
-                  <span>Dashboard</span>
+                  <span>{t('nav.dashboard')}</span>
                 </Link>
                 {isAdmin && (
                   <Link to="/admin-dashboard" className="font-medium hover:text-[#9b9b6f] transition-colors">
-                    Admin
+                    {t('nav.admin')}
                   </Link>
                 )}
                 <button
@@ -57,21 +64,22 @@ const Header: React.FC = () => {
                   type="button"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
-                  Logout
+                  {t('nav.logout')}
                 </button>
               </div>
             ) : (
               <>
                 <Link to="/subscription" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
                   <UserPlus className="h-4 w-4 mr-1" />
-                  Sign Up
+                  {t('nav.signup')}
                 </Link>
                 <Link to="/login" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
                   <LogIn className="h-4 w-4 mr-1" />
-                  Login
+                  {t('nav.login')}
                 </Link>
               </>
             )}
+            <LanguageSelector />
           </nav>
           
           <button 
@@ -97,7 +105,7 @@ const Header: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Home className="h-4 w-4 mr-1" />
-                Home
+                {t('nav.home')}
               </Link>
               <Link 
                 to="/leaderboard" 
@@ -105,7 +113,15 @@ const Header: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Trophy className="h-4 w-4 mr-1" />
-                Leaderboard
+                {t('nav.leaderboard')}
+              </Link>
+              <Link 
+                to="/ethos" 
+                className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 4h9" /><path strokeLinecap="round" strokeLinejoin="round" d="M4 6v12a2 2 0 002 2h8V4H6a2 2 0 00-2 2z" /></svg>
+                {t('nav.ethos')}
               </Link>
               <a 
                 href="https://shop.thebattlebunker.com/?srsltid=AfmBOooA1PK269tAblC8AjIUZIdGUa5gd65im0ovz5pqv5tcrV319AlX"
@@ -115,7 +131,7 @@ const Header: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <ShoppingBag className="h-4 w-4 mr-1" />
-                Shop
+                {t('nav.shop')}
               </a>
               {user ? (
                 <>
@@ -125,7 +141,7 @@ const Header: React.FC = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <User size={20} />
-                    <span>Dashboard</span>
+                    <span>{t('nav.dashboard')}</span>
                   </Link>
                   {isAdmin && (
                     <Link 
@@ -133,7 +149,7 @@ const Header: React.FC = () => {
                       className="font-medium hover:text-[#9b9b6f] transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Admin
+                      {t('nav.admin')}
                     </Link>
                   )}
                   <button
@@ -145,7 +161,7 @@ const Header: React.FC = () => {
                     type="button"
                   >
                     <LogOut className="h-4 w-4 mr-1" />
-                    Logout
+                    {t('nav.logout')}
                   </button>
                 </>
               ) : (
@@ -156,7 +172,7 @@ const Header: React.FC = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <UserPlus className="h-4 w-4 mr-1" />
-                    Sign Up
+                    {t('nav.signup')}
                   </Link>
                   <Link 
                     to="/login" 
@@ -164,10 +180,11 @@ const Header: React.FC = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <LogIn className="h-4 w-4 mr-1" />
-                    Login
+                    {t('nav.login')}
                   </Link>
                 </>
               )}
+              <LanguageSelector />
             </nav>
           </div>
         )}

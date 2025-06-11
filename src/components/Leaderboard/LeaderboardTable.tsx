@@ -78,10 +78,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           <tbody className="divide-y divide-gray-800">
             {display.map((submission, index) => {
               const rank = (showPagination ? (page - 1) * PAGE_SIZE : 0) + index + 1;
-              const badges = getBadgesForSubmission(
-                submission.actualPullUpCount ?? submission.pullUpCount,
-                submission.gender
-              );
+              const badges = getBadgesForSubmission(submission.actualPullUpCount ?? submission.pullUpCount);
               return (
                 <tr key={submission.id} className="bg-gray-900 hover:bg-gray-800 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -164,4 +161,4 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   );
 };
 
-export default LeaderboardTable;
+export default LeaderboardTable; 

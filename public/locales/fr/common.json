@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "leaderboard": "Classement",
+    "ethos": "Notre Ethos",
+    "shop": "Boutique",
+    "dashboard": "Tableau de bord",
+    "admin": "Admin",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "signup": "S'inscrire"
+  },
+  "buttons": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "submit": "Soumettre",
+    "edit": "Éditer",
+    "delete": "Supprimer",
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "viewVideo": "Voir la vidéo",
+    "loadMore": "Charger plus",
+    "resetFilters": "Réinitialiser les filtres"
+  },
+  "labels": {
+    "name": "Nom",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "age": "Âge",
+    "gender": "Genre",
+    "city": "Ville",
+    "state": "État",
+    "country": "Pays",
+    "club": "Club",
+    "organization": "Organisation",
+    "socialHandle": "Réseau social",
+    "phone": "Numéro de téléphone"
+  }
+} 

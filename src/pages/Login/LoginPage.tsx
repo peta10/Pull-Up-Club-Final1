@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
           <div className="relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm shadow-2xl p-8 flex flex-col items-center">
             <div className="mb-6">
               <img
-                src="/PUClogo (1).png"
+                src="/PUClogo (1).webp"
                 alt="Pull-Up Club Logo"
                 className="h-16 w-auto"
               />
@@ -86,7 +86,7 @@ const LoginPage: React.FC = () => {
           <div className="relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm shadow-2xl p-8 flex flex-col items-center">
             <div className="mb-6">
               <img
-                src="/PUClogo (1).png"
+                src="/PUClogo (1).webp"
                 alt="Pull-Up Club Logo"
                 className="h-16 w-auto"
               />
@@ -112,7 +112,7 @@ const LoginPage: React.FC = () => {
         <div className="relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm shadow-2xl p-8 flex flex-col items-center">
           <div className="flex items-center justify-center mb-6">
             <img
-              src="/PUClogo (1).png"
+              src="/PUClogo (1).webp"
               alt="Pull-Up Club Logo"
               className="h-16 w-auto"
             />

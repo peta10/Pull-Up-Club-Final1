@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "leaderboard": "Bestenliste",
+    "ethos": "Unser Ethos",
+    "shop": "Shop",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "signup": "Registrieren"
+  },
+  "buttons": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "submit": "Absenden",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "viewVideo": "Video ansehen",
+    "loadMore": "Mehr laden",
+    "resetFilters": "Filter zurücksetzen"
+  },
+  "labels": {
+    "name": "Name",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "age": "Alter",
+    "gender": "Geschlecht",
+    "city": "Stadt",
+    "state": "Bundesland",
+    "country": "Land",
+    "club": "Club",
+    "organization": "Organisation",
+    "socialHandle": "Social Handle",
+    "phone": "Telefonnummer"
+  }
+} 

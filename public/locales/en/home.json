@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "title": "Pull-Up Club | Battle Bunker",
+    "description": "Join the Pull-Up Club. Compete globally, earn badges, and climb the leaderboard for just $9.99/mo.",
+    "ogTitle": "Pull-Up Club | Battle Bunker",
+    "ogDescription": "Compete globally, earn badges, and climb the leaderboard."
+  },
+  "hero": {
+    "headline": "Welcome to Pull-Up Club",
+    "subheadline": "Compete globally. Earn badges. Climb the leaderboard."
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "step1": "Sign up and join the club",
+    "step2": "Submit your pull-up video",
+    "step3": "Get judged and climb the leaderboard"
+  },
+  "perks": {
+    "title": "Why Join?",
+    "perk1": "Global competition",
+    "perk2": "Earn exclusive badges",
+    "perk3": "Monthly prizes and recognition"
+  },
+  "leaderboardPreview": {
+    "title": "Leaderboard Preview",
+    "subtitle": "See the top performers this month"
+  },
+  "testimonials": {
+    "title": "What Members Say",
+    "quote1": "Pull-Up Club keeps me motivated every month!",
+    "quote2": "The badge system is so rewarding.",
+    "quote3": "I love seeing my progress on the leaderboard."
+  },
+  "cta": {
+    "title": "Ready to Join?",
+    "button": "Sign Up Now"
+  }
+} 

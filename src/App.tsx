@@ -26,6 +26,8 @@ const SubscribeRedirect = lazy(() => import("./pages/Subscription/SubscribeRedir
 const SignupAccessPage = lazy(() => import("./pages/Subscription/SignupAccessPage.tsx"));
 const VideoSubmissionPage = lazy(() => import("./pages/VideoSubmission/VideoSubmissionPage.tsx"));
 const AdminUserManagement = lazy(() => import("./pages/AdminUserManagement.tsx"));
+const EthosPage = lazy(() => import("./pages/EthosPage.tsx"));
+const Herotry = lazy(() => import("./pages/Home/Herotry.tsx"));
 
 // Loading component
 const LoadingFallback = () => (
@@ -135,11 +137,13 @@ function App() {
           <Routes>
             {/* Public routes that don't require authentication */}
             <Route path="/" element={<Home />} />
+            <Route path="/herotry" element={<Herotry />} />
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/cookies" element={<CookiesPolicyPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/ethos" element={<EthosPage />} />
 
             {/* Authentication routes - redirect if already logged in */}
             <Route

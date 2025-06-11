@@ -1,0 +1,36 @@
+{
+  "hero": {
+    "title": "The Legend Behind Our Mission",
+    "subtitle": "Every rep is a rescue. Every member is a lifter. This is the Pull-Up Club Ethos."
+  },
+  "legend": {
+    "title": "The Legend of Alkeios",
+    "quote1": "In the early days of Battle Bunker, there was a soldier named <1>Alkeios</1>. During a brutal mission deep behind enemy lines, his unit was trapped — 100 men and women, buried alive in a collapsed underground bunker. The only way out was vertical — a 60-foot shaft with no ladder, no ropes, and no exit plan.",
+    "quote2": "One by one, Alkeios pulled them out with nothing but his bare hands and iron will — 100 rescues, each one costing him blood, pain, and breath. When the final soldier reached safety, Alkeios collapsed. His body was broken, but none were left behind.",
+    "summary": "That act of endurance, sacrifice, and unbreakable resolve became known as the origin of the Pull-Up Club — where every pull-up is a nod to the warrior who lifted others from the pit when all hope was gone."
+  },
+  "purpose": {
+    "title": "The Purpose of Pull-Up Club",
+    "intro": "Pull-ups are not just fitness — they're training for readiness, for rescue, for service. Every rep is a personal mission:",
+    "pillars": {
+      "trainToSave": {
+        "title": "Train to Save",
+        "desc": "Every pull-up is a rehearsal for rescue. We train not just for ourselves, but to be ready to lift others when it matters most."
+      },
+      "strengthToLift": {
+        "title": "Strength to Lift Others",
+        "desc": "Our strength is measured by how many we can help. The Pull-Up Club is a community built on service, support, and lifting each other up."
+      },
+      "disciplineToOvercome": {
+        "title": "Discipline to Overcome",
+        "desc": "Discipline is forged in adversity. We overcome obstacles, rep by rep, building the mental toughness to face any challenge."
+      }
+    }
+  },
+  "cta": {
+    "title": "Join the Mission",
+    "subtitle": "Every rep matters. Become part of a global community where strength is measured by service, and every pull-up is a story of rescue.",
+    "signup": "Sign Up",
+    "leaderboard": "View Leaderboard"
+  }
+} 

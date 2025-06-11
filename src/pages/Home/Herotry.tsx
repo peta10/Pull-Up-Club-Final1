@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Trophy, Users, Globe, Zap, Timer } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Link } from '../../components/ui/Link';
-import { useTranslation } from "react-i18next";
 
 const badgeImages = [
   { src: '/Male-Badges/Elite.webp', alt: 'Elite Badge' },
@@ -12,8 +11,7 @@ const badgeImages = [
   { src: '/Male-Badges/Recruit.webp', alt: 'Recruit Badge' },
 ];
 
-const Hero = () => {
-  const { t } = useTranslation("home");
+const Herotry = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(false);
   const [currentStats, setCurrentStats] = useState({
@@ -111,7 +109,7 @@ const Hero = () => {
 
   return (
     <div ref={heroRef} className="relative min-h-screen bg-gray-900 text-white overflow-hidden">
-      {/* Background image with overlay */}
+      {/* Background image with overlay (matches Hero.tsx) */}
       <div className="absolute inset-0 bg-black">
         <img
           src="/NewWebp-Pics/pullup_header.webp"
@@ -307,4 +305,4 @@ const Hero = () => {
   );
 };
 
-export default Hero;
+export default Herotry; 

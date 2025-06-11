@@ -14,7 +14,7 @@ const CTASection: React.FC = () => {
           Pull-Up Challenge. Show the world what you're capable of!
         </p>
         <Button variant="secondary" size="lg">
-          <Link href="/login" className="text-white">
+          <Link href="/subscription" className="text-white">
             Sign Up
           </Link>
         </Button>

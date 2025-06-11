@@ -4,7 +4,7 @@ import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { LoadingState, ErrorState } from "../../components/ui/LoadingState";
 import { Eye, CheckCircle, XCircle, Star, Filter, Search, ChevronDown } from "lucide-react";
-import { adminApi } from "../../utils/edgeFunctions";
+import { supabase } from "../../lib/supabase";
 
 const LOGO_PATH = "/PUClogo (1).png";
 
@@ -38,22 +38,56 @@ const AdminDashboardPage: React.FC = () => {
   });
 
   // Fetch submissions (paginated)
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchSubmissions = async () => {
+    try {
       setIsLoading(true);
       setError(null);
-      try {
-        // TODO: Replace with paginated/filtered API call
-        const data = await adminApi.getSubmissions();
-        setSubmissions(data);
-        setFilteredSubmissions(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to load submissions");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
+      const { data, error } = await supabase
+        .from('submissions')
+        .select(`
+          *,
+          profiles:user_id (
+            email,
+            full_name,
+            age,
+            gender,
+            organization,
+            social_media,
+            city,
+            state
+          )
+        `)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const formattedSubmissions = (data || []).map((submission: any) => ({
+        id: submission.id.toString(),
+        userId: submission.user_id,
+        fullName: submission.profiles?.full_name || 'Unknown User',
+        socialHandle: submission.profiles?.social_media || '',
+        challenge: 'Pull-Up Challenge',
+        category: submission.region || 'General',
+        submittedAt: submission.created_at,
+        submissionDate: new Date(submission.created_at).toLocaleDateString(),
+        status: submission.status.charAt(0).toUpperCase() + submission.status.slice(1),
+        pullUpCount: submission.pull_up_count,
+        claimedCount: submission.pull_up_count,
+        verifiedCount: submission.actual_pull_up_count,
+        videoUrl: submission.video_url,
+        notes: submission.notes
+      }));
+      setSubmissions(formattedSubmissions);
+      setFilteredSubmissions(formattedSubmissions);
+    } catch (err) {
+      console.error("Error fetching submissions:", err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch submissions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubmissions();
+    // eslint-disable-next-line
   }, []);
 
   // Filtering logic
@@ -94,22 +128,29 @@ const AdminDashboardPage: React.FC = () => {
   const totalPages = Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE);
 
   // Actions
-  const handleStatusChange = async (submissionId: string, newStatus: 'Approved' | 'Rejected' | 'Featured', verifiedCount?: number) => {
+  const handleStatusChange = async (
+    submissionId: string,
+    newStatus: 'Approved' | 'Rejected' | 'Featured',
+    verifiedCount?: number
+  ) => {
     setIsLoading(true);
     try {
+      let updateObj: any = {
+        status: newStatus.toLowerCase(),
+        updated_at: new Date().toISOString()
+      };
       if (newStatus === 'Approved') {
-        await adminApi.approveSubmission(submissionId, verifiedCount || 0);
-      } else if (newStatus === 'Rejected') {
-        await adminApi.rejectSubmission(submissionId, "Rejected by admin");
-      } else if (newStatus === 'Featured') {
-        // For now, just update local state; implement feature logic as needed
-        setSubmissions(prev => prev.map(sub => sub.id === submissionId ? { ...sub, status: 'Featured' } : sub));
+        updateObj.actual_pull_up_count = verifiedCount;
       }
-      // Refresh data
-      const data = await adminApi.getSubmissions();
-      setSubmissions(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to update submission");
+      const { error } = await supabase
+        .from('submissions')
+        .update(updateObj)
+        .eq('id', submissionId);
+      if (error) throw error;
+      await fetchSubmissions();
+    } catch (error) {
+      console.error('Error updating submission:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update submission');
     } finally {
       setIsLoading(false);
     }
@@ -156,7 +197,7 @@ const AdminDashboardPage: React.FC = () => {
           </div>
           {newSubmissionsCount > 0 && (
             <div className="flex items-center bg-[#9a9871]/10 border border-[#9a9871] rounded-lg px-4 py-2">
-              <span className="inline-block w-6 h-6 bg-[#9a9871] text-black font-bold rounded-full flex items-center justify-center mr-2">{newSubmissionsCount}</span>
+              <span className="w-6 h-6 bg-[#9a9871] text-black font-bold rounded-full flex items-center justify-center mr-2">{newSubmissionsCount}</span>
               <span className="text-[#9a9871] text-sm font-medium">New submissions to review</span>
             </div>
           )}
