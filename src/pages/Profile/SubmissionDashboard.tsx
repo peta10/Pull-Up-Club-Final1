@@ -15,6 +15,51 @@ interface SubmissionDashboardProps {
   onRefresh?: () => void;
 }
 
+const MonthlyCountdown: React.FC = () => {
+  const [timeLeft, setTimeLeft] = useState<{days: number, hours: number, minutes: number} | null>(null);
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const timeDiff = endOfMonth.getTime() - now.getTime();
+      if (timeDiff > 0) {
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        setTimeLeft({ days, hours, minutes });
+      } else {
+        setTimeLeft(null);
+      }
+    };
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  if (!timeLeft) return null;
+  return (
+    <div className="bg-gradient-to-r from-[#9b9b6f]/20 to-[#7a7a58]/20 border border-[#9b9b6f]/30 rounded-lg p-4 mb-6">
+      <div className="text-center">
+        <h3 className="text-white font-semibold mb-2">🏆 Monthly Competition Ends In:</h3>
+        <div className="flex justify-center space-x-4 text-2xl font-bold text-[#9b9b6f]">
+          <div className="text-center">
+            <div>{timeLeft.days}</div>
+            <div className="text-xs text-gray-400">DAYS</div>
+          </div>
+          <div className="text-center">
+            <div>{timeLeft.hours}</div>
+            <div className="text-xs text-gray-400">HOURS</div>
+          </div>
+          <div className="text-center">
+            <div>{timeLeft.minutes}</div>
+            <div className="text-xs text-gray-400">MINS</div>
+          </div>
+        </div>
+        <p className="text-gray-300 text-sm mt-2">Submit your video before the month ends to compete!</p>
+      </div>
+    </div>
+  );
+};
+
 const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
   submissions: propSubmissions,
   onRefresh,
@@ -223,6 +268,9 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Monthly Countdown */}
+      <MonthlyCountdown />
 
       {/* Submissions List */}
       {submissions.length > 0 ? (

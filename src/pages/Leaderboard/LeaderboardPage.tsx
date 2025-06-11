@@ -22,34 +22,48 @@ const LeaderboardPage: React.FC = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('submissions')
-        .select('*, profiles(email, full_name, age, gender, city, organization)')
+        .select(`
+          *,
+          profiles:user_id (
+            email,
+            full_name,
+            age,
+            gender,
+            city,
+            organization,
+            social_media
+          )
+        `)
         .eq('status', 'approved')
+        .not('actual_pull_up_count', 'is', null)
         .order('actual_pull_up_count', { ascending: false });
 
       if (error) throw error;
 
       // Transform the data to match the Submission interface
-      const transformedSubmissions: Submission[] = (data || []).map(record => ({
-        id: record.id,
-        userId: record.user_id,
-        fullName: record.profiles?.full_name || 'Unknown User',
-        email: record.profiles?.email || 'unknown@example.com',
-        phone: record.profiles?.phone,
-        age: record.profiles?.age || 0,
-        gender: (record.profiles?.gender as 'Male' | 'Female' | 'Other') || 'Other',
-        region: record.profiles?.city || 'Unknown Region',
-        clubAffiliation: record.profiles?.organization || 'None',
-        pullUpCount: record.pull_up_count,
-        actualPullUpCount: record.actual_pull_up_count || undefined,
-        videoUrl: record.video_url,
-        status: 'Approved',
-        submittedAt: record.created_at,
-        approvedAt: record.approved_at || undefined,
-        notes: record.notes || undefined,
-        featured: true,
-        socialHandle: record.social_handle
-      }));
-
+      const transformedSubmissions: Submission[] = (data || []).map(record => {
+        const verifiedCount = record.actual_pull_up_count || record.pull_up_count;
+        return {
+          id: record.id,
+          userId: record.user_id,
+          fullName: record.profiles?.full_name || 'Unknown User',
+          email: record.profiles?.email || 'unknown@example.com',
+          phone: record.profiles?.phone,
+          age: record.profiles?.age || 0,
+          gender: (record.profiles?.gender as 'Male' | 'Female' | 'Other') || 'Other',
+          region: record.region || record.profiles?.city || 'Unknown Region',
+          clubAffiliation: record.club_affiliation || record.profiles?.organization || 'None',
+          pullUpCount: verifiedCount,
+          actualPullUpCount: record.actual_pull_up_count,
+          videoUrl: record.video_url,
+          status: 'Approved',
+          submittedAt: record.created_at,
+          approvedAt: record.approved_at || undefined,
+          notes: record.notes || undefined,
+          featured: true,
+          socialHandle: record.profiles?.social_media
+        };
+      });
       setSubmissions(transformedSubmissions);
     } catch (err) {
       console.error('Error fetching leaderboard data:', err);
