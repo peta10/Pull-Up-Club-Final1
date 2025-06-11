@@ -86,13 +86,13 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const rejectSubmission = async (submissionId: string, reason: string) => {
+  const rejectSubmission = async (submissionId: string, notes?: string) => {
     try {
       const { error } = await supabase.functions.invoke('admin-submissions', {
         body: {
           action: 'reject',
           submissionId,
-          reason
+          notes
         }
       });
 
@@ -129,11 +129,18 @@ const AdminDashboard: React.FC = () => {
         </TabsList>
 
         <TabsContent value="submissions">
-          <SubmissionReview
-            submission={submissions[0]} // Pass the first submission for now
-            onApprove={approveSubmission}
-            onReject={rejectSubmission}
-          />
+          {submissions.length > 0 ? (
+            submissions.map((submission) => (
+              <SubmissionReview
+                key={submission.id}
+                submission={submission}
+                onApprove={approveSubmission}
+                onReject={rejectSubmission}
+              />
+            ))
+          ) : (
+            <div className="text-gray-400">No submissions found.</div>
+          )}
         </TabsContent>
 
         <TabsContent value="users">

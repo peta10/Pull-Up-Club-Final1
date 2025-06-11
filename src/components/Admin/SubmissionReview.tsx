@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Submission } from '../../types';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { User, MapPin, Building, Calendar, MessageSquare, ExternalLink, Check, X } from 'lucide-react';
+import { User, MapPin, Building, Calendar, ExternalLink, Check, X } from 'lucide-react';
 
 interface SubmissionReviewProps {
   submission: Submission;
