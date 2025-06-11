@@ -33,7 +33,7 @@ const AdminDashboardPage: React.FC = () => {
       setIsLoading(true);
       setLoadingError(null);
 
-      // Direct Supabase query - no Edge Functions needed
+      // Enhanced query to get ALL user information
       const { data, error } = await supabase
         .from('submissions')
         .select(`
@@ -43,7 +43,12 @@ const AdminDashboardPage: React.FC = () => {
             full_name,
             age,
             gender,
-            organization
+            organization,
+            social_media,
+            city,
+            state,
+            country,
+            phone
           )
         `)
         .order('created_at', { ascending: false });
@@ -59,13 +64,13 @@ const AdminDashboardPage: React.FC = () => {
         return {
           id: submission.id.toString(),
           userId: submission.user_id,
-          fullName: submission.profiles?.full_name || submission.profiles?.email?.split('@')[0] || 'Unknown User',
+          fullName: submission.profiles?.full_name || 'No Name Provided',
           email: submission.profiles?.email || 'unknown@example.com',
-          phone: undefined,
+          phone: submission.profiles?.phone || undefined,
           age: submission.profiles?.age ?? 0,
           gender: validateGender(submission.profiles?.gender),
-          region: submission.region || 'Unknown Region',
-          clubAffiliation: submission.club_affiliation || 'None',
+          region: submission.region || `${submission.profiles?.city || ''}, ${submission.profiles?.state || ''}`.trim().replace(/^,|,$/, '') || 'Unknown Region',
+          clubAffiliation: submission.club_affiliation || submission.profiles?.organization || 'None',
           pullUpCount: submission.pull_up_count,
           actualPullUpCount: submission.actual_pull_up_count ?? undefined,
           videoUrl: submission.video_url,
@@ -74,7 +79,7 @@ const AdminDashboardPage: React.FC = () => {
           approvedAt: submission.approved_at || undefined,
           notes: submission.notes ?? undefined,
           featured: submission.status === 'approved',
-          socialHandle: undefined
+          socialHandle: submission.profiles?.social_media || undefined
         };
       });
 
@@ -116,7 +121,7 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleRejectSubmission = async (id: string) => {
+  const handleRejectSubmission = async (id: string, notes?: string) => {
     try {
       setIsLoading(true);
       
@@ -124,6 +129,7 @@ const AdminDashboardPage: React.FC = () => {
         .from('submissions')
         .update({ 
           status: 'rejected',
+          notes: notes || null,  // Save admin notes
           updated_at: new Date().toISOString()
         })
         .eq('id', id);
