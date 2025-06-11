@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Trophy, Users, Globe, Zap, Timer } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Globe, Zap, Timer } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Link } from '../../components/ui/Link';
-import { useTranslation } from "react-i18next";
 
 const badgeImages = [
   { src: '/Male-Badges/Elite.webp', alt: 'Elite Badge' },
@@ -13,7 +12,6 @@ const badgeImages = [
 ];
 
 const Hero = () => {
-  const { t } = useTranslation("home");
   const [imageLoaded, setImageLoaded] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(false);
   const [currentStats, setCurrentStats] = useState({

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Trophy, Users, Globe, Zap, Timer } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Globe, Zap, Timer } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Link } from '../../components/ui/Link';
 

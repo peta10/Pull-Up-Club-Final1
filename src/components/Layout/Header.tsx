@@ -8,7 +8,7 @@ import { LanguageSelector } from '../LanguageSelector';
 const Header: React.FC = () => {
   const { user, signOut, isAdmin } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { t, i18n } = useTranslation('common');
+  const { t } = useTranslation('common');
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
