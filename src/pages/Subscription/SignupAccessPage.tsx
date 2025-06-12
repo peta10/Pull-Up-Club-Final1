@@ -14,6 +14,15 @@ interface VerificationResult {
   error?: string;
 }
 
+const REGION_OPTIONS = [
+  "North America",
+  "South America",
+  "Europe",
+  "Asia",
+  "Africa",
+  "Australia/Oceania"
+];
+
 const SignupAccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -29,7 +38,8 @@ const SignupAccessPage: React.FC = () => {
     phone: '',
     age: '',
     gender: '',
-    organisation: ''
+    organisation: '',
+    region: ''
   });
 
   const sessionId = searchParams.get('session_id');
@@ -113,6 +123,7 @@ const SignupAccessPage: React.FC = () => {
             age: formData.age ? parseInt(formData.age) : null,
             gender: formData.gender,
             organisation: formData.organisation,
+            region: formData.region,
             stripe_customer_id: verificationResult?.customerId,
             is_paid: true
           }
@@ -265,6 +276,20 @@ const SignupAccessPage: React.FC = () => {
                 className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
                 placeholder="Organisation (Optional)"
               />
+              <div className="w-full">
+                <select
+                  name="region"
+                  value={formData.region}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                >
+                  <option value="">Region</option>
+                  {REGION_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
               <input
                 type="password"
                 name="password"
