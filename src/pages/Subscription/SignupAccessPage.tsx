@@ -251,7 +251,8 @@ const SignupAccessPage: React.FC = () => {
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] appearance-none"
+                  style={{ backgroundColor: '#232323', color: '#fff' }}
                 >
                   <option value="">Gender</option>
                   <option value="male">Male</option>
