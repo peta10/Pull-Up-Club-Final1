@@ -3,12 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 interface LoginFormProps {
-  onToggleForm: () => void;
   onShowResetForm: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
-  onToggleForm,
   onShowResetForm,
 }) => {
   const [email, setEmail] = useState("");
@@ -64,6 +62,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
+  const handleGoToSubscribe = () => {
+    navigate('/subscribe');
+  };
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
       <div className="w-full flex flex-col gap-3">
@@ -115,7 +117,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             Don't have an account?{" "}
             <button
               type="button"
-              onClick={onToggleForm}
+              onClick={handleGoToSubscribe}
               className="underline text-white/80 hover:text-white"
             >
               {intendedPlan

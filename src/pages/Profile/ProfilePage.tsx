@@ -10,6 +10,16 @@ import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 import { AlertTriangle, User, Building, Globe, Calendar, Users, MapPin } from "lucide-react";
 import { Submission } from "../../types";
+import { Alert } from "../../components/ui/Alert";
+
+const REGION_OPTIONS = [
+  "North America",
+  "South America",
+  "Europe",
+  "Asia",
+  "Africa",
+  "Australia/Oceania"
+];
 
 const ProfilePage: React.FC = () => {
   const { user, signOut, isFirstLogin, profile, setProfile } = useAuth();
@@ -23,13 +33,14 @@ const ProfilePage: React.FC = () => {
     age: "",
     gender: "",
     organization: "",
-    city: "",
-    state: "",
-    country: "United States",
+    region: "",
     phone: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (isFirstLogin && profile && !profile.isProfileCompleted) {
@@ -40,18 +51,48 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        fullName: profile.user_settings?.fullName ?? "",
-        socialMedia: profile.socialMedia ?? "",
-        age: profile.user_settings?.age !== undefined && profile.user_settings?.age !== null ? String(profile.user_settings?.age) : "",
-        gender: profile.user_settings?.gender ?? "",
-        organization: profile.user_settings?.organization ?? "",
-        city: profile.city ?? "",
-        state: profile.state ?? "",
-        country: profile.country ?? "United States",
-        phone: profile.user_settings?.phone ?? "",
+        fullName: profile.fullName || "",
+        socialMedia: profile.socialMedia || "",
+        age: profile.age !== undefined ? String(profile.age) : "",
+        gender: profile.gender || "",
+        organization: profile.organization || "",
+        region: profile.region || "",
+        phone: profile.phone || "",
       });
     }
   }, [profile]);
+
+  useEffect(() => {
+    const initial = profile ? {
+      fullName: profile.fullName || "",
+      socialMedia: profile.socialMedia || "",
+      age: profile.age !== undefined ? String(profile.age) : "",
+      gender: profile.gender || "",
+      organization: profile.organization || "",
+      region: profile.region || "",
+      phone: profile.phone || "",
+    } : {
+      fullName: "",
+      socialMedia: "",
+      age: "",
+      gender: "",
+      organization: "",
+      region: "",
+      phone: "",
+    };
+    setDirty(JSON.stringify(formData) !== JSON.stringify(initial));
+  }, [formData, profile]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [dirty]);
 
   const userSubmissions = mockSubmissions.filter(
     (sub) => sub.email === user?.email
@@ -81,60 +122,72 @@ const ProfilePage: React.FC = () => {
       ...prev,
       [name]: value,
     }));
+    setDirty(true);
   };
 
   const handleSavePersonalInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
+    setSuccess(false);
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setIsSaving(false);
+      return;
+    }
     try {
-      const { error } = await supabase.rpc('update_user_profile', {
-        profile_user_id: user?.id,
-        full_name: formData.fullName,
-        social_media_handle: formData.socialMedia,
-        age_value: formData.age ? parseInt(formData.age) : null,
-        gender_value: formData.gender,
-        organization_value: formData.organization,
-        city_value: formData.city,
-        state_value: formData.state,
-        country_value: formData.country,
-        phone_value: formData.phone,
-        profile_completed: true
-      });
-
-      if (error) {
-        console.error('RPC error:', error);
-        throw error;
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.fullName,
+          social_media: formData.socialMedia,
+          age: parseInt(formData.age),
+          gender: formData.gender,
+          organization: formData.organization,
+          region: formData.region,
+          phone: formData.phone,
+          is_profile_completed: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      if (error) throw error;
+      const { data: updated, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (fetchError) throw fetchError;
+      if (setProfile) {
+        setProfile({
+          ...profile!,
+          fullName: updated.full_name,
+          socialMedia: updated.social_media,
+          age: updated.age,
+          gender: updated.gender,
+          organization: updated.organization,
+          region: updated.region,
+          phone: updated.phone,
+          isProfileCompleted: updated.is_profile_completed,
+        });
       }
-
-      if (profile && setProfile) {
-        const updatedProfile = {
-          ...profile,
-          socialMedia: formData.socialMedia,
-          city: formData.city,
-          state: formData.state,
-          country: formData.country,
-          isProfileCompleted: true,
-          user_settings: {
-            ...profile.user_settings,
-            fullName: formData.fullName,
-            age: formData.age ? parseInt(formData.age) : profile.user_settings?.age,
-            gender: formData.gender,
-            organization: formData.organization,
-            phone: formData.phone,
-          },
-        };
-        setProfile(updatedProfile);
-      }
-
-      if (isFirstLogin) {
-        setActiveTab("submissions");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save profile");
+      setSuccess(true);
+      setDirty(false);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message || "Failed to save profile");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const validate = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.fullName.trim()) errors.fullName = "Full Name is required";
+    if (!formData.age || isNaN(Number(formData.age)) || Number(formData.age) < 13 || Number(formData.age) > 100) errors.age = "Valid age required (13-100)";
+    if (!formData.gender) errors.gender = "Gender is required";
+    if (!formData.region) errors.region = "Region is required";
+    return errors;
   };
 
   if (!user) {
@@ -351,49 +404,21 @@ const ProfilePage: React.FC = () => {
                         <div>
                           <label className="block text-sm font-medium text-gray-400 mb-2">
                             <MapPin className="inline h-4 w-4 mr-1" />
-                            City *
-                          </label>
-                          <input
-                            type="text"
-                            name="city"
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            required
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            placeholder="Your city"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            State/Province *
-                          </label>
-                          <input
-                            type="text"
-                            name="state"
-                            value={formData.state}
-                            onChange={handleInputChange}
-                            required
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            placeholder="State or Province"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            Country
+                            Region *
                           </label>
                           <select
-                            name="country"
-                            value={formData.country}
+                            name="region"
+                            value={formData.region}
                             onChange={handleInputChange}
+                            required
                             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
                           >
-                            <option value="United States">United States</option>
-                            <option value="Canada">Canada</option>
-                            <option value="United Kingdom">United Kingdom</option>
-                            <option value="Australia">Australia</option>
-                            <option value="Germany">Germany</option>
-                            <option value="France">France</option>
-                            <option value="Other">Other</option>
+                            <option value="">Select Region</option>
+                            {REGION_OPTIONS.map((region) => (
+                              <option key={region} value={region}>
+                                {region}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>

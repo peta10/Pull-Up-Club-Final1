@@ -70,9 +70,7 @@ export interface Profile {
   age?: number;
   gender?: string;
   organization?: string;
-  city?: string;
-  state?: string;
-  country?: string;
+  region: string;
   phone?: string;
   club?: string;
   stripeCustomerId?: string;

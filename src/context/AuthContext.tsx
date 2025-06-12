@@ -35,12 +35,7 @@ interface ProfileSettings {
 interface Profile extends ProfileSettings {
   isProfileCompleted: boolean;
   socialMedia: string | null;
-  streetAddress: string | null;
-  apartment: string | null;
-  city: string | null;
-  state: string | null;
-  zipCode: string | null;
-  country: string | null;
+  region: string;
   role: "user" | "admin";
 }
 
@@ -208,12 +203,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const fallbackProfile: Profile = {
             isProfileCompleted: false,
             socialMedia: null,
-            streetAddress: null,
-            apartment: null,
-            city: null,
-            state: null,
-            zipCode: null,
-            country: null,
+            region: '',
             role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
             ...defaultSettings
           };
@@ -238,12 +228,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const profileObject: Profile = {
         isProfileCompleted: profileData.is_profile_completed || false,
         socialMedia: profileData.social_media,
-        streetAddress: profileData.street_address,
-        apartment: profileData.apartment,
-        city: profileData.city,
-        state: profileData.state,
-        zipCode: profileData.zip_code,
-        country: profileData.country,
+        region: profileData.region || '',
         role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
         user_settings: profileData.user_settings || defaultSettings.user_settings,
         notification_preferences: profileData.notification_preferences || defaultSettings.notification_preferences,
@@ -432,12 +417,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setProfile({
         isProfileCompleted: false,
         socialMedia: null,
-        streetAddress: null,
-        apartment: null,
-        city: null,
-        state: null,
-        zipCode: null,
-        country: null,
+        region: '',
         role: "user" as "user" | "admin",
         ...defaultSettings
       });
@@ -513,12 +493,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setProfile({
         isProfileCompleted: false,
         socialMedia: null,
-        streetAddress: null,
-        apartment: null,
-        city: null,
-        state: null,
-        zipCode: null,
-        country: null,
+        region: '',
         role: "user" as "user" | "admin",
         ...defaultSettings
       });

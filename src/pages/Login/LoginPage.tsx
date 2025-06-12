@@ -48,6 +48,10 @@ const LoginPage: React.FC = () => {
     setResetSent(true);
   };
 
+  const handleGoToSubscribe = () => {
+    navigate('/subscribe');
+  };
+
   const routeState = location.state as {
     from?: string;
     intendedAction?: string;
@@ -121,24 +125,18 @@ const LoginPage: React.FC = () => {
             BATTLE BUNKER
           </h2>
           <p className="text-gray-400 text-sm mb-4 text-center">
-            New here? Sign up below to get started
+            New here? <button type="button" onClick={handleGoToSubscribe} className="underline text-white/80 hover:text-white">Sign up to get started</button>
           </p>
 
-          {isSignUp ? (
-            <SignUpForm onToggleForm={handleToggleForm} />
-          ) : (
-            <LoginForm
-              onToggleForm={handleToggleForm}
-              onShowResetForm={handleShowResetForm}
-            />
-          )}
+          <LoginForm
+            onToggleForm={handleGoToSubscribe}
+            onShowResetForm={handleShowResetForm}
+          />
         </div>
         {intendedPlan && (
           <div className="relative z-10 mt-8 flex flex-col items-center text-center">
             <p className="text-gray-400 text-sm mb-2">
-              You are about to {isSignUp ? "sign up and" : "sign in to"}{" "}
-              subscribe to the{" "}
-              {intendedPlan === "monthly" ? "$9.99/month" : "$99.00/year"} plan.
+              You are about to sign in to subscribe to the {intendedPlan === "monthly" ? "$9.99/month" : "$99.00/year"} plan.
               Payment will be processed after account creation/login.
             </p>
           </div>
