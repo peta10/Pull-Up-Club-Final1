@@ -3,12 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../../components/Layout/Layout.tsx";
 import { useAuth } from "../../context/AuthContext.tsx";
 import LoginForm from "./LoginForm.tsx";
-import SignUpForm from "./SignUpForm.tsx";
 import ResetPasswordForm from "./ResetPasswordForm.tsx";
 import ResetSentConfirmation from "./ResetSentConfirmation.tsx";
 
 const LoginPage: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -28,10 +26,6 @@ const LoginPage: React.FC = () => {
       return;
     }
   }, [navigate, user, profile, isLoading, location.state]);
-
-  const handleToggleForm = () => {
-    setIsSignUp(!isSignUp);
-  };
 
   const handleShowResetForm = () => {
     setShowResetForm(true);
@@ -129,7 +123,6 @@ const LoginPage: React.FC = () => {
           </p>
 
           <LoginForm
-            onToggleForm={handleGoToSubscribe}
             onShowResetForm={handleShowResetForm}
           />
         </div>

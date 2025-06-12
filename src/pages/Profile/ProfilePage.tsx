@@ -9,8 +9,7 @@ import PatchProgress from "./PatchProgress";
 import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 import { AlertTriangle, User, Building, Globe, Calendar, Users, MapPin } from "lucide-react";
-import { Submission } from "../../types";
-import { Alert } from "../../components/ui/Alert";
+import type { Submission } from '../../types';
 
 const REGION_OPTIONS = [
   "North America",
@@ -38,9 +37,7 @@ const ProfilePage: React.FC = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (isFirstLogin && profile && !profile.isProfileCompleted) {
@@ -51,26 +48,26 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        fullName: profile.fullName || "",
-        socialMedia: profile.socialMedia || "",
-        age: profile.age !== undefined ? String(profile.age) : "",
-        gender: profile.gender || "",
-        organization: profile.organization || "",
-        region: profile.region || "",
-        phone: profile.phone || "",
+        fullName: (profile as any).fullName ?? (profile as any).full_name ?? "",
+        socialMedia: (profile as any).socialMedia ?? (profile as any).social_media ?? "",
+        age: (profile as any).age !== undefined ? String((profile as any).age) : ((profile as any).age !== undefined ? String((profile as any).age) : ""),
+        gender: (profile as any).gender ?? "",
+        organization: (profile as any).organization ?? (profile as any).organisation ?? "",
+        region: (profile as any).region ?? "",
+        phone: (profile as any).phone ?? "",
       });
     }
   }, [profile]);
 
   useEffect(() => {
     const initial = profile ? {
-      fullName: profile.fullName || "",
-      socialMedia: profile.socialMedia || "",
-      age: profile.age !== undefined ? String(profile.age) : "",
-      gender: profile.gender || "",
-      organization: profile.organization || "",
-      region: profile.region || "",
-      phone: profile.phone || "",
+      fullName: (profile as any).fullName ?? (profile as any).full_name ?? "",
+      socialMedia: (profile as any).socialMedia ?? (profile as any).social_media ?? "",
+      age: (profile as any).age !== undefined ? String((profile as any).age) : ((profile as any).age !== undefined ? String((profile as any).age) : ""),
+      gender: (profile as any).gender ?? "",
+      organization: (profile as any).organization ?? (profile as any).organisation ?? "",
+      region: (profile as any).region ?? "",
+      phone: (profile as any).phone ?? "",
     } : {
       fullName: "",
       socialMedia: "",
@@ -129,9 +126,7 @@ const ProfilePage: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
-    setSuccess(false);
     const errors = validate();
-    setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       setIsSaving(false);
       return;
@@ -150,17 +145,17 @@ const ProfilePage: React.FC = () => {
           is_profile_completed: true,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user.id);
+        .eq('id', user?.id);
       if (error) throw error;
       const { data: updated, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', user?.id)
         .single();
       if (fetchError) throw fetchError;
       if (setProfile) {
-        setProfile({
-          ...profile!,
+        setProfile((prev) => prev ? {
+          ...prev,
           fullName: updated.full_name,
           socialMedia: updated.social_media,
           age: updated.age,
@@ -169,11 +164,9 @@ const ProfilePage: React.FC = () => {
           region: updated.region,
           phone: updated.phone,
           isProfileCompleted: updated.is_profile_completed,
-        });
+        } : prev);
       }
-      setSuccess(true);
-      setDirty(false);
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => setError(null), 3000);
     } catch (err: any) {
       setError(err.message || "Failed to save profile");
     } finally {
