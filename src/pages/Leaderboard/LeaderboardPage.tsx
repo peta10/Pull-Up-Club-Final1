@@ -7,15 +7,6 @@ import { supabase } from '../../lib/supabase';
 import { LoadingState, ErrorState } from '../../components/ui/LoadingState';
 import { useTranslation } from 'react-i18next';
 
-const allowedRegions = [
-  'North America',
-  'South America',
-  'Europe',
-  'Asia',
-  'Africa',
-  'Australia/Oceania'
-];
-
 function mapRegion(region: string): string {
   if (!region) return 'Unknown Region';
   const lower = region.toLowerCase();

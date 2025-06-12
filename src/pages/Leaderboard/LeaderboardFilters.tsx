@@ -1,6 +1,6 @@
 import React from 'react';
 import { LeaderboardFilters as FiltersType } from '../../types';
-import badges, { clubs, getAgeGroups, regions } from '../../data/mockData';
+import badges, { clubs, getAgeGroups } from '../../data/mockData';
 
 interface LeaderboardFiltersProps {
   filters: FiltersType;

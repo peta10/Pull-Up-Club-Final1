@@ -1,10 +1,8 @@
 import React from "react";
 import Layout from "../components/Layout/Layout";
 import Head from "../components/Layout/Head";
-import { Button } from "../components/ui/Button";
-import { Link } from "../components/ui/Link";
 import { Shield, Users, Activity } from "lucide-react";
-import { useTranslation, Trans } from "react-i18next";
+import { useTranslation } from "react-i18next";
 
 const FULL_LEGEND = `In the early days of Battle Bunker, there was a soldier named Alkeios. During a brutal mission deep behind enemy lines, his unit was trapped — 100 men and women, buried alive in a collapsed underground bunker. The only way out was vertical — a 60-foot shaft with no ladder, no ropes, and no exit plan. One by one, Alkeios pulled them out with nothing but his bare hands and iron will — 100 rescues, each one costing him blood, pain, and breath. When the final soldier reached safety, Alkeios collapsed. His body was broken, but none were left behind. That act of endurance, sacrifice, and unbreakable resolve became known as the origin of the Pull-Up Club — where every pull-up is a nod to the warrior who lifted others from the pit when all hope was \u00A0gone.`;
 

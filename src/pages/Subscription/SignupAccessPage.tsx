@@ -31,7 +31,6 @@ const SignupAccessPage: React.FC = () => {
     gender: '',
     organisation: ''
   });
-  const [passwordTouched, setPasswordTouched] = useState(false);
 
   const sessionId = searchParams.get('session_id');
 
@@ -271,7 +270,6 @@ const SignupAccessPage: React.FC = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                onFocus={() => setPasswordTouched(true)}
                 required
                 minLength={6}
                 className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"

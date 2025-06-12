@@ -5,15 +5,6 @@ import LeaderboardTable from "../../components/Leaderboard/LeaderboardTable";
 import { Submission } from "../../types";
 import { supabase } from "../../lib/supabase";
 
-const allowedRegions = [
-  'North America',
-  'South America',
-  'Europe',
-  'Asia',
-  'Africa',
-  'Australia/Oceania'
-];
-
 function mapRegion(region: string): string {
   if (!region) return 'Unknown Region';
   const lower = region.toLowerCase();

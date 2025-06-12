@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
-import { CheckCircle2, AlertTriangle, User, Building, Globe, Calendar, Users, MapPin } from "lucide-react";
+import { CheckCircle2, AlertTriangle, User, Building, Globe, Calendar, Users } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { Button } from "../../components/ui/Button";
 
@@ -34,8 +34,6 @@ const CreateAccountPage: React.FC = () => {
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [intendedPlan, setIntendedPlan] = useState<"monthly" | "annual" | undefined>(undefined);
-  const [returnTo, setReturnTo] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (user) {
@@ -43,13 +41,6 @@ const CreateAccountPage: React.FC = () => {
       return;
     }
     // Extract state from location
-    const routeState = location.state as {
-      intendedAction?: string;
-      plan?: "monthly" | "annual";
-      returnTo?: string;
-    } | null;
-    if (routeState?.plan) setIntendedPlan(routeState.plan);
-    if (routeState?.returnTo) setReturnTo(routeState.returnTo);
     const storedEmail = localStorage.getItem("checkoutEmail");
     if (storedEmail) setFormData((prev) => ({ ...prev, email: storedEmail }));
   }, [navigate, user, location.state]);
