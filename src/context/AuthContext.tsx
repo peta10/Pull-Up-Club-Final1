@@ -37,6 +37,11 @@ interface Profile extends ProfileSettings {
   socialMedia: string | null;
   region: string;
   role: "user" | "admin";
+  fullName?: string;
+  age?: number;
+  gender?: string;
+  organization?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -205,6 +210,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             socialMedia: null,
             region: '',
             role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
+            fullName: '',
+            age: 0,
+            gender: '',
+            organization: '',
+            phone: '',
             ...defaultSettings
           };
           
@@ -230,6 +240,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         socialMedia: profileData.social_media,
         region: profileData.region || '',
         role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
+        fullName: profileData.full_name,
+        age: profileData.age,
+        gender: profileData.gender,
+        organization: profileData.organization,
+        phone: profileData.phone,
         user_settings: profileData.user_settings || defaultSettings.user_settings,
         notification_preferences: profileData.notification_preferences || defaultSettings.notification_preferences,
         theme_preferences: profileData.theme_preferences || defaultSettings.theme_preferences,
@@ -419,6 +434,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         socialMedia: null,
         region: '',
         role: "user" as "user" | "admin",
+        fullName: '',
+        age: 0,
+        gender: '',
+        organization: '',
+        phone: '',
         ...defaultSettings
       });
       setIsFirstLogin(true);
@@ -495,6 +515,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         socialMedia: null,
         region: '',
         role: "user" as "user" | "admin",
+        fullName: '',
+        age: 0,
+        gender: '',
+        organization: '',
+        phone: '',
         ...defaultSettings
       });
       setIsFirstLogin(true);

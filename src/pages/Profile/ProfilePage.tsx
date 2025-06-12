@@ -8,8 +8,9 @@ import SubmissionDashboard from "./SubmissionDashboard";
 import PatchProgress from "./PatchProgress";
 import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
-import { AlertTriangle, User, Building, Globe, Calendar, Users, MapPin } from "lucide-react";
+import { User, Building, Globe, Calendar, Users, MapPin } from "lucide-react";
 import type { Submission } from '../../types';
+import toast from 'react-hot-toast';
 
 const REGION_OPTIONS = [
   "North America",
@@ -36,7 +37,6 @@ const ProfilePage: React.FC = () => {
     phone: "",
   });
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
@@ -48,13 +48,13 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        fullName: (profile as any).fullName ?? (profile as any).full_name ?? "",
-        socialMedia: (profile as any).socialMedia ?? (profile as any).social_media ?? "",
-        age: (profile as any).age !== undefined ? String((profile as any).age) : ((profile as any).age !== undefined ? String((profile as any).age) : ""),
-        gender: (profile as any).gender ?? "",
-        organization: (profile as any).organization ?? (profile as any).organisation ?? "",
-        region: (profile as any).region ?? "",
-        phone: (profile as any).phone ?? "",
+        fullName: profile.fullName || '',
+        socialMedia: profile.socialMedia || '',
+        age: profile.age?.toString() || '',
+        gender: profile.gender || '',
+        organization: profile.organization || '',
+        region: profile.region || '',
+        phone: profile.phone || '',
       });
     }
   }, [profile]);
@@ -125,9 +125,9 @@ const ProfilePage: React.FC = () => {
   const handleSavePersonalInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setError(null);
     const errors = validate();
     if (Object.keys(errors).length > 0) {
+      toast.error('Please fix the form errors before saving');
       setIsSaving(false);
       return;
     }
@@ -166,9 +166,29 @@ const ProfilePage: React.FC = () => {
           isProfileCompleted: updated.is_profile_completed,
         } : prev);
       }
-      setTimeout(() => setError(null), 3000);
+      toast.success('Profile updated successfully!', {
+        duration: 3000,
+        style: {
+          background: '#1f2937',
+          color: '#ffffff',
+          border: '1px solid #9b9b6f',
+        },
+        iconTheme: {
+          primary: '#9b9b6f',
+          secondary: '#ffffff',
+        },
+      });
+      setDirty(false);
     } catch (err: any) {
-      setError(err.message || "Failed to save profile");
+      console.error('Profile save error:', err);
+      toast.error('Failed to save profile. Please try again.', {
+        duration: 4000,
+        style: {
+          background: '#1f2937',
+          color: '#ffffff',
+          border: '1px solid #ef4444',
+        },
+      });
     } finally {
       setIsSaving(false);
     }
@@ -298,12 +318,6 @@ const ProfilePage: React.FC = () => {
                         information to fully access all features and receive
                         your welcome package.
                       </p>
-                    </div>
-                  )}
-                  {error && (
-                    <div className="bg-red-900 border border-red-700 text-white p-4 rounded-lg flex items-center">
-                      <AlertTriangle size={20} className="mr-2" />
-                      <span>{error}</span>
                     </div>
                   )}
                   <form onSubmit={handleSavePersonalInfo} className="space-y-6">
