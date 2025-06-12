@@ -7,6 +7,27 @@ import { supabase } from '../../lib/supabase';
 import { LoadingState, ErrorState } from '../../components/ui/LoadingState';
 import { useTranslation } from 'react-i18next';
 
+const allowedRegions = [
+  'North America',
+  'South America',
+  'Europe',
+  'Asia',
+  'Africa',
+  'Australia/Oceania'
+];
+
+function mapRegion(region: string): string {
+  if (!region) return 'Unknown Region';
+  const lower = region.toLowerCase();
+  if (lower.includes('north america')) return 'North America';
+  if (lower.includes('south america')) return 'South America';
+  if (lower.includes('europe')) return 'Europe';
+  if (lower.includes('asia')) return 'Asia';
+  if (lower.includes('africa')) return 'Africa';
+  if (lower.includes('australia') || lower.includes('oceania')) return 'Australia/Oceania';
+  return 'Unknown Region';
+}
+
 const LeaderboardPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,26 +50,30 @@ const LeaderboardPage: React.FC = () => {
         .not('actual_pull_up_count', 'is', null)
         .order('actual_pull_up_count', { ascending: false });
       if (error) throw error;
-      const formatted: Submission[] = (data || []).map((record: any) => ({
-        id: record.id,
-        userId: record.user_id,
-        fullName: record.profiles?.full_name || 'Unknown User',
-        email: record.profiles?.email || 'unknown@example.com',
-        phone: record.profiles?.phone || '',
-        age: record.profiles?.age || 0,
-        gender: (record.profiles?.gender as 'Male' | 'Female' | 'Other') || 'Other',
-        region: [record.profiles?.city, record.profiles?.state, record.profiles?.country].filter(Boolean).join(', ') || 'Unknown Region',
-        clubAffiliation: record.club_affiliation || record.profiles?.organization || 'None',
-        pullUpCount: record.actual_pull_up_count || record.pull_up_count,
-        actualPullUpCount: record.actual_pull_up_count,
-        videoUrl: record.video_url,
-        status: 'Approved',
-        submittedAt: record.created_at,
-        approvedAt: record.approved_at || undefined,
-        notes: record.notes || undefined,
-        featured: true,
-        socialHandle: record.profiles?.social_media || undefined
-      }));
+      const formatted: Submission[] = (data || []).map((record: any) => {
+        const regionRaw = [record.profiles?.city, record.profiles?.state, record.profiles?.country].filter(Boolean).join(', ');
+        const mappedRegion = mapRegion(regionRaw);
+        return {
+          id: record.id,
+          userId: record.user_id,
+          fullName: record.profiles?.full_name || 'Unknown User',
+          email: record.profiles?.email || 'unknown@example.com',
+          phone: record.profiles?.phone || '',
+          age: record.profiles?.age || 0,
+          gender: (record.profiles?.gender as 'Male' | 'Female' | 'Other') || 'Other',
+          region: mappedRegion,
+          clubAffiliation: record.club_affiliation || record.profiles?.organization || 'None',
+          pullUpCount: record.actual_pull_up_count || record.pull_up_count,
+          actualPullUpCount: record.actual_pull_up_count,
+          videoUrl: record.video_url,
+          status: 'Approved',
+          submittedAt: record.created_at,
+          approvedAt: record.approved_at || undefined,
+          notes: record.notes || undefined,
+          featured: true,
+          socialHandle: record.profiles?.social_media || undefined
+        };
+      });
       setSubmissions(formatted);
     } catch (err) {
       console.error('Error fetching leaderboard data:', err);

@@ -27,7 +27,6 @@ const SignupAccessPage = lazy(() => import("./pages/Subscription/SignupAccessPag
 const VideoSubmissionPage = lazy(() => import("./pages/VideoSubmission/VideoSubmissionPage.tsx"));
 const AdminUserManagement = lazy(() => import("./pages/AdminUserManagement.tsx"));
 const EthosPage = lazy(() => import("./pages/EthosPage.tsx"));
-const Herotry = lazy(() => import("./pages/Home/Herotry.tsx"));
 
 // Loading component
 const LoadingFallback = () => (
@@ -137,7 +136,6 @@ function App() {
           <Routes>
             {/* Public routes that don't require authentication */}
             <Route path="/" element={<Home />} />
-            <Route path="/herotry" element={<Herotry />} />
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />

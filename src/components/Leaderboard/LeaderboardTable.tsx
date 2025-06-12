@@ -103,15 +103,17 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-2">
-                      {badges.map((badge) => (
+                      {badges.length > 0 ? (
                         <img
-                          key={badge.id}
-                          src={badge.imageUrl}
-                          alt={badge.name}
-                          title={badge.name}
+                          key={badges[badges.length - 1].id}
+                          src={badges[badges.length - 1].imageUrl}
+                          alt={badges[badges.length - 1].name}
+                          title={badges[badges.length - 1].name}
                           className="h-20 w-20 rounded-full object-cover"
                         />
-                      ))}
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

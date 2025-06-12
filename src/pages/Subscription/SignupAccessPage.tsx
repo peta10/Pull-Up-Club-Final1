@@ -31,6 +31,7 @@ const SignupAccessPage: React.FC = () => {
     gender: '',
     organisation: ''
   });
+  const [passwordTouched, setPasswordTouched] = useState(false);
 
   const sessionId = searchParams.get('session_id');
 
@@ -142,6 +143,20 @@ const SignupAccessPage: React.FC = () => {
     }
   };
 
+  // Password validation logic (copied from SignUpForm)
+  const hasMinLength = formData.password.length >= 6;
+  const hasUpperCase = /[A-Z]/.test(formData.password);
+  const hasLowerCase = /[a-z]/.test(formData.password);
+  const hasNumber = /[0-9]/.test(formData.password);
+  const isPasswordValid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber;
+
+  const PasswordRequirement = ({ met, text }: { met: boolean; text: string }) => (
+    <div className="flex items-center space-x-2 text-sm">
+      <CheckCircle2 size={16} className={met ? "text-green-500" : "text-gray-500"} />
+      <span className={met ? "text-green-500" : "text-gray-500"}>{text}</span>
+    </div>
+  );
+
   if (verificationStatus === 'loading') {
     return (
       <Layout>
@@ -180,154 +195,111 @@ const SignupAccessPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-black py-12">
-        <div className="max-w-md mx-auto">
-          {/* Success Message */}
-          <div className="text-center mb-8">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-white mb-2">Payment Successful!</h1>
-            <p className="text-gray-400">
-              Now create your account to access the Pull-Up Club platform.
-            </p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black relative overflow-hidden w-full">
+        <div className="relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-r from-[#ffffff10] to-[#121212] backdrop-blur-sm shadow-2xl p-8 flex flex-col items-center">
+          <div className="flex items-center justify-center mb-6">
+            <img src="/PUClogo (1).webp" alt="Pull-Up Club Logo" className="h-16 w-auto" />
           </div>
-
-          {/* Account Creation Form */}
-          <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
-            <h2 className="text-xl font-semibold text-white mb-6">Create Your Account</h2>
-            
-            <form onSubmit={handleCreateAccount} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  readOnly={!!verificationResult?.customerEmail}
-                  className={`w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] ${
-                    verificationResult?.customerEmail ? 'opacity-75 cursor-not-allowed' : ''
-                  }`}
-                  placeholder="your@email.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  placeholder="John Doe"
-                />
-              </div>
-
+          <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-[#9b9b6f] mb-2 text-center">Payment Successful!</h1>
+          <p className="text-gray-400 text-sm mb-6 text-center">
+            Now create your account to access the Pull-Up Club platform.
+          </p>
+          <div className="w-full">
+            <form onSubmit={handleCreateAccount} className="flex flex-col w-full gap-4">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                readOnly={!!verificationResult?.customerEmail}
+                className={`w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] ${verificationResult?.customerEmail ? 'opacity-75 cursor-not-allowed' : ''}`}
+                placeholder="Email"
+              />
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                required
+                className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                placeholder="Full Name"
+              />
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Age
-                  </label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleInputChange}
-                    min="13"
-                    max="100"
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                    placeholder="25"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Gender
-                  </label>
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  >
-                    <option value="">Select</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Phone Number
-                </label>
                 <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
+                  type="number"
+                  name="age"
+                  value={formData.age}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  placeholder="+1 (555) 123-4567"
+                  min="13"
+                  max="100"
+                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                  placeholder="Age"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Organisation (Optional)
-                </label>
-                <input
-                  type="text"
-                  name="organisation"
-                  value={formData.organisation}
+                <select
+                  name="gender"
+                  value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  placeholder="Your gym, team, or organization"
-                />
+                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                >
+                  <option value="">Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  minLength={6}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  placeholder="At least 6 characters"
-                />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                placeholder="Phone Number"
+              />
+              <input
+                type="text"
+                name="organisation"
+                value={formData.organisation}
+                onChange={handleInputChange}
+                className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                placeholder="Organisation (Optional)"
+              />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                onFocus={() => setPasswordTouched(true)}
+                required
+                minLength={6}
+                className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                placeholder="Password"
+              />
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+                minLength={6}
+                className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                placeholder="Confirm Password"
+              />
+              {/* Password Requirements */}
+              <div className="space-y-2 bg-white/5 p-4 rounded-xl">
+                <p className="text-sm font-medium text-gray-300 mb-2">
+                  Password Requirements:
+                </p>
+                <PasswordRequirement met={hasMinLength} text="At least 6 characters" />
+                <PasswordRequirement met={hasUpperCase} text="One uppercase letter" />
+                <PasswordRequirement met={hasLowerCase} text="One lowercase letter" />
+                <PasswordRequirement met={hasNumber} text="One number" />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  required
-                  minLength={6}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  placeholder="Confirm your password"
-                />
-              </div>
-
               <Button
                 type="submit"
-                disabled={isCreatingAccount}
+                disabled={isCreatingAccount || !isPasswordValid}
                 className="w-full bg-[#9b9b6f] text-black hover:bg-[#7a7a58] font-medium py-3"
               >
                 {isCreatingAccount ? (

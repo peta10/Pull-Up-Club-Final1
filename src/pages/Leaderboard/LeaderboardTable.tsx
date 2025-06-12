@@ -68,10 +68,11 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             <tr className="bg-gray-800 text-gray-400 text-left text-sm uppercase">
               <th className="px-6 py-3">Rank</th>
               <th className="px-6 py-3">Name</th>
+              <th className="px-6 py-3">Club</th>
               <th className="px-6 py-3">Region</th>
               <th className="px-6 py-3">Details</th>
               <th className="px-6 py-3">Pull-Ups</th>
-              <th className="px-6 py-3">Badges</th>
+              <th className="px-6 py-3">Badge</th>
               <th className="px-6 py-3">Social</th>
             </tr>
           </thead>
@@ -82,6 +83,8 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 submission.actualPullUpCount ?? submission.pullUpCount,
                 submission.gender
               );
+              // Only show the highest badge earned
+              const highestBadge = badges.length > 0 ? badges[badges.length - 1] : null;
               return (
                 <tr key={submission.id} className="bg-gray-900 hover:bg-gray-800 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -93,11 +96,13 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                     <div className="text-white font-medium">{submission.fullName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-gray-300">{submission.clubAffiliation || 'None'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-gray-300">{submission.region}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm">
-                      <div className="text-gray-400">{submission.clubAffiliation}</div>
                       <div className="text-gray-500">{submission.age} years • {submission.gender}</div>
                     </div>
                   </td>
@@ -106,15 +111,17 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-2">
-                      {badges.map((badge) => (
+                      {highestBadge ? (
                         <img
-                          key={badge.id}
-                          src={badge.imageUrl}
-                          alt={badge.name}
-                          title={badge.name}
+                          key={highestBadge.id}
+                          src={highestBadge.imageUrl}
+                          alt={highestBadge.name}
+                          title={highestBadge.name}
                           className="h-20 w-20 rounded-full object-cover"
                         />
-                      ))}
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

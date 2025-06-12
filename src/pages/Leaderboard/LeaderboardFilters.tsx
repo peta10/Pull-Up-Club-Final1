@@ -17,6 +17,15 @@ const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({ filters, onFilt
     onFilterChange({});
   };
 
+  const allowedRegions = [
+    'North America',
+    'South America',
+    'Europe',
+    'Asia',
+    'Africa',
+    'Australia/Oceania'
+  ];
+
   return (
     <div className="bg-gray-900 p-4 rounded-lg mb-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
@@ -56,7 +65,7 @@ const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({ filters, onFilt
             className="w-full bg-gray-950 border border-gray-800 rounded py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
           >
             <option value="">All Regions</option>
-            {regions.map((region) => (
+            {allowedRegions.map((region) => (
               <option key={region} value={region}>
                 {region}
               </option>
