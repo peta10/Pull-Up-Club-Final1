@@ -6,6 +6,7 @@ import { AlertTriangle, CreditCard } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { createCheckoutSession } from "../../lib/stripe";
 import { supabase } from "../../lib/supabase";
+import toast from 'react-hot-toast';
 
 // Form reducer
 const formReducer = (state: FormState, action: any): FormState => {
@@ -144,6 +145,19 @@ const SubmissionForm: React.FC = () => {
       ]);
 
       if (error) throw error;
+
+      toast.success('Video submitted successfully!', {
+        duration: 3000,
+        style: {
+          background: '#1f2937',
+          color: '#ffffff',
+          border: '1px solid #9b9b6f',
+        },
+        iconTheme: {
+          primary: '#9b9b6f',
+          secondary: '#ffffff',
+        },
+      });
 
       setFormSubmitted(true);
     } catch (err) {
@@ -428,64 +442,57 @@ const SubmissionForm: React.FC = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="region" className="block text-white mb-1">
-                    Region <span className="text-[#9b9b6f]">*</span>
-                  </label>
-                  <select
-                    id="region"
-                    name="region"
-                    value={formState.region}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                    required
-                  >
-                    <option value="">Select your region</option>
-                    {regions.map((region) => (
-                      <option key={region} value={region}>
-                        {region}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="clubAffiliation"
-                    className="block text-white mb-1"
-                  >
-                    Club Affiliation
-                  </label>
-                  <select
-                    id="clubAffiliation"
-                    name="clubAffiliation"
-                    value={formState.clubAffiliation}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  >
-                    <option value="">Select a club (optional)</option>
-                    {clubs.map((club) => (
-                      <option key={club} value={club}>
-                        {club}
-                      </option>
-                    ))}
-                    <option value="Other">Other</option>
-                  </select>
-
-                  {formState.clubAffiliation === "Other" && (
-                    <div className="mt-2">
-                      <input
-                        type="text"
-                        id="otherClubAffiliation"
-                        name="otherClubAffiliation"
-                        value={formState.otherClubAffiliation}
-                        onChange={handleChange}
-                        placeholder="Enter your club name"
-                        className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                        required
-                      />
-                    </div>
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="region" className="block text-white mb-1">
+                      Region <span className="text-[#9b9b6f]">*</span>
+                    </label>
+                    <select
+                      id="region"
+                      name="region"
+                      value={formState.region}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                      required
+                    >
+                      <option value="">Select your region</option>
+                      {regions.map((region) => (
+                        <option key={region} value={region}>{region}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="clubAffiliation" className="block text-white mb-1">
+                      Club Affiliation
+                    </label>
+                    <select
+                      id="clubAffiliation"
+                      name="clubAffiliation"
+                      value={formState.clubAffiliation}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                    >
+                      <option value="">Select a club (optional)</option>
+                      {clubs.map((club) => (
+                        <option key={club} value={club}>{club}</option>
+                      ))}
+                      <option value="Other">Other</option>
+                    </select>
+                    {formState.clubAffiliation === 'Other' && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          id="otherClubAffiliation"
+                          name="otherClubAffiliation"
+                          value={formState.otherClubAffiliation}
+                          onChange={handleChange}
+                          placeholder="Enter your club name"
+                          className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                          required
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

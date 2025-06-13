@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { AlertTriangle } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { clubs, regions } from '../../data/mockData';
+import toast from 'react-hot-toast';
 
 interface VideoSubmissionFormProps {
   onSubmissionComplete?: () => void;
@@ -18,6 +20,9 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [region, setRegion] = useState('');
+  const [clubAffiliation, setClubAffiliation] = useState('');
+  const [otherClubAffiliation, setOtherClubAffiliation] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +46,8 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
             pull_up_count: pullUpCount,
             video_url: videoLink,
             status: "pending",
+            region: region,
+            club_affiliation: clubAffiliation === 'Other' ? otherClubAffiliation : clubAffiliation,
           },
         ]);
 
@@ -48,6 +55,18 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
 
       // Call the onSubmissionComplete callback if it exists
       if (onSubmissionComplete) {
+        toast.success('Video submitted successfully!', {
+          duration: 3000,
+          style: {
+            background: '#1f2937',
+            color: '#ffffff',
+            border: '1px solid #9b9b6f',
+          },
+          iconTheme: {
+            primary: '#9b9b6f',
+            secondary: '#ffffff',
+          },
+        });
         onSubmissionComplete();
       }
 
@@ -107,6 +126,55 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
               Please upload your video to YouTube, Instagram, or TikTok and
               paste the public link here.
             </p>
+          </div>
+
+          <div>
+            <label htmlFor="region" className="block text-white mb-1">
+              Region <span className="text-[#9b9b6f]">*</span>
+            </label>
+            <select
+              id="region"
+              value={region}
+              onChange={e => setRegion(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+              required
+            >
+              <option value="">Select your region</option>
+              {regions.map((region) => (
+                <option key={region} value={region}>{region}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="clubAffiliation" className="block text-white mb-1">
+              Club Affiliation
+            </label>
+            <select
+              id="clubAffiliation"
+              value={clubAffiliation}
+              onChange={e => setClubAffiliation(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+            >
+              <option value="">Select a club (optional)</option>
+              {clubs.map((club) => (
+                <option key={club} value={club}>{club}</option>
+              ))}
+              <option value="Other">Other</option>
+            </select>
+            {clubAffiliation === 'Other' && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  id="otherClubAffiliation"
+                  value={otherClubAffiliation}
+                  onChange={e => setOtherClubAffiliation(e.target.value)}
+                  placeholder="Enter your club name"
+                  className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex items-start mt-4">

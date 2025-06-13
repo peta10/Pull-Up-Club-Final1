@@ -4,7 +4,7 @@ import Head from "../components/Layout/Head";
 import { Shield, Users, Activity } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const FULL_LEGEND = `In the early days of Battle Bunker, there was a soldier named Alkeios. During a brutal mission deep behind enemy lines, his unit was trapped — 100 men and women, buried alive in a collapsed underground bunker. The only way out was vertical — a 60-foot shaft with no ladder, no ropes, and no exit plan. One by one, Alkeios pulled them out with nothing but his bare hands and iron will — 100 rescues, each one costing him blood, pain, and breath. When the final soldier reached safety, Alkeios collapsed. His body was broken, but none were left behind. That act of endurance, sacrifice, and unbreakable resolve became known as the origin of the Pull-Up Club — where every pull-up is a nod to the warrior who lifted others from the pit when all hope was \u00A0gone.`;
+const FULL_LEGEND = `In the early days of Battle Bunker, there was a soldier named Alkeios. During a brutal mission deep behind enemy lines, his unit was trapped — 100 men and women, buried alive in a collapsed underground bunker. The only way out was vertical, a 60-foot shaft with no ladder, no ropes, and no exit plan. One by one, Alkeios pulled them out with nothing but his bare hands and iron will, 100 rescues, each one costing him blood, pain, and breath. When the final soldier reached safety, Alkeios collapsed. His body was broken, but none were left behind. That act of endurance, sacrifice, and unbreakable resolve became known as the origin of the Pull-Up Club, where every pull-up is a nod to the warrior who lifted others from the pit when all hope was gone.`;
 
 const EthosPage: React.FC = () => {
   const { t } = useTranslation("ethos");
@@ -57,20 +57,26 @@ const EthosPage: React.FC = () => {
             {t("purpose.intro")}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center text-center bg-[#23231c] rounded-lg p-6 shadow-lg">
-              <Shield size={48} className="text-[#9b9b6f] mb-4" />
-              <h3 className="text-xl font-bold text-[#9b9b6f] mb-2">{t("purpose.pillars.trainToSave.title")}</h3>
-              <p className="text-gray-300">{t("purpose.pillars.trainToSave.desc")}</p>
+            <div className="bg-gray-900 p-6 rounded-lg text-center transform transition-transform hover:scale-105">
+              <div className="flex justify-center mb-4">
+                <Shield size={48} className="text-[#9b9b6f]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">{t("purpose.pillars.trainToSave.title")}</h3>
+              <p className="text-gray-400">{t("purpose.pillars.trainToSave.desc")}</p>
             </div>
-            <div className="flex flex-col items-center text-center bg-[#23231c] rounded-lg p-6 shadow-lg">
-              <Users size={48} className="text-[#9b9b6f] mb-4" />
-              <h3 className="text-xl font-bold text-[#9b9b6f] mb-2">{t("purpose.pillars.strengthToLift.title")}</h3>
-              <p className="text-gray-300">{t("purpose.pillars.strengthToLift.desc")}</p>
+            <div className="bg-gray-900 p-6 rounded-lg text-center transform transition-transform hover:scale-105">
+              <div className="flex justify-center mb-4">
+                <Users size={48} className="text-[#9b9b6f]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">{t("purpose.pillars.strengthToLift.title")}</h3>
+              <p className="text-gray-400">{t("purpose.pillars.strengthToLift.desc")}</p>
             </div>
-            <div className="flex flex-col items-center text-center bg-[#23231c] rounded-lg p-6 shadow-lg">
-              <Activity size={48} className="text-[#9b9b6f] mb-4" />
-              <h3 className="text-xl font-bold text-[#9b9b6f] mb-2">{t("purpose.pillars.disciplineToOvercome.title")}</h3>
-              <p className="text-gray-300">{t("purpose.pillars.disciplineToOvercome.desc")}</p>
+            <div className="bg-gray-900 p-6 rounded-lg text-center transform transition-transform hover:scale-105">
+              <div className="flex justify-center mb-4">
+                <Activity size={48} className="text-[#9b9b6f]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">{t("purpose.pillars.disciplineToOvercome.title")}</h3>
+              <p className="text-gray-400">{t("purpose.pillars.disciplineToOvercome.desc")}</p>
             </div>
           </div>
         </div>

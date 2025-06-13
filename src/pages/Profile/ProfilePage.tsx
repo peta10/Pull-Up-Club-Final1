@@ -136,7 +136,7 @@ const ProfilePage: React.FC = () => {
         .from('profiles')
         .update({
           full_name: formData.fullName,
-          social_media: formData.socialMedia,
+          social_media: formData.socialMedia.replace(/^@/, ''),
           age: parseInt(formData.age),
           gender: formData.gender,
           organization: formData.organization,
@@ -262,26 +262,6 @@ const ProfilePage: React.FC = () => {
             <div className="p-6">
               {activeTab === "submissions" && (
                 <div className="space-y-6">
-                  {/* Patch claim and Stripe portal buttons for all users with US-only disclaimer */}
-                  <div className="flex flex-col md:flex-row gap-4 mb-2">
-                    <a
-                      href="https://shop.thebattlebunker.com/checkouts/cn/Z2NwLXVzLWNlbnRyYWwxOjAxSlhCMDJBTkVaOENFOFpTQlM2N1RTM0tR?auto_redirect=false&cart_link_id=MbgRQA7E&discount=PULLUPCLUB100&edge_redirect=true&locale=en-US&skip_shop_pay=true"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#9b9b6f] bg-[#9b9b6f] text-black hover:bg-[#7a7a58] text-sm px-4 py-2 w-full md:w-auto"
-                    >
-                      Claim your patch
-                    </a>
-                    <a
-                      href="https://billing.stripe.com/p/login/test_dRmdR9dos2kmaQcdHGejK00"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#9b9b6f] bg-white/10 text-white hover:bg-white/20 text-sm px-4 py-2 w-full md:w-auto"
-                    >
-                      Manage Subscription
-                    </a>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">US shipping only. International users are not eligible for the patch or physical rewards at this time.</p>
                   <SubmissionDashboard submissions={userSubmissions} />
                   <div className="p-6 border-t border-gray-800">
                     <PatchProgress />
@@ -290,26 +270,6 @@ const ProfilePage: React.FC = () => {
               )}
               {activeTab === "personal" && (
                 <div className="space-y-6">
-                  {/* Patch claim and Stripe portal buttons for all users with US-only disclaimer (Settings tab) */}
-                  <div className="flex flex-col md:flex-row gap-4 mb-2">
-                    <a
-                      href="https://shop.thebattlebunker.com/checkouts/cn/Z2NwLXVzLWNlbnRyYWwxOjAxSlhCMDJBTkVaOENFOFpTQlM2N1RTM0tR?auto_redirect=false&cart_link_id=MbgRQA7E&discount=PULLUPCLUB100&edge_redirect=true&locale=en-US&skip_shop_pay=true"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#9b9b6f] bg-[#9b9b6f] text-black hover:bg-[#7a7a58] text-sm px-4 py-2 w-full md:w-auto"
-                    >
-                      Claim your patch
-                    </a>
-                    <a
-                      href="https://billing.stripe.com/p/login/test_dRmdR9dos2kmaQcdHGejK00"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#9b9b6f] bg-white/10 text-white hover:bg-white/20 text-sm px-4 py-2 w-full md:w-auto"
-                    >
-                      Manage Subscription
-                    </a>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">US shipping only. International users are not eligible for the patch or physical rewards at this time.</p>
                   {(isFirstLogin ||
                     (profile && !profile.isProfileCompleted)) && (
                     <div className="p-4 bg-[#9b9b6f] bg-opacity-20 border-l-4 border-[#9b9b6f]">
@@ -351,9 +311,9 @@ const ProfilePage: React.FC = () => {
                             value={formData.socialMedia}
                             onChange={handleInputChange}
                             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            placeholder="@yourusername"
+                            placeholder="yourusername"
                           />
-                          <p className="text-xs text-gray-400 mt-1">Displayed on leaderboard for social connections</p>
+                          <p className="text-xs text-gray-400 mt-1">Do not include the @ symbol, just your username. Displayed on leaderboard for social connections</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">

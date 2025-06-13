@@ -127,12 +127,12 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     {submission.socialHandle ? (
                       <a
-                        href={`https://instagram.com/${submission.socialHandle}`}
+                        href={`https://instagram.com/${submission.socialHandle.replace(/^@/, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#9b9b6f] hover:text-[#7a7a58] flex items-center"
                       >
-                        @{submission.socialHandle}
+                        @{submission.socialHandle.replace(/^@/, "")}
                       </a>
                     ) : (
                       <span className="text-gray-500">-</span>

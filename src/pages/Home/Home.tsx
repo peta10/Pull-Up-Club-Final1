@@ -1,7 +1,7 @@
 import React from "react";
 import Head from "../../components/Layout/Head";
 import Layout from "../../components/Layout/Layout";
-import Hero from "./Hero";
+import Hero1 from "./Hero1";
 import HowItWorks from "./HowItWorks";
 import PerksSection from "./PerksSection";
 import LeaderboardPreview from "./LeaderboardPreview";
@@ -22,7 +22,7 @@ const Home: React.FC = () => {
         <link rel="canonical" href="https://yourdomain.com/" />
       </Head>
       <Layout>
-        <Hero />
+        <Hero1 />
         <HowItWorks />
         <PerksSection />
         <LeaderboardPreview />

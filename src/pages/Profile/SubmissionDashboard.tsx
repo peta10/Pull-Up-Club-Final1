@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Badge } from "../../components/ui/Badge";
 import { ExternalLink, Upload, AlertTriangle, Clock } from "lucide-react";
 import { Submission } from "../../types";
-import { getBadgesForSubmission } from "../../data/mockData";
 import { Button } from "../../components/ui/Button";
 import { Link } from "../../components/ui/Link";
-import CountdownTimer from "../../pages/Home/CountdownTimer";
-import BadgeProgress from "./BadgeProgress";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 
@@ -15,63 +11,136 @@ interface SubmissionDashboardProps {
   onRefresh?: () => void;
 }
 
-const MonthlyCountdown: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState<{days: number, hours: number, minutes: number} | null>(null);
+const ProminentCountdown: React.FC = () => {
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date();
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-      const timeDiff = endOfMonth.getTime() - now.getTime();
-      if (timeDiff > 0) {
-        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-        setTimeLeft({ days, hours, minutes });
-      } else {
-        setTimeLeft(null);
-      }
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const diff = endOfMonth.getTime() - now.getTime();
+      if (diff <= 0) return null;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      return { days, hours, minutes, seconds };
     };
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 60000);
-    return () => clearInterval(interval);
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 1000);
+    return () => clearInterval(timer);
   }, []);
   if (!timeLeft) return null;
   return (
-    <div className="bg-gradient-to-r from-[#9b9b6f]/20 to-[#7a7a58]/20 border border-[#9b9b6f]/30 rounded-lg p-4 mb-6">
-      <div className="text-center">
-        <h3 className="text-white font-semibold mb-2">🏆 Monthly Competition Ends In:</h3>
-        <div className="flex justify-center space-x-4 text-2xl font-bold text-[#9b9b6f]">
-          <div className="text-center">
-            <div>{timeLeft.days}</div>
-            <div className="text-xs text-gray-400">DAYS</div>
-          </div>
-          <div className="text-center">
-            <div>{timeLeft.hours}</div>
-            <div className="text-xs text-gray-400">HOURS</div>
-          </div>
-          <div className="text-center">
-            <div>{timeLeft.minutes}</div>
-            <div className="text-xs text-gray-400">MINS</div>
-          </div>
-        </div>
-        <p className="text-gray-300 text-sm mt-2">Submit your video before the month ends to compete!</p>
+    <div className="w-full flex justify-center mb-4">
+      <div className="bg-[#b2b285] border-4 border-black rounded-xl w-full max-w-3xl flex items-center justify-center py-4 px-6">
+        <span className="text-2xl font-bold text-black flex items-center">
+          <Clock className="w-8 h-8 mr-3 text-black" />
+          <span className="mr-3">Get your submissions in!</span>
+          <span className="ml-2">{timeLeft.days} <span className="text-base font-normal">d</span></span>
+          <span className="ml-2">{timeLeft.hours} <span className="text-base font-normal">h</span></span>
+          <span className="ml-2">{timeLeft.minutes} <span className="text-base font-normal">m</span></span>
+          <span className="ml-2">{timeLeft.seconds} <span className="text-base font-normal">s</span></span>
+        </span>
       </div>
     </div>
   );
 };
 
+const MonthlySubmissionStatus: React.FC<{ submissions: Submission[] }> = ({ submissions }) => {
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const thisMonthSubmissions = submissions.filter(sub => {
+    const subDate = new Date(sub.submittedAt);
+    return subDate.getMonth() === currentMonth && subDate.getFullYear() === currentYear;
+  });
+  const latestThisMonth = thisMonthSubmissions[0];
+  return (
+    <div className="bg-gray-900 rounded-lg p-4 mb-6">
+      <h3 className="text-white font-semibold mb-3">This Month's Submission</h3>
+      {latestThisMonth ? (
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-white font-medium">Status: {latestThisMonth.status}</p>
+            <p className="text-gray-400 text-sm">
+              Submitted {new Date(latestThisMonth.submittedAt).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[#918f6f] font-bold text-lg">{latestThisMonth.pullUpCount} pull-ups</p>
+            {latestThisMonth.status === 'Approved' && (
+              <span className="text-green-400 text-xs">✅ On Leaderboard</span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-4">
+          <p className="text-gray-400">No submission this month</p>
+          <Link 
+            href="/submit" 
+            className="inline-block mt-2 px-4 py-2 bg-[#918f6f] hover:bg-[#a19f7f] text-black font-semibold rounded text-sm"
+          >
+            Submit Now
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
-  submissions: propSubmissions,
   onRefresh,
 }) => {
   const { user } = useAuth();
-  const [submissions, setSubmissions] = useState<Submission[]>(propSubmissions);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchUserSubmissions = async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (data) {
+        const formattedSubmissions: Submission[] = data.map((submission) => ({
+          id: submission.id,
+          userId: submission.user_id,
+          fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
+          email: submission.email || 'unknown@example.com',
+          phone: submission.phone ?? undefined,
+          age: submission.age ?? 0,
+          gender: (submission.gender as "Male" | "Female" | "Other") || "Other",
+          region: submission.region || 'Unknown Region',
+          clubAffiliation: submission.club_affiliation || 'None',
+          pullUpCount: submission.pull_up_count,
+          actualPullUpCount: submission.actual_pull_up_count ?? undefined,
+          videoUrl: submission.video_url,
+          status: (submission.status.charAt(0).toUpperCase() + submission.status.slice(1)) as "Pending" | "Approved" | "Rejected",
+          submittedAt: submission.created_at,
+          approvedAt: submission.approved_at || undefined,
+          notes: submission.notes ?? undefined,
+          featured: submission.status === 'approved',
+          socialHandle: submission.social_handle
+        }));
+        setSubmissions(formattedSubmissions);
+        if (onRefresh) onRefresh();
+      }
+    } catch (err) {
+      setError("Failed to load submission history");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setSubmissions(propSubmissions);
-  }, [propSubmissions]);
+    fetchUserSubmissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // Get the highest pull-up count from approved submissions
   const highestSubmission = submissions
@@ -121,58 +190,6 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
       (!lastApprovedSubmission || daysUntilNextSubmission <= 0)) ||
     hasRejectedSubmission;
 
-  const fetchLatestSubmissions = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error } = await supabase
-        .from("submissions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedSubmissions: Submission[] = data.map((submission) => ({
-          id: submission.id,
-          userId: submission.user_id,
-          fullName: submission.full_name || submission.email?.split('@')[0] || 'Unknown User',
-          email: submission.email || 'unknown@example.com',
-          phone: submission.phone ?? undefined,
-          age: submission.age ?? 0,
-          gender: (submission.gender as "Male" | "Female" | "Other") || "Other",
-          region: submission.region || 'Unknown Region',
-          clubAffiliation: submission.club_affiliation || 'None',
-          pullUpCount: submission.pull_up_count,
-          actualPullUpCount: submission.actual_pull_up_count ?? undefined,
-          videoUrl: submission.video_url,
-          status: (submission.status.charAt(0).toUpperCase() + submission.status.slice(1)) as "Pending" | "Approved" | "Rejected",
-          submittedAt: submission.created_at,
-          approvedAt: submission.approved_at || undefined,
-          notes: submission.notes ?? undefined,
-          featured: submission.status === 'approved',
-          socialHandle: submission.social_handle
-        }));
-
-        setSubmissions(formattedSubmissions);
-
-        // Call parent refresh function if provided
-        if (onRefresh) {
-          onRefresh();
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching submissions:", err);
-      setError("Failed to load submission history");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {loading && (
@@ -187,7 +204,9 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
           <AlertTriangle className="w-6 h-6 text-red-400 mb-2" />
           <p className="text-white">{error}</p>
           <Button
-            onClick={fetchLatestSubmissions}
+            onClick={() => {
+              fetchUserSubmissions();
+            }}
             variant="default"
             size="sm"
             className="mt-2"
@@ -197,90 +216,68 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
         </div>
       )}
 
-      {/* Badge Progress Section */}
-      {highestSubmission && (
-        <BadgeProgress
-          pullUps={highestPullUps}
-        />
-      )}
-
-      {/* Monthly Submission Prompt */}
-      <div
-        className={`p-6 rounded-lg text-white ${
-          canSubmit ? "bg-[#9b9b6f]" : "bg-gray-700"
-        }`}
-      >
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="p-3 bg-white/10 rounded-lg mb-4">
-            {canSubmit ? <Upload size={24} /> : <Clock size={24} />}
+      {/* Patch claim and Stripe portal buttons for all users with US-only disclaimer */}
+      <div className="flex flex-col md:flex-row gap-4 mb-2">
+        {/* ... claim patch and manage subscription buttons ... */}
+      </div>
+      <p className="text-xs text-gray-400 mt-1">US shipping only. International users are not eligible for the patch or physical rewards at this time.</p>
+      {/* Main submission prompt area */}
+      <div className={`p-6 rounded-lg text-white border-2 mb-4 ${canSubmit ? "bg-[#9b9b6f] border-[#9b9b6f]" : "bg-gray-700 border-gray-600"}`}>
+        <ProminentCountdown />
+        <div className="flex flex-col items-center justify-center">
+          <div className="text-lg font-semibold mb-2 text-black">
+            {canSubmit ? "Ready for Your Next Submission!" : "Submission Cooldown Active"}
           </div>
-
-          {lastPendingSubmission ? (
-            <h3 className="text-lg font-semibold mb-2">
-              Submission Under Review
-            </h3>
-          ) : hasRejectedSubmission ? (
-            <h3 className="text-lg font-semibold mb-2">
-              Ready to Resubmit Your Video
-            </h3>
-          ) : canSubmit ? (
-            <h3 className="text-lg font-semibold mb-2">
-              Ready for Your Next Submission!
-            </h3>
-          ) : (
-            <h3 className="text-lg font-semibold mb-2">
-              Next Submission Available in {daysUntilNextSubmission} Days
-            </h3>
+          {canSubmit && (
+            <Link href="/submit">
+              <Button 
+                variant="secondary" 
+                className="bg-white text-[#9b9b6f] hover:bg-gray-100 font-semibold px-8 py-3"
+              >
+                {hasRejectedSubmission ? "Resubmit Video" : "Submit Your Video"}
+              </Button>
+            </Link>
           )}
-
-          {lastPendingSubmission ? (
-            <p className="text-sm opacity-90 max-w-md">
-              Your submission from{" "}
-              {new Date(
-                lastPendingSubmission.submittedAt
-              ).toLocaleDateString()}
-              is currently being reviewed. We'll notify you once it's approved
-              or if additional information is needed.
-            </p>
-          ) : canSubmit ? (
-            <>
-              <Link href="/submit">
-                <Button variant="secondary" className="mb-6">
-                  {hasRejectedSubmission
-                    ? "Resubmit Video"
-                    : "Submit Your Video"}
-                </Button>
-              </Link>
-              <div className="w-full bg-gray-950 mt-4 p-2">
-                <CountdownTimer />
-              </div>
-            </>
-          ) : (
-            <p className="text-sm opacity-90 max-w-md">
-              To maintain fairness and consistency, members are limited to one
-              submission per month. Your next submission will be available on{" "}
-              {lastSubmissionDate &&
-                new Date(
-                  lastSubmissionDate.getTime() + 30 * 24 * 60 * 60 * 1000
-                ).toLocaleDateString()}
-              .
-            </p>
+          {!canSubmit && daysUntilNextSubmission > 0 && (
+            <div className="mt-2 text-gray-200">
+              You can submit again in {daysUntilNextSubmission} day{daysUntilNextSubmission > 1 ? "s" : ""}.
+            </div>
           )}
         </div>
       </div>
-
-      {/* Monthly Countdown */}
-      <MonthlyCountdown />
-
-      {/* Submissions List */}
-      {submissions.length > 0 ? (
+      {/* Best performance summary */}
+      {highestSubmission && (
+        <div className="bg-gray-950 p-4 rounded-lg mb-6">
+          <h3 className="text-white font-semibold mb-2">Your Best Performance</h3>
+          <div className="flex items-center space-x-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[#9b9b6f]">{highestPullUps}</div>
+              <div className="text-xs text-gray-400">Pull-ups</div>
+            </div>
+            <div className="text-gray-400 text-sm">
+              Submitted on {new Date(highestSubmission.submittedAt).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Monthly submission status */}
+      <MonthlySubmissionStatus submissions={submissions} />
+      {/* Submission history or no submissions message */}
+      {submissions.length === 0 ? (
+        <div className="bg-gray-950 p-6 rounded-lg text-center">
+          <Upload className="w-8 h-8 text-gray-600 mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-white mb-2">No Submissions Yet</h3>
+          <p className="text-gray-400 text-sm">
+            Your submission history will appear here once you submit your first video.
+          </p>
+        </div>
+      ) : (
         <div>
           <h2 className="text-xl font-semibold text-white mb-4">
             Your Submission History
           </h2>
           <div className="space-y-4">
-            {submissions.map((submission) => {
-              const badges = getBadgesForSubmission(submission.actualPullUpCount ?? submission.pullUpCount);
+            {submissions.slice(0, 3).map((submission) => {
               const actualCount =
                 submission.actualPullUpCount ?? submission.pullUpCount;
 
@@ -334,33 +331,6 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
                           </p>
                         )}
                     </div>
-
-                    <div>
-                      <p className="text-gray-400">Badges Earned:</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {badges.length > 0 ? (
-                          badges.map((badge) => (
-                            <Badge
-                              key={badge.id}
-                              variant={
-                                badge.id === "elite" ? "elite" : "default"
-                              }
-                              className={
-                                badge.id === "elite"
-                                  ? ""
-                                  : "bg-gray-800 text-white"
-                              }
-                            >
-                              {badge.name}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-gray-500">
-                            No badges earned yet
-                          </span>
-                        )}
-                      </div>
-                    </div>
                   </div>
 
                   {submission.notes && (
@@ -378,11 +348,6 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
                           ? "Please review the feedback provided above."
                           : "Please review the video requirements and submit a new attempt."}
                       </p>
-                      <Link href="/submit">
-                        <Button variant="secondary" size="sm">
-                          Submit New Video
-                        </Button>
-                      </Link>
                     </div>
                   )}
                 </div>
@@ -392,27 +357,15 @@ const SubmissionDashboard: React.FC<SubmissionDashboardProps> = ({
 
           <div className="text-center mt-6">
             <Button
-              onClick={fetchLatestSubmissions}
+              onClick={() => {
+                fetchUserSubmissions();
+              }}
               variant="outline"
               size="sm"
             >
               Refresh Submission Status
             </Button>
           </div>
-        </div>
-      ) : (
-        <div className="bg-gray-950 p-6 rounded-lg text-center">
-          <Upload className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">
-            No Submissions Yet
-          </h3>
-          <p className="text-gray-400 mb-4">
-            Ready to show off your pull-up skills? Submit your first video to
-            get started!
-          </p>
-          <Link href="/submit">
-            <Button variant="secondary">Submit Your First Video</Button>
-          </Link>
         </div>
       )}
     </div>

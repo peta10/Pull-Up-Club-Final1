@@ -146,12 +146,21 @@ const SubscriptionPage: React.FC = () => {
       <div className="bg-black min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold text-white mb-3">
-              Pull-Up Club Membership
-            </h1>
+            <div className="flex items-center justify-center mb-3 gap-4">
+              <img
+                src="/PUClogo (1).webp"
+                alt="Pull-Up Club Logo"
+                className="h-12 w-12 md:h-16 md:w-16 object-contain inline-block"
+                style={{ background: 'transparent' }}
+                loading="eager"
+                fetchPriority="high"
+              />
+              <h1 className="text-3xl font-bold text-white m-0 p-0">
+                Pull-Up Club Membership
+              </h1>
+            </div>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Join our exclusive pull-up challenge community. Get daily
-              workouts, track your progress, and compete on the leaderboard.
+              Join our exclusive pull-up challenge community, track your progress, and compete on the leaderboard.
             </p>
           </div>
 

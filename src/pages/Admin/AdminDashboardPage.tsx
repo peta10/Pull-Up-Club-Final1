@@ -127,7 +127,58 @@ const AdminDashboardPage: React.FC = () => {
 
   const totalPages = Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE);
 
-  // Actions
+  // Add monthly eligibility helper
+  const getMonthlyEligibilityMessage = (submission: any) => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const submissionDate = new Date(submission.submittedAt);
+    const submissionMonth = submissionDate.getMonth();
+    const submissionYear = submissionDate.getFullYear();
+    const isCurrentMonth = currentMonth === submissionMonth && currentYear === submissionYear;
+    if (!isCurrentMonth) {
+      return "Previous month submission";
+    }
+    switch (submission.status.toLowerCase()) {
+      case 'pending':
+        return "Current month - awaiting review";
+      case 'approved':
+        return "Current month - approved, user must wait until next month";
+      case 'rejected':
+        return "Current month - rejected, user can resubmit immediately";
+      case 'featured':
+        return "Current month - featured submission";
+      default:
+        return "Current month submission";
+    }
+  };
+
+  // Add sendRejectionEmail function
+  const sendRejectionEmail = async (userProfile: any) => {
+    try {
+      // Insert email notification record
+      const { error: emailError } = await supabase
+        .from('email_notifications')
+        .insert({
+          user_id: userProfile.userId,
+          email_type: 'rejection',
+          recipient_email: userProfile.email || `${userProfile.fullName}@example.com`,
+          subject: 'Your Pull-Up Club Submission - Resubmission Available',
+          message: `Hi ${userProfile.fullName || 'there'},\n\nUnfortunately, your recent pull-up submission was not approved.\n\nGood news: You can submit a new video right away! Make sure to:\n- Film in good lighting with clear form visible\n- Count your reps accurately and honestly\n- Follow our submission guidelines\n- Ensure video quality is clear\n\nReady to try again? Submit your new video at: https://pullupclub.com/submit\n\nKeep pushing your limits!\nThe Pull-Up Club Team`,
+          created_at: new Date().toISOString()
+        });
+      if (emailError) {
+        console.error('Error creating email notification:', emailError);
+        return;
+      }
+      // Trigger the edge function to send emails
+      await supabase.functions.invoke('send-rejection-email');
+      console.log('Rejection email queued successfully');
+    } catch (err) {
+      console.error('Failed to send rejection email:', err);
+    }
+  };
+
+  // Update handleStatusChange to use sendRejectionEmail
   const handleStatusChange = async (
     submissionId: string,
     newStatus: 'Approved' | 'Rejected' | 'Featured',
@@ -135,6 +186,8 @@ const AdminDashboardPage: React.FC = () => {
   ) => {
     setIsLoading(true);
     try {
+      // Find the submission to get user profile data
+      const submission = submissions.find(s => s.id === submissionId);
       let updateObj: any = {
         status: newStatus.toLowerCase(),
         updated_at: new Date().toISOString()
@@ -147,7 +200,19 @@ const AdminDashboardPage: React.FC = () => {
         .update(updateObj)
         .eq('id', submissionId);
       if (error) throw error;
+      // Send rejection email if status is rejected
+      if (newStatus === 'Rejected' && submission) {
+        await sendRejectionEmail({
+          userId: submission.userId,
+          fullName: submission.fullName,
+          email: submission.profiles?.email || `${submission.fullName}@example.com`
+        });
+      }
       await fetchSubmissions();
+      // Show success message
+      if (newStatus === 'Rejected') {
+        console.log('Submission rejected and user notified via email');
+      }
     } catch (error) {
       console.error('Error updating submission:', error);
       setError(error instanceof Error ? error.message : 'Failed to update submission');
@@ -189,6 +254,15 @@ const AdminDashboardPage: React.FC = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-black py-8 px-2 md:px-8">
+        {/* Email notification banner */}
+        <div className="bg-blue-900 border border-blue-700 text-white p-4 rounded-lg mb-6">
+          <p className="text-sm">
+            📧 <strong>Monthly Submission System Active:</strong> Rejection emails are automatically sent to users when you reject submissions. 
+            Rejected users can resubmit immediately. Approved users must wait until next month.
+            <br />
+            <span className="text-blue-300">Make sure the send-rejection-email Edge Function is deployed and configured.</span>
+          </p>
+        </div>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
@@ -282,10 +356,10 @@ const AdminDashboardPage: React.FC = () => {
                             <div className="text-sm text-[#ededed]">{submission.challenge || "Pull-Up Challenge"}</div>
                             <div className="flex items-center mt-1">
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#9a9871]/20 text-[#9a9871]">
-                                {submission.category || "Outdoor"}
+                                {submission.category || "General"}
                               </span>
                               <span className="ml-2 text-xs text-[#ededed]">
-                                {new Date(submission.submittedAt || submission.submissionDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                {getMonthlyEligibilityMessage(submission)}
                               </span>
                             </div>
                           </div>
@@ -311,6 +385,31 @@ const AdminDashboardPage: React.FC = () => {
                         <tr className="bg-[#23231f]">
                           <td colSpan={5} className="px-6 py-4">
                             <div className="bg-black rounded-lg p-4 border border-[#23231f]">
+                              {/* Monthly Submission Info */}
+                              <div className="mb-4">
+                                <h5 className="font-medium text-[#ededed] mb-2">Monthly Submission Info</h5>
+                                <div className="bg-[#23231f] p-3 rounded">
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <span className="text-[#9a9871]">Submission Month:</span>
+                                      <div className="text-[#ededed]">
+                                        {new Date(submission.submittedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="text-[#9a9871]">User Status:</span>
+                                      <div className="text-[#ededed]">
+                                        {submission.status === 'rejected' ?
+                                          'Can resubmit immediately' :
+                                          submission.status === 'approved' ?
+                                          'Must wait until next month' :
+                                          'Awaiting review'
+                                        }
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                               <h4 className="font-medium text-[#ededed] mb-3">Submission Details</h4>
                               <p className="text-sm text-[#ededed] mb-4">
                                 {submission.notes || `Pull-up submission with ${submission.pullUpCount} claimed repetitions.`}
