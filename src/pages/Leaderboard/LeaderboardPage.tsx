@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import Layout from "../../components/Layout/Layout";
 import BadgeLegend from "./BadgeLegend";
 import LeaderboardTable from "../../components/Leaderboard/LeaderboardTable";
+import LeaderboardFilters from "./LeaderboardFilters";
 import { LeaderboardFilters as FiltersType } from "../../types";
 import { LoadingState, ErrorState } from '../../components/ui/LoadingState';
 import { useTranslation } from 'react-i18next';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // PaginationControls component
 const PaginationControls: React.FC<{
@@ -67,6 +69,8 @@ const LeaderboardPage: React.FC = () => {
   const [filters, setFilters] = useState<FiltersType>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [showBadgeLegend, setShowBadgeLegend] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const { t } = useTranslation('leaderboard');
 
   // Filtering logic (client-side, same as before)
@@ -121,17 +125,73 @@ const LeaderboardPage: React.FC = () => {
               {t('subtitle')}
             </p>
           </div>
-          <BadgeLegend />
-          <LeaderboardTable
-            data={currentItems}
-            loading={isLoading}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            totalUsers={filtered.length}
-            showFilters={true}
-            filters={filters}
-            onFilterChange={handleFilterChange}
-          />
+
+          {/* Mobile: Collapsible Badge Legend */}
+          <div className="md:hidden mb-4">
+            <button
+              onClick={() => setShowBadgeLegend(!showBadgeLegend)}
+              className="w-full bg-gray-900 p-4 rounded-lg flex items-center justify-between text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+              aria-expanded={showBadgeLegend}
+              aria-controls="badge-legend-mobile"
+            >
+              <span className="font-medium">{showBadgeLegend ? 'Hide Badge Legend' : 'View Badge Legend'}</span>
+              {showBadgeLegend ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+            {showBadgeLegend && (
+              <div id="badge-legend-mobile" className="mt-2">
+                <BadgeLegend />
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: Collapsible Filters */}
+          <div className="md:hidden mb-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full bg-gray-900 p-4 rounded-lg flex items-center justify-between text-white focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+              aria-expanded={showFilters}
+              aria-controls="filters-mobile"
+            >
+              <span className="font-medium">{showFilters ? 'Hide Filters' : 'Filter Results'}</span>
+              {showFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+            {showFilters && (
+              <div id="filters-mobile" className="mt-2">
+                <LeaderboardFilters filters={filters} onFilterChange={handleFilterChange} />
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: Leaderboard Cards */}
+          <div className="md:hidden">
+            <LeaderboardTable
+              data={currentItems}
+              loading={isLoading}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              showFilters={false}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              mobileCardMode={true}
+            />
+          </div>
+
+          {/* Desktop: Always show Badge Legend, Filters, and Table */}
+          <div className="hidden md:block">
+            <BadgeLegend />
+            <LeaderboardFilters filters={filters} onFilterChange={handleFilterChange} />
+            <LeaderboardTable
+              data={currentItems}
+              loading={isLoading}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              showFilters={false}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              mobileCardMode={false}
+            />
+          </div>
+
           {totalPages > 1 && (
             <PaginationControls
               currentPage={currentPage}

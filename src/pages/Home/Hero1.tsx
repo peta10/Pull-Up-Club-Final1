@@ -6,14 +6,6 @@ import { Zap } from 'lucide-react';
 // Use the same color and font conventions as Hero.tsx
 const FALLBACK_ACTIVE_USERS = 1230
 
-function getRoundedUserCount(count: number) {
-  if (count < 100) return 30;
-  if (count < 1000) return Math.round(count / 10) * 10;
-  if (count < 10000) return Math.round(count / 100) * 100;
-  if (count < 100000) return Math.round(count / 1000) * 1000;
-  return Math.round(count / 10000) * 10000;
-}
-
 const Hero1: React.FC = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(false);
@@ -32,7 +24,23 @@ const Hero1: React.FC = () => {
   const [headlineVisible, setHeadlineVisible] = useState(false);
   const [subtitleVisible, setSubtitleVisible] = useState(false);
   const [displayedActiveUsers, setDisplayedActiveUsers] = useState(0);
-  const roundedTarget = getRoundedUserCount(currentStats.activeUsers);
+
+  // Map of cities to typical names
+  const cityNameMap: Record<string, string[]> = {
+    "Chicago": ["Marcus", "Emily", "James", "Ashley"],
+    "London": ["Sarah", "Oliver", "Amelia", "Jack"],
+    "São Paulo": ["Carlos", "Ana", "Lucas", "Beatriz"],
+    "Tokyo": ["Yuki", "Haruto", "Sakura", "Ren"],
+    "Berlin": ["Lukas", "Mia", "Leon", "Hannah"],
+    "Sydney": ["Oliver", "Charlotte", "Jack", "Isla"],
+    "Toronto": ["Liam", "Emma", "Noah", "Olivia"],
+    "Mumbai": ["Aarav", "Priya", "Vivaan", "Ananya"],
+    "Lagos": ["Chinedu", "Ngozi", "Emeka", "Amina"],
+    "Paris": ["Louis", "Camille", "Lucas", "Chloé"],
+    "Madrid": ["Mateo", "Lucía", "Sofía", "Hugo"],
+    "New York": ["Michael", "Jessica", "David", "Ashley"],
+  };
+  const cities = Object.keys(cityNameMap);
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -71,11 +79,11 @@ const Hero1: React.FC = () => {
     }
   }, [animationsEnabled]);
 
-  // Slower, smooth animated counter for Join 30+/rounded users
+  // Slower, smooth animated counter for Warriors Joined
   useEffect(() => {
     if (isVisible) {
       let start = 0;
-      const end = roundedTarget;
+      const end = 1200;
       const duration = 1800; // ms, slower
       const stepTime = 30;
       const steps = Math.ceil(duration / stepTime);
@@ -93,22 +101,21 @@ const Hero1: React.FC = () => {
       }, stepTime);
       return () => clearInterval(interval);
     }
-  }, [isVisible, roundedTarget]);
+  }, [isVisible]);
 
   // Activity ticker
   useEffect(() => {
     const interval = setInterval(() => {
-      setRecentActivity(prev => {
-        const names = ["Alex", "Maria", "James", "Yuki", "Ahmed", "Elena"];
-        const cities = ["Tokyo", "Berlin", "Sydney", "Toronto", "Mumbai", "Lagos"];
-        const newActivity = {
-          name: names[Math.floor(Math.random() * names.length)],
-          location: cities[Math.floor(Math.random() * cities.length)],
-          pullUps: Math.floor(Math.random() * 40) + 10,
-          time: "Just now"
-        };
-        return [newActivity, ...prev.slice(0, 2)];
-      });
+      const city = cities[Math.floor(Math.random() * cities.length)];
+      const names = cityNameMap[city];
+      const name = names[Math.floor(Math.random() * names.length)];
+      const newActivity = {
+        name,
+        location: city,
+        pullUps: Math.floor(Math.random() * 40) + 10,
+        time: "Just now"
+      };
+      setRecentActivity(prev => [newActivity, ...prev.slice(0, 2)]);
     }, 8000);
 
     return () => clearInterval(interval);
@@ -131,39 +138,35 @@ const Hero1: React.FC = () => {
 
       {/* Live Activity Ticker */}
       <div className="absolute top-4 left-0 right-0 z-10">
-        <div className="bg-black/50 backdrop-blur-sm border-b border-[#9b9b6f]/20">
-          <div className="max-w-7xl mx-auto px-4 py-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-green-400">LIVE</span>
+        <div className="max-w-7xl mx-auto px-2 py-2">
+          <div className="flex items-center text-sm px-0 py-0">
+            <div className="flex items-center space-x-2 mr-4">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-green-400">LIVE</span>
+            </div>
+            <div className="overflow-x-auto whitespace-nowrap w-auto max-w-full">
+              {recentActivity.map((activity, index) => (
+                <div
+                  key={index}
+                  className={`inline transition-all duration-500 ${
+                    index === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full absolute'
+                  }`}
+                >
+                  <span className="text-gray-300">
+                    <span className="text-[#9b9b6f] font-semibold">{activity.name}</span> from {activity.location} completed <span className="text-[#9b9b6f]">{activity.pullUps} pull-ups</span>
+                  </span>
                 </div>
-                <div className="overflow-hidden relative h-5 w-64">
-                  {recentActivity.map((activity, index) => (
-                    <div
-                      key={index}
-                      className={`transition-all duration-500 ${
-                        index === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full absolute'
-                      }`}
-                    >
-                      <span className="text-gray-300">
-                        <span className="text-[#9b9b6f] font-semibold">{activity.name}</span> from {activity.location} completed <span className="text-[#9b9b6f]">{activity.pullUps} pull-ups</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8 flex flex-col items-start justify-center" style={{ minHeight: '70vh' }}>
-        {/* Animated Join Counter */}
+        {/* Animated Warriors Joined Counter */}
         <div className={`mb-2 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <span className="block text-2xl md:text-3xl font-bold tracking-tight text-white">
-            Join <span className="text-[#9b9b6f]">{displayedActiveUsers.toLocaleString()}+</span>
+            {displayedActiveUsers.toLocaleString()}+ <span className="text-[#9b9b6f]">Warriors Joined</span>
           </span>
         </div>
         {/* Dramatic Headline Animation */}

@@ -79,10 +79,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           <tbody className="divide-y divide-gray-800">
             {display.map((submission, index) => {
               const rank = (showPagination ? (page - 1) * PAGE_SIZE : 0) + index + 1;
-              const badges = getBadgesForSubmission(
-                submission.actualPullUpCount ?? submission.pullUpCount,
-                submission.gender
-              );
+              const badges = getBadgesForSubmission(submission.actualPullUpCount ?? submission.pullUpCount);
               // Only show the highest badge earned
               const highestBadge = badges.length > 0 ? badges[badges.length - 1] : null;
               return (
@@ -117,7 +114,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                           src={highestBadge.imageUrl}
                           alt={highestBadge.name}
                           title={highestBadge.name}
-                          className="h-20 w-20 rounded-full object-cover"
+                          className="h-24 w-24 rounded-full object-cover"
                         />
                       ) : (
                         <span className="text-gray-500">-</span>

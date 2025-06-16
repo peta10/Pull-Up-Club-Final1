@@ -2,31 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
-import { Button } from "../../components/ui/Button";
-import { Badge } from "../../components/ui/Badge";
 import SubmissionDashboard from "./SubmissionDashboard";
-import PatchProgress from "./PatchProgress";
-import { mockSubmissions, getBadgesForSubmission } from "../../data/mockData";
-import { supabase } from "../../lib/supabase";
-import { User, Building, Globe, Calendar, Users, MapPin } from "lucide-react";
-import type { Submission } from '../../types';
-import toast from 'react-hot-toast';
-
-const REGION_OPTIONS = [
-  "North America",
-  "South America",
-  "Europe",
-  "Asia",
-  "Africa",
-  "Australia/Oceania"
-];
+import ProfileSettings from "../../components/Profile/ProfileSettings";
+import SubscriptionRewards from "./SubscriptionRewards";
 
 const ProfilePage: React.FC = () => {
-  const { user, signOut, isFirstLogin, profile, setProfile } = useAuth();
+  const { user, isFirstLogin, profile } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<
-    "submissions" | "rankings" | "personal"
-  >("submissions");
+  const [activeTab, setActiveTab] = useState<string>("submissions");
   const [formData, setFormData] = useState({
     fullName: "",
     socialMedia: "",
@@ -36,12 +19,11 @@ const ProfilePage: React.FC = () => {
     region: "",
     phone: "",
   });
-  const [isSaving, setIsSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     if (isFirstLogin && profile && !profile.isProfileCompleted) {
-      setActiveTab("personal");
+      setActiveTab("settings");
     }
   }, [isFirstLogin, profile]);
 
@@ -91,118 +73,6 @@ const ProfilePage: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [dirty]);
 
-  const userSubmissions = mockSubmissions.filter(
-    (sub) => sub.email === user?.email
-  );
-
-  const highestSubmission = userSubmissions.reduce((highest: Submission | null, current: Submission) => {
-    const currentCount = current.actualPullUpCount ?? current.pullUpCount;
-    const highestCount = highest
-      ? (highest.actualPullUpCount ?? highest.pullUpCount)
-      : 0;
-    return currentCount > highestCount ? current : highest;
-  }, null);
-
-  const userBadges = highestSubmission
-    ? getBadgesForSubmission(
-        highestSubmission.actualPullUpCount ?? highestSubmission.pullUpCount,
-        formData.gender || highestSubmission.gender || 'Male'
-      )
-    : [];
-  const eliteBadge = userBadges.find((badge) => badge.id === "elite");
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setDirty(true);
-  };
-
-  const handleSavePersonalInfo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    const errors = validate();
-    if (Object.keys(errors).length > 0) {
-      toast.error('Please fix the form errors before saving');
-      setIsSaving(false);
-      return;
-    }
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: formData.fullName,
-          social_media: formData.socialMedia.replace(/^@/, ''),
-          age: parseInt(formData.age),
-          gender: formData.gender,
-          organization: formData.organization,
-          region: formData.region,
-          phone: formData.phone,
-          is_profile_completed: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user?.id);
-      if (error) throw error;
-      const { data: updated, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-      if (fetchError) throw fetchError;
-      if (setProfile) {
-        setProfile((prev) => prev ? {
-          ...prev,
-          fullName: updated.full_name,
-          socialMedia: updated.social_media,
-          age: updated.age,
-          gender: updated.gender,
-          organization: updated.organization,
-          region: updated.region,
-          phone: updated.phone,
-          isProfileCompleted: updated.is_profile_completed,
-        } : prev);
-      }
-      toast.success('Profile updated successfully!', {
-        duration: 3000,
-        style: {
-          background: '#1f2937',
-          color: '#ffffff',
-          border: '1px solid #9b9b6f',
-        },
-        iconTheme: {
-          primary: '#9b9b6f',
-          secondary: '#ffffff',
-        },
-      });
-      setDirty(false);
-    } catch (err: any) {
-      console.error('Profile save error:', err);
-      toast.error('Failed to save profile. Please try again.', {
-        duration: 4000,
-        style: {
-          background: '#1f2937',
-          color: '#ffffff',
-          border: '1px solid #ef4444',
-        },
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const validate = () => {
-    const errors: { [key: string]: string } = {};
-    if (!formData.fullName.trim()) errors.fullName = "Full Name is required";
-    if (!formData.age || isNaN(Number(formData.age)) || Number(formData.age) < 13 || Number(formData.age) > 100) errors.age = "Valid age required (13-100)";
-    if (!formData.gender) errors.gender = "Gender is required";
-    if (!formData.region) errors.region = "Region is required";
-    return errors;
-  };
-
   if (!user) {
     navigate("/login");
     return null;
@@ -210,226 +80,54 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="bg-black min-h-screen py-16">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-gray-900 rounded-lg shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-gray-800 flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-white">Your Profile</h2>
-                <p className="text-gray-400 mt-1">{user.email}</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                {eliteBadge && (
-                  <Badge variant="elite" className="text-sm">
-                    {eliteBadge.name}
-                  </Badge>
-                )}
-              </div>
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        {/* Profile Header - Clean, no background */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Your Profile</h1>
+          <p className="text-gray-400">{user?.email}</p>
+        </div>
 
-            <div className="border-b border-gray-800">
-              <nav className="flex">
-                <button
-                  onClick={() => setActiveTab("submissions")}
-                  className={`px-6 py-3 text-sm font-medium ${
-                    activeTab === "submissions"
-                      ? "text-white border-b-2 border-[#9b9b6f]"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                  disabled={
-                    !!(
-                      profile &&
-                      !profile.isProfileCompleted &&
-                      activeTab !== "personal"
-                    )
-                  }
-                >
-                  Submissions
-                </button>
-                <button
-                  onClick={() => setActiveTab("personal")}
-                  className={`px-6 py-3 text-sm font-medium ${
-                    activeTab === "personal"
-                      ? "text-white border-b-2 border-[#9b9b6f]"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Settings
-                </button>
-              </nav>
-            </div>
+        {/* Tab Navigation - HORIZONTAL like before */}
+        <div className="flex justify-center mb-8">
+          <nav className="flex bg-gray-900 rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab("submissions")}
+              className={`px-6 py-3 rounded-md font-medium transition-colors flex items-center ${
+                activeTab === "submissions"
+                  ? "bg-[#9b9b6f] text-black"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Submissions
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`px-6 py-3 rounded-md font-medium transition-colors flex items-center ${
+                activeTab === "settings"
+                  ? "bg-[#9b9b6f] text-black"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Settings
+            </button>
+            <button
+              onClick={() => setActiveTab("subscription")}
+              className={`px-6 py-3 rounded-md font-medium transition-colors flex items-center ${
+                activeTab === "subscription"
+                  ? "bg-[#9b9b6f] text-black"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Subscription & Rewards
+            </button>
+          </nav>
+        </div>
 
-            <div className="p-6">
-              {activeTab === "submissions" && (
-                <div className="space-y-6">
-                  <SubmissionDashboard submissions={userSubmissions} />
-                  <div className="p-6 border-t border-gray-800">
-                    <PatchProgress />
-                  </div>
-                </div>
-              )}
-              {activeTab === "personal" && (
-                <div className="space-y-6">
-                  {(isFirstLogin ||
-                    (profile && !profile.isProfileCompleted)) && (
-                    <div className="p-4 bg-[#9b9b6f] bg-opacity-20 border-l-4 border-[#9b9b6f]">
-                      <p className="text-white">
-                        Welcome to Pull-Up Club! Please complete your profile
-                        information to fully access all features and receive
-                        your welcome package.
-                      </p>
-                    </div>
-                  )}
-                  <form onSubmit={handleSavePersonalInfo} className="space-y-6">
-                    <div className="bg-gray-950 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-white mb-4">Profile Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            <User className="inline h-4 w-4 mr-1" />
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            name="fullName"
-                            value={formData.fullName}
-                            onChange={handleInputChange}
-                            required
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            placeholder="Enter your full name"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">This will be displayed on the leaderboard</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            <Globe className="inline h-4 w-4 mr-1" />
-                            Social Media Handle
-                          </label>
-                          <input
-                            type="text"
-                            name="socialMedia"
-                            value={formData.socialMedia}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            placeholder="yourusername"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">Do not include the @ symbol, just your username. Displayed on leaderboard for social connections</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            <Calendar className="inline h-4 w-4 mr-1" />
-                            Age *
-                          </label>
-                          <input
-                            type="number"
-                            name="age"
-                            value={formData.age}
-                            onChange={handleInputChange}
-                            required
-                            min="13"
-                            max="100"
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            placeholder="25"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            <Users className="inline h-4 w-4 mr-1" />
-                            Gender *
-                          </label>
-                          <select
-                            name="gender"
-                            value={formData.gender}
-                            onChange={handleInputChange}
-                            required
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                          >
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            <Building className="inline h-4 w-4 mr-1" />
-                            Club/Organization
-                          </label>
-                          <input
-                            type="text"
-                            name="organization"
-                            value={formData.organization}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                            placeholder="Your gym, team, or club"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
-                            <MapPin className="inline h-4 w-4 mr-1" />
-                            Region *
-                          </label>
-                          <select
-                            name="region"
-                            value={formData.region}
-                            onChange={handleInputChange}
-                            required
-                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                          >
-                            <option value="">Select Region</option>
-                            {REGION_OPTIONS.map((region) => (
-                              <option key={region} value={region}>
-                                {region}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
-                          Phone Number (Optional)
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#9b9b6f] focus:border-transparent"
-                          placeholder="+1 (555) 123-4567"
-                        />
-                      </div>
-                      <div className="pt-4">
-                        <Button
-                          type="submit"
-                          disabled={isSaving}
-                          className="w-full bg-[#9b9b6f] hover:bg-[#8a8a63] text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                        >
-                          {isSaving ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
-            <div className="px-6 py-4 bg-gray-950 border-t border-gray-800">
-              <div className="flex justify-end">
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    signOut();
-                    navigate("/");
-                  }}
-                >
-                  Sign Out
-                </Button>
-              </div>
-            </div>
-          </div>
+        {/* Tab Content - No background wrapper, cards float on black */}
+        <div className="max-w-6xl mx-auto">
+          {activeTab === "submissions" && <SubmissionDashboard />}
+          {activeTab === "settings" && <ProfileSettings />}
+          {activeTab === "subscription" && <SubscriptionRewards />}
         </div>
       </div>
     </Layout>

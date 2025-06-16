@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.tsx';
-import { User, Menu, X, Trophy, Home, ShoppingBag, UserPlus, LogIn, LogOut } from 'lucide-react';
+import { User, Menu, X, Trophy, Home, ShoppingBag, UserPlus, LogIn, LogOut, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from '../LanguageSelector';
 
@@ -54,7 +54,8 @@ const Header: React.FC = () => {
                   <span>{t('nav.dashboard')}</span>
                 </Link>
                 {isAdmin && (
-                  <Link to="/admin-dashboard" className="font-medium hover:text-[#9b9b6f] transition-colors">
+                  <Link to="/admin-dashboard" className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center">
+                    <Shield className="h-4 w-4 mr-1" />
                     {t('nav.admin')}
                   </Link>
                 )}
@@ -146,9 +147,10 @@ const Header: React.FC = () => {
                   {isAdmin && (
                     <Link 
                       to="/admin-dashboard" 
-                      className="font-medium hover:text-[#9b9b6f] transition-colors"
+                      className="font-medium hover:text-[#9b9b6f] transition-colors flex items-center"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
+                      <Shield className="h-4 w-4 mr-1" />
                       {t('nav.admin')}
                     </Link>
                   )}

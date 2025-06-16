@@ -6,18 +6,18 @@ import { LoadingState, ErrorState } from "../../components/ui/LoadingState";
 import { Eye, CheckCircle, XCircle, Star, Filter, Search, ChevronDown } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
-const LOGO_PATH = "/PUClogo (1).png";
-
-// Add a type for all possible statuses
-const ALL_STATUSES = ["Pending", "Approved", "Rejected", "Featured"] as const;
-type StatusType = typeof ALL_STATUSES[number];
+const LOGO_PATH = "/PUClogo (1).webp";
 
 // Add index signature for STATUS_MAP
-const STATUS_MAP: Record<StatusType, { label: string; variant: string }> = {
-  Pending: { label: "New Submission", variant: "warning" },
-  Approved: { label: "Approved", variant: "success" },
-  Rejected: { label: "Rejected", variant: "danger" },
-  Featured: { label: "Featured", variant: "default" },
+const STATUS_MAP: Record<string, { label: string; variant: string; icon?: string }> = {
+  'pending': { label: "Pending", variant: "warning" },
+  'approved': { label: "Approved", variant: "success" },
+  'rejected': { label: "Rejected", variant: "danger" },
+  'featured': { label: "Featured", variant: "default" },
+  'Pending': { label: "Pending", variant: "warning" },
+  'Approved': { label: "Approved", variant: "success" },
+  'Rejected': { label: "Rejected", variant: "danger" },
+  'Featured': { label: "Featured", variant: "default" },
 };
 
 const ITEMS_PER_PAGE = 50;
@@ -31,8 +31,6 @@ const AdminDashboardPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     month: "All Months",
-    challenge: "All Challenges",
-    category: "All Categories",
     status: "All Status",
     search: ""
   });
@@ -59,22 +57,26 @@ const AdminDashboardPage: React.FC = () => {
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;
+      console.log('Raw submissions data:', data); // Debug log
       const formattedSubmissions = (data || []).map((submission: any) => ({
         id: submission.id.toString(),
         userId: submission.user_id,
         fullName: submission.profiles?.full_name || 'Unknown User',
+        email: submission.profiles?.email,
         socialHandle: submission.profiles?.social_media || '',
         challenge: 'Pull-Up Challenge',
         category: submission.region || 'General',
         submittedAt: submission.created_at,
         submissionDate: new Date(submission.created_at).toLocaleDateString(),
-        status: submission.status.charAt(0).toUpperCase() + submission.status.slice(1),
+        status: submission.status,
         pullUpCount: submission.pull_up_count,
         claimedCount: submission.pull_up_count,
         verifiedCount: submission.actual_pull_up_count,
         videoUrl: submission.video_url,
-        notes: submission.notes
+        notes: submission.notes,
+        profiles: submission.profiles
       }));
+      console.log('Formatted submissions:', formattedSubmissions); // Debug log
       setSubmissions(formattedSubmissions);
       setFilteredSubmissions(formattedSubmissions);
     } catch (err) {
@@ -94,13 +96,17 @@ const AdminDashboardPage: React.FC = () => {
   useEffect(() => {
     let filtered = submissions;
     if (filters.status !== "All Status") {
-      filtered = filtered.filter(sub => (sub.status === filters.status || STATUS_MAP[(sub.status as StatusType)]?.label === filters.status));
-    }
-    if (filters.category !== "All Categories") {
-      filtered = filtered.filter(sub => sub.category === filters.category);
-    }
-    if (filters.challenge !== "All Challenges") {
-      filtered = filtered.filter(sub => sub.challenge === filters.challenge);
+      filtered = filtered.filter(sub => {
+        const subStatus = sub.status.toLowerCase();
+        const filterStatus = filters.status.toLowerCase();
+        // Handle "Featured ⭐" filter
+        if (filterStatus.includes('featured') || filterStatus.includes('⭐')) {
+          return subStatus === 'featured';
+        }
+        return subStatus === filterStatus || 
+               STATUS_MAP[subStatus]?.label.toLowerCase().includes(filterStatus) ||
+               sub.status === filters.status;
+      });
     }
     if (filters.month !== "All Months") {
       filtered = filtered.filter(sub => {
@@ -116,7 +122,7 @@ const AdminDashboardPage: React.FC = () => {
       );
     }
     setFilteredSubmissions(filtered);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   }, [filters, submissions]);
 
   // Pagination logic
@@ -127,31 +133,6 @@ const AdminDashboardPage: React.FC = () => {
 
   const totalPages = Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE);
 
-  // Add monthly eligibility helper
-  const getMonthlyEligibilityMessage = (submission: any) => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const submissionDate = new Date(submission.submittedAt);
-    const submissionMonth = submissionDate.getMonth();
-    const submissionYear = submissionDate.getFullYear();
-    const isCurrentMonth = currentMonth === submissionMonth && currentYear === submissionYear;
-    if (!isCurrentMonth) {
-      return "Previous month submission";
-    }
-    switch (submission.status.toLowerCase()) {
-      case 'pending':
-        return "Current month - awaiting review";
-      case 'approved':
-        return "Current month - approved, user must wait until next month";
-      case 'rejected':
-        return "Current month - rejected, user can resubmit immediately";
-      case 'featured':
-        return "Current month - featured submission";
-      default:
-        return "Current month submission";
-    }
-  };
-
   // Add sendRejectionEmail function
   const sendRejectionEmail = async (userProfile: any) => {
     try {
@@ -161,7 +142,7 @@ const AdminDashboardPage: React.FC = () => {
         .insert({
           user_id: userProfile.userId,
           email_type: 'rejection',
-          recipient_email: userProfile.email || `${userProfile.fullName}@example.com`,
+          recipient_email: userProfile.email || userProfile.profiles?.email,
           subject: 'Your Pull-Up Club Submission - Resubmission Available',
           message: `Hi ${userProfile.fullName || 'there'},\n\nUnfortunately, your recent pull-up submission was not approved.\n\nGood news: You can submit a new video right away! Make sure to:\n- Film in good lighting with clear form visible\n- Count your reps accurately and honestly\n- Follow our submission guidelines\n- Ensure video quality is clear\n\nReady to try again? Submit your new video at: https://pullupclub.com/submit\n\nKeep pushing your limits!\nThe Pull-Up Club Team`,
           created_at: new Date().toISOString()
@@ -186,33 +167,35 @@ const AdminDashboardPage: React.FC = () => {
   ) => {
     setIsLoading(true);
     try {
-      // Find the submission to get user profile data
       const submission = submissions.find(s => s.id === submissionId);
       let updateObj: any = {
-        status: newStatus.toLowerCase(),
         updated_at: new Date().toISOString()
       };
+      // Handle different status updates
       if (newStatus === 'Approved') {
+        updateObj.status = 'approved';
         updateObj.actual_pull_up_count = verifiedCount;
+      } else if (newStatus === 'Featured') {
+        updateObj.status = 'featured';
+        updateObj.actual_pull_up_count = verifiedCount || submission?.pullUpCount;
+      } else if (newStatus === 'Rejected') {
+        updateObj.status = 'rejected';
       }
+      console.log('Updating submission with:', updateObj); // Debug log
       const { error } = await supabase
         .from('submissions')
         .update(updateObj)
         .eq('id', submissionId);
-      if (error) throw error;
+      if (error) {
+        console.error('Database update error:', error);
+        throw error;
+      }
       // Send rejection email if status is rejected
       if (newStatus === 'Rejected' && submission) {
-        await sendRejectionEmail({
-          userId: submission.userId,
-          fullName: submission.fullName,
-          email: submission.profiles?.email || `${submission.fullName}@example.com`
-        });
+        await sendRejectionEmail(submission);
       }
       await fetchSubmissions();
-      // Show success message
-      if (newStatus === 'Rejected') {
-        console.log('Submission rejected and user notified via email');
-      }
+      console.log(`Submission ${newStatus.toLowerCase()} successfully`);
     } catch (error) {
       console.error('Error updating submission:', error);
       setError(error instanceof Error ? error.message : 'Failed to update submission');
@@ -223,7 +206,17 @@ const AdminDashboardPage: React.FC = () => {
 
   // Helper for status badge
   const getStatusBadge = (status: string) => {
-    const map = STATUS_MAP[(status as StatusType)] || { label: status, variant: 'default' };
+    const statusKey = status.toLowerCase();
+    const map = STATUS_MAP[statusKey] || STATUS_MAP[status] || { label: status, variant: 'default' };
+    // Add star icon only for featured status, but keep it subtle
+    if (statusKey === 'featured') {
+      return (
+        <Badge variant="default" className="bg-amber-100 text-amber-800 border-amber-300">
+          <Star className="h-3 w-3 mr-1" />
+          {map.label}
+        </Badge>
+      );
+    }
     return <Badge variant={map.variant as any}>{map.label}</Badge>;
   };
 
@@ -235,17 +228,12 @@ const AdminDashboardPage: React.FC = () => {
       return date.toLocaleString('default', { month: 'long', year: 'numeric' });
     }))).filter(Boolean)
   ];
-  const challenges = [
-    "All Challenges",
-    ...Array.from(new Set(submissions.map(sub => sub.challenge || "Pull-Up Challenge"))).filter(Boolean)
-  ];
-  const categories = [
-    "All Categories",
-    ...Array.from(new Set(submissions.map(sub => sub.category || "Outdoor"))).filter(Boolean)
-  ];
   const statuses = [
     "All Status",
-    ...Array.from(new Set(submissions.map(sub => STATUS_MAP[(sub.status as StatusType)]?.label || sub.status))).filter(Boolean)
+    "Pending",
+    "Approved", 
+    "Rejected",
+    "Featured"
   ];
 
   // Count of new submissions
@@ -255,19 +243,29 @@ const AdminDashboardPage: React.FC = () => {
     <Layout>
       <div className="min-h-screen bg-black py-8 px-2 md:px-8">
         {/* Email notification banner */}
-        <div className="bg-blue-900 border border-blue-700 text-white p-4 rounded-lg mb-6">
+        <div className="bg-[#918f6f]/10 border border-[#918f6f] text-white p-4 rounded-lg mb-6">
           <p className="text-sm">
-            📧 <strong>Monthly Submission System Active:</strong> Rejection emails are automatically sent to users when you reject submissions. 
+            📧 <strong className="text-[#918f6f]">Monthly Submission System Active:</strong> Rejection emails are automatically sent to users when you reject submissions. 
             Rejected users can resubmit immediately. Approved users must wait until next month.
             <br />
-            <span className="text-blue-300">Make sure the send-rejection-email Edge Function is deployed and configured.</span>
+            <span className="text-[#918f6f]/80">Make sure the send-rejection-email Edge Function is deployed and configured.</span>
           </p>
         </div>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <img src={LOGO_PATH} alt="Pull-Up Club Logo" className="h-12 w-auto" />
-            <h1 className="text-2xl md:text-3xl font-bold text-[#9a9871] tracking-wide">Admin Dashboard</h1>
+          <div className="flex flex-1 items-center justify-center">
+            <img 
+              src={LOGO_PATH} 
+              alt="Pull-Up Club Logo" 
+              className="h-12 w-auto object-contain mr-4" 
+              onError={(e) => {
+                console.log('Logo failed to load, trying PNG fallback');
+                e.currentTarget.src = "/PUClogo.png";
+              }}
+            />
+            <h1 className="text-2xl md:text-3xl font-bold text-[#918f6f] tracking-wide text-center">
+              Admin Dashboard
+            </h1>
           </div>
           {newSubmissionsCount > 0 && (
             <div className="flex items-center bg-[#9a9871]/10 border border-[#9a9871] rounded-lg px-4 py-2">
@@ -279,47 +277,52 @@ const AdminDashboardPage: React.FC = () => {
 
         {/* Filters */}
         <div className="bg-[#18181b] rounded-lg shadow-sm border border-[#23231f] p-4 mb-6">
-          <div className="flex items-center mb-4">
+          <div className="flex items-center mb-2 justify-between">
+            <div className="flex items-center">
             <Filter className="h-5 w-5 text-[#9a9871] mr-2" />
             <span className="font-medium text-[#ededed]">Filters</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setFilters({ month: "All Months", status: "All Status", search: "" })}>
+              Reset Filters
+            </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            {/* Month Filter */}
             <div>
               <label className="block text-xs font-medium text-[#ededed] mb-1">Month</label>
-              <select className="w-full p-2 border border-[#23231f] rounded-md bg-black text-[#ededed]" value={filters.month} onChange={e => setFilters(f => ({ ...f, month: e.target.value }))}>
+              <select 
+                className="w-full p-2 border border-[#23231f] rounded-md bg-black text-[#ededed] text-sm" 
+                value={filters.month} 
+                onChange={e => setFilters(f => ({ ...f, month: e.target.value }))}
+              >
                 {months.map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-[#ededed] mb-1">Challenge</label>
-              <select className="w-full p-2 border border-[#23231f] rounded-md bg-black text-[#ededed]" value={filters.challenge} onChange={e => setFilters(f => ({ ...f, challenge: e.target.value }))}>
-                {challenges.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#ededed] mb-1">Category</label>
-              <select className="w-full p-2 border border-[#23231f] rounded-md bg-black text-[#ededed]" value={filters.category} onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}>
-                {categories.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
+            {/* Status Filter */}
             <div>
               <label className="block text-xs font-medium text-[#ededed] mb-1">Status</label>
-              <select className="w-full p-2 border border-[#23231f] rounded-md bg-black text-[#ededed]" value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}>
+              <select 
+                className="w-full p-2 border border-[#23231f] rounded-md bg-black text-[#ededed] text-sm" 
+                value={filters.status} 
+                onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
+              >
                 {statuses.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
+            {/* Search Filter */}
             <div>
               <label className="block text-xs font-medium text-[#ededed] mb-1">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9a9871]" />
-                <input type="text" placeholder="Search..." className="w-full pl-10 pr-4 py-2 border border-[#23231f] rounded-md bg-black text-[#ededed]" value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#918f6f]" />
+                <input 
+                  type="text" 
+                  placeholder="Search..." 
+                  className="w-full pl-10 pr-4 py-2 border border-[#23231f] rounded-md bg-black text-[#ededed] text-sm" 
+                  value={filters.search} 
+                  onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} 
+                />
               </div>
             </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button variant="outline" size="sm" onClick={() => setFilters({ month: "All Months", challenge: "All Challenges", category: "All Categories", status: "All Status", search: "" })}>
-              Reset Filters
-            </Button>
           </div>
         </div>
 
@@ -335,7 +338,6 @@ const AdminDashboardPage: React.FC = () => {
                 <thead className="bg-[#23231f] border-b border-[#23231f]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#ededed] uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#ededed] uppercase tracking-wider">Challenge / Category</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#ededed] uppercase tracking-wider">Submission Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#ededed] uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#ededed] uppercase tracking-wider">Actions</th>
@@ -349,19 +351,6 @@ const AdminDashboardPage: React.FC = () => {
                           <div>
                             <div className="text-sm font-medium text-[#ededed]">{submission.fullName}</div>
                             <div className="text-xs text-[#9a9871]">{submission.socialHandle}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm text-[#ededed]">{submission.challenge || "Pull-Up Challenge"}</div>
-                            <div className="flex items-center mt-1">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#9a9871]/20 text-[#9a9871]">
-                                {submission.category || "General"}
-                              </span>
-                              <span className="ml-2 text-xs text-[#ededed]">
-                                {getMonthlyEligibilityMessage(submission)}
-                              </span>
-                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#ededed]">
@@ -380,53 +369,36 @@ const AdminDashboardPage: React.FC = () => {
                           </Button>
                         </td>
                       </tr>
-                      {/* Expandable Details Row */}
+                      {/* Replace the expandable details section with this compact version */}
                       {selectedSubmission?.id === submission.id && (
-                        <tr className="bg-[#23231f]">
-                          <td colSpan={5} className="px-6 py-4">
-                            <div className="bg-black rounded-lg p-4 border border-[#23231f]">
-                              {/* Monthly Submission Info */}
-                              <div className="mb-4">
-                                <h5 className="font-medium text-[#ededed] mb-2">Monthly Submission Info</h5>
-                                <div className="bg-[#23231f] p-3 rounded">
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <span className="text-[#9a9871]">Submission Month:</span>
-                                      <div className="text-[#ededed]">
-                                        {new Date(submission.submittedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        <tr>
+                          <td colSpan={4} className="px-6 py-3 bg-[#1a1a17]">
+                            <div className="max-w-2xl w-full">
+                              {/* Compact submission info */}
+                              <div className="mb-3">
+                                <h5 className="font-medium text-[#ededed] mb-2 text-sm">Submission Info</h5>
+                                <div className="bg-[#23231f] p-3 rounded text-sm">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-[#9a9871]">Claimed:</span>
+                                    <span className="text-[#ededed] font-bold">{submission.pullUpCount}</span>
                                       </div>
-                                    </div>
-                                    <div>
-                                      <span className="text-[#9a9871]">User Status:</span>
-                                      <div className="text-[#ededed]">
-                                        {submission.status === 'rejected' ?
-                                          'Can resubmit immediately' :
-                                          submission.status === 'approved' ?
-                                          'Must wait until next month' :
-                                          'Awaiting review'
-                                        }
-                                      </div>
-                                    </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[#9a9871]">Verified:</span>
+                                    <span className={`font-bold ${submission.verifiedCount ? 'text-green-400' : 'text-yellow-400'}`}>{submission.verifiedCount || 'Pending'}</span>
                                   </div>
                                 </div>
                               </div>
-                              <h4 className="font-medium text-[#ededed] mb-3">Submission Details</h4>
-                              <p className="text-sm text-[#ededed] mb-4">
-                                {submission.notes || `Pull-up submission with ${submission.pullUpCount} claimed repetitions.`}
-                              </p>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <h5 className="font-medium text-[#ededed] mb-2">Change Status</h5>
-                                  <div className="flex items-center space-x-2">
+                              {/* Compact actions */}
+                              <div className="flex items-center gap-2 flex-wrap">
                                     <input
                                       type="number"
-                                      placeholder={`Verify count (claimed: ${submission.pullUpCount})`}
-                                      className="w-32 px-3 py-1.5 border border-[#23231f] rounded text-sm bg-black text-[#ededed]"
+                                  placeholder="Count"
+                                  className="w-20 px-2 py-1 border border-[#23231f] rounded text-sm bg-black text-[#ededed]"
                                       id={`verify-${submission.id}`}
-                                      defaultValue={submission.pullUpCount}
+                                      defaultValue={submission.verifiedCount || submission.pullUpCount}
                                     />
                                     <Button
-                                      variant="primary"
+                                  variant="secondary"
                                       size="sm"
                                       onClick={() => {
                                         const input = document.getElementById(`verify-${submission.id}`) as HTMLInputElement;
@@ -434,42 +406,41 @@ const AdminDashboardPage: React.FC = () => {
                                         handleStatusChange(submission.id, 'Approved', verifiedCount);
                                       }}
                                       disabled={isLoading}
+                                  className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1"
                                     >
-                                      <CheckCircle className="h-4 w-4 mr-1" />
-                                      Approve & Add to Leaderboard
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Approve
                                     </Button>
                                     <Button
                                       variant="secondary"
                                       size="sm"
-                                      onClick={() => handleStatusChange(submission.id, 'Featured')}
+                                      onClick={() => {
+                                        const input = document.getElementById(`verify-${submission.id}`) as HTMLInputElement;
+                                        const verifiedCount = parseInt(input.value) || submission.pullUpCount;
+                                        handleStatusChange(submission.id, 'Featured', verifiedCount);
+                                      }}
                                       disabled={isLoading}
+                                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1"
                                     >
-                                      <Star className="h-4 w-4 mr-1" />
+                                  <Star className="h-3 w-3 mr-1" />
                                       Feature
                                     </Button>
                                     <Button
-                                      variant="danger"
+                                  variant="secondary"
                                       size="sm"
                                       onClick={() => handleStatusChange(submission.id, 'Rejected')}
                                       disabled={isLoading}
+                                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1"
                                     >
-                                      <XCircle className="h-4 w-4 mr-1" />
+                                  <XCircle className="h-3 w-3 mr-1" />
                                       Reject
                                     </Button>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h5 className="font-medium text-[#ededed] mb-2">Video</h5>
-                                  <a
-                                    href={submission.videoUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center px-3 py-1.5 border border-[#9a9871] text-sm font-medium rounded text-[#9a9871] hover:bg-[#9a9871]/10"
-                                  >
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    Watch Submission Video
-                                  </a>
-                                </div>
+                                <button
+                                  onClick={() => window.open(submission.videoUrl, '_blank')}
+                                  className="bg-[#9a9871] hover:bg-[#a5a575] text-black px-3 py-1 rounded text-xs font-semibold"
+                                >
+                                  Watch Video
+                                </button>
                               </div>
                             </div>
                           </td>

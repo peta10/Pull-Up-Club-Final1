@@ -18,7 +18,7 @@ const BadgeLegend: React.FC = () => {
             <img
               src={badge.imageUrl}
               alt={badge.name}
-              className="h-16 w-16 rounded-full mb-2"
+              className="h-24 w-24 rounded-full mb-2"
             />
             <h4 className="text-[#9b9b6f] font-bold">{badge.name}</h4>
             <span className="text-white font-bold text-sm mt-1">{badge.criteria.value} Pull-Ups Required</span>

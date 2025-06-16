@@ -23,9 +23,6 @@ const LeaderboardPreview: React.FC = () => {
           loading={isLoading}
           currentPage={1}
           itemsPerPage={5}
-          totalUsers={leaderboardData.length}
-          maxEntries={5}
-          isPreview={true}
         />
         <div className="text-center">
           <Button variant="secondary" size="lg">

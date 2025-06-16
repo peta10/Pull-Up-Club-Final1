@@ -172,32 +172,27 @@ const badges: Badge[] = [
   }
 ];
 
-export function getBadgeImageUrl(badgeId: string, gender: string): string {
-  if (gender === 'Female') {
-    switch (badgeId) {
-      case 'recruit':
-        return '/Female-Badges/Recruit_-_Female.webp';
-      case 'proven':
-        return '/Female-Badges/Proven_-_Female.webp';
-      case 'hardened':
-        return '/Female-Badges/Hardened_1_-_Female.webp';
-      case 'operator':
-        return '/Female-Badges/Operator_-_Female.webp';
-      case 'elite':
-        return '/Female-Badges/Elite_Female.webp';
-      default:
-        return '/Male-Badges/Recruit.webp';
-    }
+export function getBadgeImageUrl(badgeId: string): string {
+  switch (badgeId) {
+    case 'recruit':
+      return '/Male-Badges/Recruit.webp';
+    case 'proven':
+      return '/Male-Badges/Proven.webp';
+    case 'hardened':
+      return '/Male-Badges/Hardened.webp';
+    case 'operator':
+      return '/Male-Badges/Operator.webp';
+    case 'elite':
+      return '/Male-Badges/Elite.webp';
+    default:
+      return '/Male-Badges/Recruit.webp';
   }
-  // Default to Male badges
-  const badge = badges.find(b => b.id === badgeId);
-  return badge ? badge.imageUrl : '/Male-Badges/Recruit.webp';
 }
 
-export const getBadgesForSubmission = (pullUpCount: number, gender: string = 'Male'): Badge[] => {
+export const getBadgesForSubmission = (pullUpCount: number): Badge[] => {
   return badges.filter(badge => badge.criteria.value <= pullUpCount).map(badge => ({
     ...badge,
-    imageUrl: getBadgeImageUrl(badge.id, gender)
+    imageUrl: getBadgeImageUrl(badge.id)
   }));
 };
 
