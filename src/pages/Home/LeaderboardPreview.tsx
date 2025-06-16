@@ -18,13 +18,27 @@ const LeaderboardPreview: React.FC = () => {
             this list?
           </p>
         </div>
-        <LeaderboardTable
-          data={leaderboardData}
-          loading={isLoading}
-          currentPage={1}
-          itemsPerPage={5}
-        />
-        <div className="text-center">
+        {/* Mobile: Card layout */}
+        <div className="md:hidden">
+          <LeaderboardTable
+            data={leaderboardData}
+            loading={isLoading}
+            currentPage={1}
+            itemsPerPage={5}
+            mobileCardMode={true}
+          />
+        </div>
+        {/* Desktop: Table layout */}
+        <div className="hidden md:block">
+          <LeaderboardTable
+            data={leaderboardData}
+            loading={isLoading}
+            currentPage={1}
+            itemsPerPage={5}
+            mobileCardMode={false}
+          />
+        </div>
+        <div className="text-center mt-6">
           <Button variant="secondary" size="lg">
             <Link href="/leaderboard" className="text-white">
               View Full Leaderboard
