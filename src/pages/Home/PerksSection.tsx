@@ -11,7 +11,7 @@ const PerksSection: React.FC = () => {
     {
       icon: <Award size={48} className="text-[#9b9b6f]" />,
       title: "QUARTERLY COLLECTOR'S PATCH",
-      description: "Each quarter we drop a brand-new, limited-edition patch — designed for that quarter only. Earn it with a submission. Miss it? You'll never see it again."
+      description: "Each quarter we drop a brand-new, limited-edition patch — pull-up club members will receive the patch shipped to their doorstep. Miss it? You'll never see it again."
     },
     {
       icon: <Trophy size={48} className="text-[#9b9b6f]" />,
@@ -21,17 +21,17 @@ const PerksSection: React.FC = () => {
     {
       icon: <Medal size={48} className="text-[#9b9b6f]" />,
       title: "OFFICIAL LEADERBOARD",
-      description: "Once verified, your name is locked in. Compete with the best, track your climb, and let the numbers speak for themselves."
+      description: "Once verified, your name is locked in. Compete with the best, track your climb, and let the numbers speak for themselves. Leaderboard only displays active pull-up club members."
     },
     {
       icon: <ShoppingBag size={48} className="text-[#9b9b6f]" />,
       title: "TIER-RESTRICTED GEAR ACCESS",
-      description: "Want the shirt? Earn it. Exclusive merch unlocks only at certain tiers. No shortcuts, no excuses — you wear what you've proven."
+      description: "Want the gear? Earn it. Exclusive merch unlocks only at certain tiers. No shortcuts, no excuses — you rock what you've proven."
     },
     {
       icon: <Share2 size={48} className="text-[#9b9b6f]" />,
       title: "SOCIAL SPOTLIGHT",
-      description: "Tag us on your verified pull-up video and get featured. We spotlight top-tier athletes, comeback stories, and pure savagery on the feed."
+      description: "Tag us in your submission videos, patch photos and comeback stories and get featured. We share 100% of the community."
     }
   ];
 

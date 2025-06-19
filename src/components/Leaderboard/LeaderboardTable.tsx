@@ -40,6 +40,9 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           const rank = (currentPage - 1) * itemsPerPage + index + 1;
           const badges = getBadgesForSubmission(submission.actualPullUpCount ?? submission.pullUpCount);
           const highestBadge = badges.length > 0 ? badges[badges.length - 1] : null;
+          // Debug logs
+          console.log('Submission data:', submission);
+          console.log('Video URL:', submission.videoUrl);
           return (
             <div key={submission.id} className="p-5 bg-gray-900 hover:bg-gray-800 transition-colors rounded-xl mb-4 shadow-lg">
               {/* Top Row: Rank, Name, Pull-ups */}
@@ -77,7 +80,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 </div>
               </div>
 
-              {/* Bottom Row: Badge and Social */}
+              {/* Bottom Row: Badge and Video */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div>
@@ -112,25 +115,24 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                     )}
                   </div>
                 </div>
-                {/* Social Handle */}
+                {/* Video Button */}
                 <div className="text-right">
-                  {submission.socialHandle ? (
+                  {submission.videoUrl ? (
                     <div>
-                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Follow</div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Video</div>
                       <a
-                        href={`https://instagram.com/${submission.socialHandle.replace(/^@/, "")}`}
+                        href={submission.videoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#9b9b6f] hover:text-[#7a7a58] font-medium inline-flex items-center space-x-1"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-[#9b9b6f] text-[#9b9b6f] hover:bg-[#9b9b6f] hover:text-black transition-colors"
                       >
-                        <span>@{submission.socialHandle.replace(/^@/, "")}</span>
-                        <InstagramIcon />
+                        View Video
                       </a>
                     </div>
                   ) : (
                     <div>
-                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Social</div>
-                      <span className="text-gray-500 text-sm">Not provided</span>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Video</div>
+                      <span className="text-gray-500 text-xs">Not available</span>
                     </div>
                   )}
                 </div>
@@ -153,9 +155,9 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             <th className="px-6 py-3">Club</th>
             <th className="px-6 py-3">Region</th>
             <th className="px-6 py-3">Details</th>
-            <th className="px-6 py-3">Pull-Ups</th>
-            <th className="px-6 py-3">Badge</th>
-            <th className="px-6 py-3">Social</th>
+            <th className="px-6 py-3 text-center">Pull-Ups</th>
+            <th className="px-6 py-3 text-center">Badge</th>
+            <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">VIDEO</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-800">
@@ -163,6 +165,9 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             const rank = (currentPage - 1) * itemsPerPage + index + 1;
             const badges = getBadgesForSubmission(submission.actualPullUpCount ?? submission.pullUpCount);
             const highestBadge = badges.length > 0 ? badges[badges.length - 1] : null;
+            // Debug logs
+            console.log('Submission data:', submission);
+            console.log('Video URL:', submission.videoUrl);
             return (
               <tr key={submission.id} className="bg-gray-900 hover:bg-gray-800 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -184,11 +189,11 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                     <div className="text-gray-500">{submission.age} years • {submission.gender}</div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap text-center">
                   <div className="text-xl font-bold text-white">{submission.actualPullUpCount ?? submission.pullUpCount}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-wrap gap-2">
+                <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <div className="flex flex-wrap gap-2 justify-center">
                     {highestBadge ? (
                       <img
                         key={highestBadge.id}
@@ -202,18 +207,18 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {submission.socialHandle ? (
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                  {submission.videoUrl ? (
                     <a
-                      href={`https://instagram.com/${submission.socialHandle.replace(/^@/, "")}`}
+                      href={submission.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#9b9b6f] hover:text-[#7a7a58] flex items-center"
+                      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-[#9b9b6f] text-[#9b9b6f] hover:bg-[#9b9b6f] hover:text-black transition-colors"
                     >
-                      @{submission.socialHandle.replace(/^@/, "")}
+                      View Video
                     </a>
                   ) : (
-                    <span className="text-gray-500">-</span>
+                    <span className="text-gray-500 text-sm">No video</span>
                   )}
                 </td>
               </tr>

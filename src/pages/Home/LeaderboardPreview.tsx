@@ -2,10 +2,17 @@ import React from "react";
 import { Button } from "../../components/ui/Button";
 import { Link } from "../../components/ui/Link";
 import LeaderboardTable from "../../components/Leaderboard/LeaderboardTable";
+import { useLeaderboardWithCache } from '../../hooks/useOptimizedQuery';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 
 const LeaderboardPreview: React.FC = () => {
-  const { leaderboardData, isLoading } = useLeaderboard(5);
+  const { data: cachedData = [], isLoading: cachedLoading } = useLeaderboardWithCache();
+  const { leaderboardData: originalData = [], isLoading: originalLoading } = useLeaderboard();
+
+  // Use fresh data if available, fall back to cached data
+  const finalData = originalData?.length > 0 ? originalData : cachedData;
+  const finalLoading = originalLoading && cachedLoading;
+  const top5 = finalData.slice(0, 5);
 
   return (
     <section className="bg-black py-16">
@@ -21,8 +28,8 @@ const LeaderboardPreview: React.FC = () => {
         {/* Mobile: Card layout */}
         <div className="md:hidden">
           <LeaderboardTable
-            data={leaderboardData}
-            loading={isLoading}
+            data={top5}
+            loading={finalLoading}
             currentPage={1}
             itemsPerPage={5}
             mobileCardMode={true}
@@ -31,8 +38,8 @@ const LeaderboardPreview: React.FC = () => {
         {/* Desktop: Table layout */}
         <div className="hidden md:block">
           <LeaderboardTable
-            data={leaderboardData}
-            loading={isLoading}
+            data={top5}
+            loading={finalLoading}
             currentPage={1}
             itemsPerPage={5}
             mobileCardMode={false}

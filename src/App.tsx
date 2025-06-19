@@ -8,6 +8,8 @@ import Lenis from "lenis";
 import StripeProvider from "./lib/StripeProvider.tsx";
 import DebugConnection from './lib/DebugConnection';
 import { Toaster } from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { CacheProvider } from './context/CacheProvider';
 
 // Lazy-loaded components
 const Home = lazy(() => import("./pages/Home/Home.tsx"));
@@ -35,6 +37,20 @@ const LoadingFallback = () => (
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9b9b6f]"></div>
   </div>
 );
+
+// Create QueryClient with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000, // 30 seconds
+      gcTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+  },
+});
 
 function App() {
   const [connectionStatus, setConnectionStatus] = useState<
@@ -110,146 +126,148 @@ function App() {
   };
 
   return (
-    <>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#1f2937',
-            color: '#ffffff',
-            border: '1px solid #9b9b6f',
-          },
-          success: {
+    <QueryClientProvider client={queryClient}>
+      <CacheProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
             style: {
               background: '#1f2937',
               color: '#ffffff',
               border: '1px solid #9b9b6f',
             },
-            iconTheme: {
-              primary: '#9b9b6f',
-              secondary: '#ffffff',
+            success: {
+              style: {
+                background: '#1f2937',
+                color: '#ffffff',
+                border: '1px solid #9b9b6f',
+              },
+              iconTheme: {
+                primary: '#9b9b6f',
+                secondary: '#ffffff',
+              },
             },
-          },
-          error: {
-            style: {
-              background: '#1f2937',
-              color: '#ffffff',
-              border: '1px solid #ef4444',
+            error: {
+              style: {
+                background: '#1f2937',
+                color: '#ffffff',
+                border: '1px solid #ef4444',
+              },
             },
-          },
-        }}
-      />
-      <AuthProvider>
-        <StripeProvider>
-          {connectionStatus === "error" && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-0 left-0 right-0 z-50 flex justify-between items-center">
-              <span>
-                <strong>Connection Error:</strong> Unable to connect to the
-                database. Some features may not work correctly.
-              </span>
-              <button
-                onClick={() => {
-                  setConnectionStatus("connecting");
-                  checkConnection();
-                }}
-                className="bg-red-700 text-white px-4 py-2 rounded"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-          
-          {/* Debug connection component for better diagnostics */}
-          <DebugConnection />
-          
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {/* Public routes that don't require authentication */}
-              <Route path="/" element={<Home />} />
-              <Route path="/rules" element={<RulesPage />} />
-              <Route path="/faq" element={<FAQPage />} />
-              <Route path="/privacy" element={<PrivacyPolicyPage />} />
-              <Route path="/cookies" element={<CookiesPolicyPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/ethos" element={<EthosPage />} />
+          }}
+        />
+        <AuthProvider>
+          <StripeProvider>
+            {connectionStatus === "error" && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-0 left-0 right-0 z-50 flex justify-between items-center">
+                <span>
+                  <strong>Connection Error:</strong> Unable to connect to the
+                  database. Some features may not work correctly.
+                </span>
+                <button
+                  onClick={() => {
+                    setConnectionStatus("connecting");
+                    checkConnection();
+                  }}
+                  className="bg-red-700 text-white px-4 py-2 rounded"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            
+            {/* Debug connection component for better diagnostics */}
+            <DebugConnection />
+            
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                {/* Public routes that don't require authentication */}
+                <Route path="/" element={<Home />} />
+                <Route path="/rules" element={<RulesPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/cookies" element={<CookiesPolicyPage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="/ethos" element={<EthosPage />} />
 
-              {/* Authentication routes - redirect if already logged in */}
-              <Route
-                path="/login"
-                element={
-                  <ProtectedRoute requireAuth={false} redirectTo="/profile">
-                    <LoginPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Authentication routes - redirect if already logged in */}
+                <Route
+                  path="/login"
+                  element={
+                    <ProtectedRoute requireAuth={false} redirectTo="/profile">
+                      <LoginPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Redirect from /create-account to /login */}
-              <Route
-                path="/create-account"
-                element={<Navigate to="/login" replace />}
-              />
+                {/* Redirect from /create-account to /login */}
+                <Route
+                  path="/create-account"
+                  element={<Navigate to="/login" replace />}
+                />
 
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-              {/* Public route with conditional display based on auth state */}
-              <Route path="/subscription" element={<SubscriptionPage />} />
+                {/* Public route with conditional display based on auth state */}
+                <Route path="/subscription" element={<SubscriptionPage />} />
 
-              {/* Alias route for backwards compatibility */}
-              <Route path="/subscribe" element={<SubscriptionPage />} />
+                {/* Alias route for backwards compatibility */}
+                <Route path="/subscribe" element={<SubscriptionPage />} />
 
-              {/* New pay-first signup route */}
-              <Route path="/signup" element={<SubscribeRedirect />} />
+                {/* New pay-first signup route */}
+                <Route path="/signup" element={<SubscribeRedirect />} />
 
-              {/* Secure signup access page */}
-              <Route path="/signup-access" element={<SignupAccessPage />} />
+                {/* Secure signup access page */}
+                <Route path="/signup-access" element={<SignupAccessPage />} />
 
-              {/* Protected routes - require authentication */}
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Protected routes - require authentication */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route path="/success" element={<SuccessPage />} />
+                <Route path="/success" element={<SuccessPage />} />
 
-              <Route
-                path="/submit"
-                element={
-                  <ProtectedRoute>
-                    <VideoSubmissionPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/submit"
+                  element={
+                    <ProtectedRoute>
+                      <VideoSubmissionPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Admin routes with role check */}
-              <Route
-                path="/admin-dashboard"
-                element={
-                  <AdminRoute>
-                    <AdminDashboardPage />
-                  </AdminRoute>
-                }
-              />
+                {/* Admin routes with role check */}
+                <Route
+                  path="/admin-dashboard"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboardPage />
+                    </AdminRoute>
+                  }
+                />
 
-              <Route
-                path="/admin-users"
-                element={
-                  <AdminRoute>
-                    <AdminUserManagement />
-                  </AdminRoute>
-                }
-              />
+                <Route
+                  path="/admin-users"
+                  element={
+                    <AdminRoute>
+                      <AdminUserManagement />
+                    </AdminRoute>
+                  }
+                />
 
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
-        </StripeProvider>
-      </AuthProvider>
-    </>
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
+          </StripeProvider>
+        </AuthProvider>
+      </CacheProvider>
+    </QueryClientProvider>
   );
 }
 

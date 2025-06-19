@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from "../../components/Layout/Layout";
 import BadgeLegend from "./BadgeLegend";
 import LeaderboardTable from "../../components/Leaderboard/LeaderboardTable";
@@ -6,7 +6,10 @@ import LeaderboardFilters from "./LeaderboardFilters";
 import { LeaderboardFilters as FiltersType } from "../../types";
 import { LoadingState, ErrorState } from '../../components/ui/LoadingState';
 import { useTranslation } from 'react-i18next';
+import { useLeaderboardWithCache } from '../../hooks/useOptimizedQuery';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
+import { useCache } from '../../context/CacheProvider';
+import CacheManager from '../../utils/cacheManager';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // PaginationControls component
@@ -65,16 +68,35 @@ const PaginationControls: React.FC<{
 };
 
 const LeaderboardPage: React.FC = () => {
-  const { leaderboardData, isLoading, error } = useLeaderboard();
   const [filters, setFilters] = useState<FiltersType>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [showBadgeLegend, setShowBadgeLegend] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const { t } = useTranslation('leaderboard');
+  const { data: cachedData = [], isLoading: cachedLoading, error: cachedError } = useLeaderboardWithCache(filters);
+  const { leaderboardData: originalData = [], isLoading: originalLoading, error: originalError } = useLeaderboard();
+  const { cacheInfo, clearAllCaches } = useCache();
+
+  // Use fresh data if available, fall back to cached data
+  const finalData = originalData?.length > 0 ? originalData : cachedData;
+  const finalLoading = originalLoading && cachedLoading;
+  const finalError = originalError || cachedError;
+
+  // Clear cache if data mismatch
+  useEffect(() => {
+    if (
+      cachedData?.length &&
+      originalData?.length &&
+      cachedData.length !== originalData.length
+    ) {
+      console.log('Data mismatch detected, clearing cache');
+      CacheManager.clearCache('leaderboard_data');
+    }
+  }, [cachedData?.length, originalData?.length]);
 
   // Filtering logic (client-side, same as before)
-  let filtered = leaderboardData;
+  let filtered = finalData;
   if (filters) {
     if (filters.club) filtered = filtered.filter(s => s.clubAffiliation === filters.club);
     if (filters.region) filtered = filtered.filter(s => s.region === filters.region);
@@ -109,13 +131,28 @@ const LeaderboardPage: React.FC = () => {
     setCurrentPage(1); // Reset to first page when filters change
   };
 
-  if (isLoading) return <LoadingState message={t('loading')} />;
-  if (error) return <ErrorState message={error} />;
+  if (finalLoading) return <LoadingState message={t('loading')} />;
+  if (finalError) return <ErrorState message={typeof finalError === 'string' ? finalError : 'Failed to load leaderboard.'} />;
 
   return (
     <Layout>
       <div className="bg-black py-10">
         <div className="container mx-auto px-4">
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-gray-800 p-4 rounded-lg mb-4 border border-yellow-500">
+              <h4 className="text-yellow-400 font-medium mb-2">Cache Debug Info</h4>
+              <div className="text-sm text-gray-300">
+                <p>Cache Size: {cacheInfo?.size ? `${Math.round(cacheInfo.size / 1024)}KB` : 'Loading...'}</p>
+                <p>Cached Keys: {cacheInfo?.keys?.length || 0}</p>
+                <button 
+                  onClick={() => clearAllCaches()} 
+                  className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
+                >
+                  Clear All Cache
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-center mb-8">
             <img src="/PUClogo (1).webp" alt="Pull-Up Club Logo" className="h-10 w-auto mr-3" />
             <h1 className="text-3xl font-bold text-white">{t('title')}</h1>
@@ -166,7 +203,7 @@ const LeaderboardPage: React.FC = () => {
           <div className="md:hidden">
             <LeaderboardTable
               data={currentItems}
-              loading={isLoading}
+              loading={finalLoading}
               currentPage={currentPage}
               itemsPerPage={itemsPerPage}
               showFilters={false}
@@ -182,7 +219,7 @@ const LeaderboardPage: React.FC = () => {
             <LeaderboardFilters filters={filters} onFilterChange={handleFilterChange} />
             <LeaderboardTable
               data={currentItems}
-              loading={isLoading}
+              loading={finalLoading}
               currentPage={currentPage}
               itemsPerPage={itemsPerPage}
               showFilters={false}

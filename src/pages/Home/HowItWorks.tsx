@@ -6,7 +6,7 @@ const HowItWorks: React.FC = () => {
     {
       icon: <Camera size={48} className="text-[#9b9b6f]" />,
       title: "1. Record & Submit",
-      description: "Record your best pull-up performance and submit the video link along with a fee."
+      description: "Record your best pull-up performance, post it publicly and submit the video link along with a fee."
     },
     {
       icon: <Award size={48} className="text-[#9b9b6f]" />,
@@ -16,7 +16,7 @@ const HowItWorks: React.FC = () => {
     {
       icon: <Medal size={48} className="text-[#9b9b6f]" />,
       title: "3. Join the Leaderboard",
-      description: "Once approved, your performance will be featured on our global leaderboard."
+      description: "Once verified, your performance will be featured on our global leaderboard."
     }
   ];
 
