@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Submission } from '../../types';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { User, MapPin, Building, Calendar, ExternalLink, Check, X } from 'lucide-react';
+import { User, MapPin, Building, Calendar, ExternalLink, Check, X, Loader2 } from 'lucide-react';
 
 interface SubmissionReviewProps {
   submission: Submission;
@@ -17,14 +17,15 @@ const SubmissionReview: React.FC<SubmissionReviewProps> = ({
 }) => {
   const [actualCount, setActualCount] = useState(submission.pullUpCount);
   const [adminNotes, setAdminNotes] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   const handleApprove = async () => {
-    setIsProcessing(true);
+    setIsApproving(true);
     try {
       await onApprove(submission.id, actualCount);
     } finally {
-      setIsProcessing(false);
+      setIsApproving(false);
     }
   };
 
@@ -33,11 +34,11 @@ const SubmissionReview: React.FC<SubmissionReviewProps> = ({
       alert('Please provide a reason for rejection');
       return;
     }
-    setIsProcessing(true);
+    setIsRejecting(true);
     try {
       await onReject(submission.id, adminNotes);
     } finally {
-      setIsProcessing(false);
+      setIsRejecting(false);
     }
   };
 
@@ -233,58 +234,58 @@ const SubmissionReview: React.FC<SubmissionReviewProps> = ({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Approve Section */}
-              <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
-                <h5 className="text-green-400 font-medium mb-3">Approve Submission</h5>
-                
-                <div className="mb-3">
-                  <label className="block text-sm text-gray-300 mb-2">
-                    Verified Pull-up Count:
-                  </label>
-                  <input
-                    type="number"
-                    value={actualCount}
-                    onChange={(e) => setActualCount(parseInt(e.target.value) || 0)}
-                    min="0"
-                    max="200"
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:border-green-500 focus:outline-none"
-                  />
+              <div className="bg-green-900/20 border border-green-800 rounded-lg p-4 flex flex-col justify-between">
+                <div>
+                  <h5 className="text-green-400 font-medium mb-3">Approve Submission</h5>
+                  <div className="mb-3">
+                    <label className="block text-sm text-gray-300 mb-2">
+                      Verified Pull-up Count:
+                    </label>
+                    <input
+                      type="number"
+                      value={actualCount}
+                      onChange={(e) => setActualCount(parseInt(e.target.value) || 0)}
+                      min="0"
+                      max="200"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:border-green-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
-                
                 <Button
                   onClick={handleApprove}
-                  disabled={isProcessing}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  disabled={isApproving || isRejecting}
+                  className="w-full"
                 >
-                  <Check size={16} className="mr-2" />
-                  {isProcessing ? 'Approving...' : 'Approve'}
+                  {isApproving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check size={16} className="mr-2" />}
+                  {isApproving ? 'Approving...' : 'Approve'}
                 </Button>
               </div>
 
               {/* Reject Section */}
-              <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
-                <h5 className="text-red-400 font-medium mb-3">Reject Submission</h5>
-                
-                <div className="mb-3">
-                  <label className="block text-sm text-gray-300 mb-2">
-                    Reason for rejection: <span className="text-red-400">*</span>
-                  </label>
-                  <textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Please provide a clear reason for rejection..."
-                    rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:border-red-500 focus:outline-none resize-none"
-                  />
+              <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 flex flex-col justify-between">
+                <div>
+                  <h5 className="text-red-400 font-medium mb-3">Reject Submission</h5>
+                  <div className="mb-3">
+                    <label className="block text-sm text-gray-300 mb-2">
+                      Reason for rejection: <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      placeholder="Please provide a clear reason for rejection..."
+                      rows={3}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:border-red-500 focus:outline-none resize-none"
+                    />
+                  </div>
                 </div>
-                
                 <Button
                   onClick={handleReject}
-                  disabled={isProcessing || !adminNotes.trim()}
-                  variant="danger"
+                  disabled={isApproving || isRejecting || !adminNotes.trim()}
+                  variant="destructive"
                   className="w-full"
                 >
-                  <X size={16} className="mr-2" />
-                  {isProcessing ? 'Rejecting...' : 'Reject'}
+                  {isRejecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X size={16} className="mr-2" />}
+                  {isRejecting ? 'Rejecting...' : 'Reject'}
                 </Button>
               </div>
             </div>

@@ -2,7 +2,7 @@ import React, { useState, useReducer, useEffect } from "react";
 import { FormState } from "../../types/index.ts";
 import { Button } from "../../components/ui/Button";
 import { clubs, regions } from "../../data/mockData";
-import { AlertTriangle, CreditCard } from "lucide-react";
+import { AlertTriangle, CreditCard, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { createCheckoutSession } from "../../lib/stripe";
 import { supabase } from "../../lib/supabase";
@@ -352,7 +352,7 @@ const SubmissionForm: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-2xl mx-auto">
             {/* Only show personal info step for non-subscribers */}
             {!isSubscriber && formState.step === 1 && (
               <div className="space-y-4">
@@ -461,38 +461,19 @@ const SubmissionForm: React.FC = () => {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label htmlFor="clubAffiliation" className="block text-white mb-1">
-                      Club Affiliation
-                    </label>
-                    <select
-                      id="clubAffiliation"
-                      name="clubAffiliation"
-                      value={formState.clubAffiliation}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                    >
-                      <option value="">Select a club (optional)</option>
-                      {clubs.map((club) => (
-                        <option key={club} value={club}>{club}</option>
-                      ))}
+                  <div className="md:col-span-2">
+                    <label className="block text-gray-300 mb-2" htmlFor="clubAffiliation">Club Affiliation</label>
+                    <select name="clubAffiliation" value={formState.clubAffiliation} onChange={handleChange} className="w-full bg-gray-800 text-white p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]">
+                      <option value="None">None</option>
+                      {clubs.map(c => <option key={c} value={c}>{c}</option>)}
                       <option value="Other">Other</option>
                     </select>
-                    {formState.clubAffiliation === 'Other' && (
-                      <div className="mt-2">
-                        <input
-                          type="text"
-                          id="otherClubAffiliation"
-                          name="otherClubAffiliation"
-                          value={formState.otherClubAffiliation}
-                          onChange={handleChange}
-                          placeholder="Enter your club name"
-                          className="w-full px-4 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                          required
-                        />
-                      </div>
-                    )}
                   </div>
+                  {formState.clubAffiliation === 'Other' && (
+                    <div className="md:col-span-2">
+                      <input type="text" name="otherClubAffiliation" value={formState.otherClubAffiliation} onChange={handleChange} placeholder="Please specify your club" className="w-full bg-gray-800 text-white p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]" />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -759,6 +740,26 @@ const SubmissionForm: React.FC = () => {
                     <span className="text-[#9b9b6f]">*</span>
                   </label>
                 </div>
+
+                <p className="text-gray-300 mb-6">
+                  Please complete your payment to finalize your submission.
+                  You are subscribing to the {formState.subscriptionType} plan.
+                </p>
+                <Button
+                  type="submit"
+                  disabled={formState.isSubmitting}
+                  className="w-full flex items-center justify-center"
+                >
+                  {formState.isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="mr-2 h-4 w-4" />
+                  )}
+                  {formState.isSubmitting ? 'Processing...' : `Pay & Complete Submission`}
+                </Button>
+                <Button onClick={handlePrevStep} variant="outline" className="w-full mt-4">
+                  Back to Submission Details
+                </Button>
               </div>
             )}
 

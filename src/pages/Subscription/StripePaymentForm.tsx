@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '../../components/ui/Button';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { createPaymentIntent } from '../../lib/stripe';
 
 interface StripePaymentFormProps {
@@ -105,10 +105,10 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         <Button
           type="submit"
           disabled={!stripe || !elements || isProcessing}
-          isLoading={isProcessing}
-          fullWidth
+          className="w-full mt-4"
         >
-          Pay $10.00
+          {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isProcessing ? 'Processing...' : 'Pay $10.00'}
         </Button>
       </form>
     </div>

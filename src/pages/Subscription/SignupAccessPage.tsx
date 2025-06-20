@@ -115,7 +115,7 @@ const SignupAccessPage: React.FC = () => {
       }
 
       // Create account with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {

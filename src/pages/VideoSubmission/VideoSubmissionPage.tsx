@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Info, Upload } from 'lucide-react';
+import { Info, Upload, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import useVideoSubmission from '../../hooks/useVideoSubmission';
 import useSubmissions from '../../hooks/useSubmissions';
@@ -229,7 +229,9 @@ const VideoSubmissionPage: React.FC = () => {
       isChecked.checkbox1 &&
       isChecked.checkbox2 &&
       isChecked.checkbox3 &&
-      isChecked.checkbox4
+      isChecked.checkbox4 &&
+      formData.gender &&
+      formData.region
     );
   };
 
@@ -492,11 +494,16 @@ const VideoSubmissionPage: React.FC = () => {
                   <Button
                     type="submit"
                     disabled={!isFormValid() || uploading}
-                    isLoading={uploading}
-                    className="w-full"
+                    className="w-full bg-[#9b9b6f] text-black hover:bg-[#a5a575] font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
                   >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Submit Video
+                    {uploading ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit Now'
+                    )}
                   </Button>
                 </div>
               </form>

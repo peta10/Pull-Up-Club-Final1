@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { getStatusInfo } from '../../data/mockData';
 import { Button } from '../../components/ui/Button';
+import { Link } from 'react-router-dom';
+import Layout from '../../components/Layout/Layout';
 
 interface Submission {
   id: string;
@@ -14,68 +15,70 @@ interface Submission {
 const ReviewSubmission: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [submission, setSubmission] = React.useState<Submission | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     // Fetch submission details
     // This is a placeholder - implement actual fetch logic
+    setLoading(true);
+    setError(null);
     setSubmission({
       id: id || '',
       status: 'Pending',
-      videoUrl: 'https://example.com/video',
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       pullUpCount: 10
     });
+    setLoading(false);
   }, [id]);
 
   if (!submission) {
-    return <div>Loading...</div>;
+    return (
+      <Layout>
+        <div className="text-center">Loading...</div>
+      </Layout>
+    );
   }
 
-  const { label, color, description } = getStatusInfo(submission.status);
-
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Review Submission #{submission.id}</h1>
-      
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4">
-          <div className={`w-3 h-3 rounded-full ${color} mr-2`} />
-          <span className="font-medium">{label}</span>
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Back to Dashboard Link */}
+          <Link to="/admin/dashboard" className="text-[#9b9b6f] hover:text-[#7a7a58] mb-6 inline-block">
+            &larr; Back to Dashboard
+          </Link>
+
+          {loading ? (
+            <div className="text-center">
+              <p>Loading submission...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500">
+              <p>{error}</p>
+            </div>
+          ) : submission ? (
+            <div className="bg-gray-900 shadow-lg rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">Review Submission</h2>
+              <div className="mb-4">
+                <video src={submission.videoUrl} controls className="w-full rounded-lg"></video>
+              </div>
+              <p className="text-white">Pull-up Count: {submission.pullUpCount}</p>
+              <p className="text-gray-400">Status: {submission.status}</p>
+
+              <div className="mt-6 flex gap-4">
+                <Button>Approve</Button>
+                <Button variant="destructive">Reject</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-400">
+              <p>Submission not found.</p>
+            </div>
+          )}
         </div>
-        
-        <p className="text-gray-600 mb-4">{description}</p>
-        
-        <div className="mb-4">
-          <h3 className="font-medium mb-2">Video Submission</h3>
-          <a
-            href={submission.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            View Video
-          </a>
-        </div>
-        
-        <div className="mb-4">
-          <h3 className="font-medium mb-2">Pull-up Count</h3>
-          <p>{submission.pullUpCount}</p>
-        </div>
-        
-        {submission.notes && (
-          <div className="mb-4">
-            <h3 className="font-medium mb-2">Notes</h3>
-            <p className="text-gray-600">{submission.notes}</p>
-          </div>
-        )}
-        
-        {submission.status === 'Pending' && (
-          <div className="flex gap-2">
-            <Button variant="primary">Approve</Button>
-            <Button variant="danger">Reject</Button>
-          </div>
-        )}
       </div>
-    </div>
+    </Layout>
   );
 };
 

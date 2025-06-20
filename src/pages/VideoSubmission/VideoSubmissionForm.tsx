@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 interface VideoSubmissionFormProps {
@@ -152,10 +152,10 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
               !videoAuthenticity ||
               isSubmitting
             }
-            isLoading={isSubmitting}
-            className="w-full"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-[#9b9b6f] hover:bg-[#8a8862] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9b9b6f]"
           >
-            Submit Video
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isSubmitting ? 'Submitting...' : 'Submit Video'}
           </Button>
         </form>
       </div>
