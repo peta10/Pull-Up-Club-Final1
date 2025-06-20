@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Info, Upload, Loader2 } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import useVideoSubmission from '../../hooks/useVideoSubmission';
 import useSubmissions from '../../hooks/useSubmissions';

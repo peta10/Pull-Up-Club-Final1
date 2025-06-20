@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { clubs, regions } from '../../data/mockData';
 import toast from 'react-hot-toast';
@@ -13,6 +14,7 @@ interface VideoSubmissionFormProps {
 const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
   onSubmissionComplete,
 }) => {
+  const { user } = useAuth();
   const [pullUpCount, setPullUpCount] = useState<number>(0);
   const [videoLink, setVideoLink] = useState("");
   const [videoConfirmed, setVideoConfirmed] = useState(false);
@@ -26,34 +28,28 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setError("You must be logged in to submit a video.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { error: submissionError } = await supabase.from("submissions").insert({
+        user_id: user.id,
+        pull_up_count: pullUpCount,
+        video_url: videoLink,
+        status: "pending",
+        region: region,
+        club_affiliation: clubAffiliation === 'Other' ? otherClubAffiliation : clubAffiliation,
+      });
 
-      if (!session?.user) {
-        throw new Error("No authenticated user found");
+      if (submissionError) {
+        throw submissionError;
       }
 
-      const { error: submissionError } = await supabase
-        .from("submissions")
-        .insert([
-          {
-            user_id: session.user.id,
-            pull_up_count: pullUpCount,
-            video_url: videoLink,
-            status: "pending",
-            region: region,
-            club_affiliation: clubAffiliation === 'Other' ? otherClubAffiliation : clubAffiliation,
-          },
-        ]);
-
-      if (submissionError) throw submissionError;
-
-      // Call the onSubmissionComplete callback if it exists
       if (onSubmissionComplete) {
         toast.success('Video submitted successfully!', {
           duration: 3000,
@@ -68,11 +64,11 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
           },
         });
         onSubmissionComplete();
+      } else {
+        navigate("/profile");
       }
-
-      navigate("/profile");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit video");
+    } catch (err: any) {
+      setError(err.message || "An error occurred during submission.");
     } finally {
       setIsSubmitting(false);
     }
@@ -223,6 +219,7 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
             isLoading={isSubmitting}
             className="w-full"
           >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Submit Video
           </Button>
         </form>

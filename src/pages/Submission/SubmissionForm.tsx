@@ -783,7 +783,6 @@ const SubmissionForm: React.FC = () => {
                 <Button
                   type="submit"
                   disabled={validateStep() || formState.isSubmitting}
-                  isLoading={formState.isSubmitting}
                   className={isSubscriber ? "w-full" : ""}
                 >
                   {isSubscriber
