@@ -286,7 +286,7 @@ const SubmissionForm: React.FC = () => {
           </p>
           <Button
             onClick={() => (window.location.href = "/profile")}
-            variant="primary"
+            variant="default"
             size="lg"
           >
             Return to Profile

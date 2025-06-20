@@ -216,7 +216,6 @@ const VideoSubmissionForm: React.FC<VideoSubmissionFormProps> = ({
               !videoAuthenticity ||
               isSubmitting
             }
-            isLoading={isSubmitting}
             className="w-full"
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
