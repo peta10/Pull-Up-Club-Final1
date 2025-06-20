@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import Layout from '../../components/Layout/Layout';
@@ -20,7 +21,8 @@ const REGION_OPTIONS = [
   "Europe",
   "Asia",
   "Africa",
-  "Australia/Oceania"
+  "Australia/Oceania",
+  "Middle East"
 ];
 
 const SignupAccessPage: React.FC = () => {
@@ -38,7 +40,7 @@ const SignupAccessPage: React.FC = () => {
     phone: '',
     age: '',
     gender: '',
-    organisation: '',
+    organization: '',
     region: ''
   });
 
@@ -103,12 +105,12 @@ const SignupAccessPage: React.FC = () => {
     try {
       // Validate form
       if (formData.password !== formData.confirmPassword) {
-        alert('Passwords do not match');
+        toast.error('Passwords do not match');
         return;
       }
 
-      if (formData.password.length < 6) {
-        alert('Password must be at least 6 characters long');
+      if (!isPasswordValid) {
+        toast.error('Please ensure your password meets all requirements.');
         return;
       }
 
@@ -122,7 +124,7 @@ const SignupAccessPage: React.FC = () => {
             phone: formData.phone,
             age: formData.age ? parseInt(formData.age) : null,
             gender: formData.gender,
-            organisation: formData.organisation,
+            organization: formData.organization,
             region: formData.region,
             stripe_customer_id: verificationResult?.customerId,
             is_paid: true
@@ -132,22 +134,21 @@ const SignupAccessPage: React.FC = () => {
 
       if (authError) {
         console.error('Error creating account:', authError);
-        alert(`Failed to create account: ${authError.message}`);
+        toast.error(`Failed to create account: ${authError.message}`);
         return;
       }
 
       // Account created successfully
-      console.log('Account created successfully:', authData);
+      toast.success('Account created successfully! Redirecting...');
       
       // Wait a moment for the trigger to create the profile, then redirect
       setTimeout(() => {
-        console.log('Redirecting to profile page...');
         navigate('/profile');
       }, 1500);
 
     } catch (error) {
       console.error('Error creating account:', error);
-      alert('Failed to create account. Please try again.');
+      toast.error('Failed to create account. Please try again.');
     } finally {
       setIsCreatingAccount(false);
     }
@@ -236,17 +237,19 @@ const SignupAccessPage: React.FC = () => {
                 className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
                 placeholder="Full Name"
               />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="number"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleInputChange}
-                  min="13"
-                  max="100"
-                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                  placeholder="Age"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <input
+                    type="number"
+                    name="age"
+                    value={formData.age}
+                    onChange={handleInputChange}
+                    min="13"
+                    max="100"
+                    className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                    placeholder="Age"
+                  />
+                </div>
                 <div className="relative w-full">
                   <select
                     name="gender"
@@ -278,11 +281,11 @@ const SignupAccessPage: React.FC = () => {
               />
               <input
                 type="text"
-                name="organisation"
-                value={formData.organisation}
+                name="organization"
+                value={formData.organization}
                 onChange={handleInputChange}
                 className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
-                placeholder="Organisation (Optional)"
+                placeholder="Organization (Optional)"
               />
               <div className="relative w-full">
                 <select

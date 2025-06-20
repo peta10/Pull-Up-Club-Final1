@@ -22,6 +22,7 @@ const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({ filters, onFilt
     'South America',
     'Europe',
     'Asia',
+    'Middle East',
     'Africa',
     'Australia/Oceania'
   ];

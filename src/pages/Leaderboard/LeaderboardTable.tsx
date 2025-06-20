@@ -32,8 +32,13 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
     if (filters.region) filtered = filtered.filter(s => s.region === filters.region);
     if (filters.gender) filtered = filtered.filter(s => s.gender === filters.gender);
     if (filters.ageGroup) {
-      const [min, max] = filters.ageGroup.split("-").map(Number);
-      filtered = filtered.filter(s => s.age >= min && (max ? s.age <= max : true));
+      if (filters.ageGroup.includes('+')) {
+        const min = parseInt(filters.ageGroup, 10);
+        filtered = filtered.filter(s => s.age >= min);
+      } else {
+        const [min, max] = filters.ageGroup.split("-").map(Number);
+        filtered = filtered.filter(s => s.age >= min && (max ? s.age <= max : true));
+      }
     }
     if (filters.badge) {
       filtered = filtered.filter(s => getBadgesForSubmission(s.actualPullUpCount ?? s.pullUpCount).some(b => b.id === filters.badge));

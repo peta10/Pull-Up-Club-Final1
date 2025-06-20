@@ -2,7 +2,7 @@ import React from 'react';
 
 const CompetitionRules: React.FC = () => {
   return (
-    <div className="max-w-3xl mx-auto bg-gray-800 rounded-lg p-6 mb-8">
+    <div className="max-w-3xl mx-auto bg-gray-900 rounded-lg p-8 border border-gray-700">
       <h2 className="text-2xl font-bold text-white mb-6 text-center">
         Official Video Submission Rules
       </h2>
