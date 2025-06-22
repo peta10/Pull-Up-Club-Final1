@@ -159,7 +159,7 @@ const LeaderboardPage: React.FC = () => {
             </div>
           )}
           <div className="flex items-center justify-center mb-8">
-            <img src="/PUClogo (1).webp" alt="Pull-Up Club Logo" className="h-10 w-auto mr-3" />
+            <img src="/PUClogo-optimized.webp" alt="Pull-Up Club Logo" className="h-10 w-auto mr-3" />
             <h1 className="text-3xl font-bold text-white">{t('title')}</h1>
           </div>
           <div className="text-center mb-8">

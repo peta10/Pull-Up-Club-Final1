@@ -16,7 +16,7 @@ const Home: React.FC = () => {
       <Head>
         <title>{t("meta.title")}</title>
         <meta name="description" content={t("meta.description")} />
-        <meta property="og:image" content="/NewWebp-Pics/pullup_header.webp" />
+        <meta property="og:image" content="/pullup_header_desktop.webp" />
         <meta property="og:title" content={t("meta.ogTitle")}/>
         <meta property="og:description" content={t("meta.ogDescription")}/>
         <link rel="canonical" href="https://yourdomain.com/" />

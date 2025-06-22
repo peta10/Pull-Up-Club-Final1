@@ -1,10 +1,58 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Link } from '../../components/ui/Link';
 import { Zap } from 'lucide-react';
 
 // Use the same color and font conventions as Hero.tsx
 const FALLBACK_ACTIVE_USERS = 1230
+
+// Lazy load non-critical features
+const LazyActivityTicker = memo(() => {
+  const [recentActivity, setRecentActivity] = useState([
+    { name: "Marcus", location: "Chicago", pullUps: 25, time: "2 min ago" }
+  ]);
+
+  const cityNameMap: { [key: string]: string[] } = {
+    "Chicago": ["Marcus", "Emily", "James"],
+    "London": ["Sarah", "Oliver", "Amelia"],
+    "São Paulo": ["Carlos", "Ana", "Lucas"],
+    "Tokyo": ["Yuki", "Haruto", "Sakura"],
+    "Berlin": ["Lukas", "Mia", "Leon"],
+    "Sydney": ["Oliver", "Charlotte", "Jack"]
+  };
+  const cities = Object.keys(cityNameMap);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const city = cities[Math.floor(Math.random() * cities.length)];
+      const names = cityNameMap[city];
+      const name = names[Math.floor(Math.random() * names.length)];
+      setRecentActivity([{
+        name,
+        location: city,
+        pullUps: Math.floor(Math.random() * 40) + 10,
+        time: "Just now"
+      }]);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="absolute top-4 left-0 right-0 z-10">
+      <div className="max-w-7xl mx-auto px-2 py-2">
+        <div className="flex items-center text-sm">
+          <div className="flex items-center space-x-2 mr-4">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-green-400">LIVE</span>
+          </div>
+          <span className="text-gray-300">
+            <span className="text-[#9b9b6f] font-semibold">{recentActivity[0].name}</span> from {recentActivity[0].location} completed <span className="text-[#9b9b6f]">{recentActivity[0].pullUps} pull-ups</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 const Hero1: React.FC = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -13,17 +61,13 @@ const Hero1: React.FC = () => {
     totalPullUps: 0,
     activeUsers: FALLBACK_ACTIVE_USERS
   });
-  const [recentActivity, setRecentActivity] = useState([
-    { name: "Marcus", location: "Chicago", pullUps: 25, time: "2 min ago" },
-    { name: "Sarah", location: "London", pullUps: 18, time: "5 min ago" },
-    { name: "Carlos", location: "São Paulo", pullUps: 32, time: "8 min ago" }
-  ]);
+  const [displayedActiveUsers, setDisplayedActiveUsers] = useState(0);
+  const [currentPullUps, setCurrentPullUps] = useState(368);
   
-  const heroRef = useRef(null);
+  const heroRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [headlineVisible, setHeadlineVisible] = useState(false);
   const [subtitleVisible, setSubtitleVisible] = useState(false);
-  const [displayedActiveUsers, setDisplayedActiveUsers] = useState(0);
 
   // Map of cities to typical names
   const cityNameMap: Record<string, string[]> = {
@@ -61,6 +105,30 @@ const Hero1: React.FC = () => {
     }
 
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Preload appropriate hero image based on screen size
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.type = 'image/webp';
+    
+    if (window.innerWidth <= 768) {
+      link.href = '/pullup_header-mobile.webp';
+    } else if (window.innerWidth <= 1024) {
+      link.href = '/pullup_header-tablet.webp';
+    } else {
+      link.href = '/pullup_header_desktop.webp';
+    }
+    
+    document.head.appendChild(link);
+    
+    return () => {
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
+    };
   }, []);
 
   // Animated counter for pull-ups and active users
@@ -103,64 +171,39 @@ const Hero1: React.FC = () => {
     }
   }, [isVisible]);
 
-  // Activity ticker
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const city = cities[Math.floor(Math.random() * cities.length)];
-      const names = cityNameMap[city];
-      const name = names[Math.floor(Math.random() * names.length)];
-      const newActivity = {
-        name,
-        location: city,
-        pullUps: Math.floor(Math.random() * 40) + 10,
-        time: "Just now"
-      };
-      setRecentActivity(prev => [newActivity, ...prev.slice(0, 2)]);
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div ref={heroRef} className="relative bg-gray-900 text-white overflow-hidden" style={{ minHeight: '70vh' }}>
       {/* Background image with overlay */}
       <div className="absolute inset-0 bg-black">
-        <img
-          src="/NewWebp-Pics/pullup_header.webp"
-          alt="Athlete doing pull-ups"
-          className={`w-full h-full object-cover transition-opacity duration-1000 ${imageLoaded ? 'opacity-40' : 'opacity-0'}`}
-          loading="eager"
-          fetchPriority="high"
-          onLoad={() => setImageLoaded(true)}
-        />
+        <picture>
+          <source 
+            media="(max-width: 768px)"
+            srcSet="/pullup_header-mobile.webp"
+            type="image/webp"
+          />
+          <source 
+            media="(max-width: 1024px)"
+            srcSet="/pullup_header-tablet.webp"
+            type="image/webp"
+          />
+          <source 
+            srcSet="/pullup_header_desktop.webp"
+            type="image/webp"
+          />
+          <img
+            src="/pullup_header_desktop.webp"
+            alt="Athlete doing pull-ups"
+            className={`w-full h-full object-cover object-right sm:object-center lg:object-left transition-opacity duration-1000 ${imageLoaded ? 'opacity-40' : 'opacity-0'}`}
+            loading="eager"
+            fetchPriority="high"
+            onLoad={() => setImageLoaded(true)}
+          />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-r from-black to-transparent opacity-90"></div>
       </div>
 
-      {/* Live Activity Ticker */}
-      <div className="absolute top-4 left-0 right-0 z-10">
-        <div className="max-w-7xl mx-auto px-2 py-2">
-          <div className="flex items-center text-sm px-0 py-0">
-            <div className="flex items-center space-x-2 mr-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-green-400">LIVE</span>
-            </div>
-            <div className="overflow-x-auto whitespace-nowrap w-auto max-w-full">
-              {recentActivity.map((activity, index) => (
-                <div
-                  key={index}
-                  className={`inline transition-all duration-500 ${
-                    index === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full absolute'
-                  }`}
-                >
-                  <span className="text-gray-300">
-                    <span className="text-[#9b9b6f] font-semibold">{activity.name}</span> from {activity.location} completed <span className="text-[#9b9b6f]">{activity.pullUps} pull-ups</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Lazy load activity ticker */}
+      <LazyActivityTicker />
 
       <div className="relative max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8 flex flex-col items-start justify-center" style={{ minHeight: '70vh' }}>
         {/* Animated Warriors Joined Counter */}
@@ -215,7 +258,7 @@ const Hero1: React.FC = () => {
         <div className="mt-8 flex items-center space-x-4 text-sm text-gray-400">
           <div className="flex items-center space-x-2">
             <Zap className="w-4 h-4 text-[#9b9b6f]" />
-            <span><span className="text-[#9b9b6f] font-bold">{currentStats.totalPullUps.toLocaleString()}</span> pull-ups completed in the last 24 hours</span>
+            <span><span className="text-[#9b9b6f] font-bold">{currentPullUps}</span> pull-ups completed in the last 24 hours</span>
           </div>
         </div>
       </div>
@@ -223,4 +266,4 @@ const Hero1: React.FC = () => {
   );
 };
 
-export default Hero1; 
+export default memo(Hero1); 

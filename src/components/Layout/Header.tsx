@@ -20,8 +20,8 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-2 text-[#9b9b6f] hover:text-[#7a7a58] transition-colors">
             <img 
-              src={"/NewWebp-Pics/png_bb_logo.webp"}
-              alt="Pull-Up Club Logo"
+              src={"/battlebunker-logo-optimized.webp"}
+              alt="Battle Bunker"
               className="h-8 w-auto"
             />
             <span className="text-xl font-bold tracking-wider"></span>

@@ -6,7 +6,7 @@ import { LoadingState, ErrorState } from "../../components/ui/LoadingState";
 import { Eye, CheckCircle, XCircle, Star, Filter, Search, ChevronDown } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
-const LOGO_PATH = "/PUClogo (1).webp";
+const LOGO_PATH = "/PUClogo-optimized.webp";
 
 // Add index signature for STATUS_MAP
 const STATUS_MAP: Record<string, { label: string; variant: string; icon?: string }> = {
