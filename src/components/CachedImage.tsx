@@ -7,12 +7,26 @@ interface CachedImageProps {
   alt?: string;
   cacheKey: string;
   placeholder?: React.ReactNode;
+  width?: number;
+  height?: number;
+  priority?: boolean;
+  sizes?: string;
 }
 
 // Example usage:
 // <CachedImage uri="/badge1.png" cacheKey="badge_1" style="h-16 w-16" alt="Badge" />
 
-const CachedImage: React.FC<CachedImageProps> = ({ uri, style, alt, cacheKey, placeholder }) => {
+const CachedImage: React.FC<CachedImageProps> = ({ 
+  uri, 
+  style, 
+  alt, 
+  cacheKey, 
+  placeholder, 
+  width, 
+  height, 
+  priority = false, 
+  sizes 
+}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [cachedUri, setCachedUri] = useState<string | null>(null);
@@ -75,8 +89,13 @@ const CachedImage: React.FC<CachedImageProps> = ({ uri, style, alt, cacheKey, pl
       src={cachedUri || uri}
       className={style}
       alt={alt || 'Cached image'}
+      width={width}
+      height={height}
+      sizes={sizes}
       onError={() => setError(true)}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      fetchPriority={priority ? "high" : "auto"}
     />
   );
 };

@@ -71,7 +71,7 @@ const AuthContext = createContext<AuthContextType>({
   resetPassword: async () => {},
   updatePassword: async () => {},
   isFirstLogin: false,
-  isLoading: true,
+  isLoading: false,
   isAdmin: false,
   updateProfileSettings: async () => {},
 });
@@ -107,9 +107,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isFirstLogin, setIsFirstLogin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>('loading');
+  const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>('active');
   const [hasInitialized, setHasInitialized] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -222,14 +222,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setProfile(fallbackProfile);
           setIsFirstLogin(true);
           
-          // ✅ CRITICAL FIX: Clear loading state after setting fallback profile
-          console.log("[AuthContext] Clearing loading state after fallback profile");
-          setIsLoading(false);
+          console.log("[AuthContext] Setting fallback profile");
           return;
         }
         console.error("Error fetching profile:", profileError);
-        // ✅ CRITICAL FIX: Clear loading state on error
-        setIsLoading(false);
         return;
       }
 
@@ -255,10 +251,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setProfile(profileObject);
       setIsFirstLogin(!profileData.is_profile_completed);
 
-      // ✅ CRITICAL FIX: Clear loading state after successful profile fetch
-      console.log("[AuthContext] Profile fetch completed successfully, clearing loading state");
-      setIsLoading(false);
-
       if (user) {
         const updatedUser: User = {
           ...user,
@@ -269,8 +261,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (err) {
       console.error("Error in fetchProfile:", err);
-      // ✅ CRITICAL FIX: Clear loading state on exception
-      setIsLoading(false);
     }
   };
 
@@ -369,7 +359,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const initAuth = async () => {
       console.log("[AuthContext] initAuth started.");
-      setIsLoading(true);
       try {
         // Set up auth state change listener FIRST
         const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
@@ -386,13 +375,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               await fetchProfile(session.user.id);
               await evaluateSubscription();
               await processPendingSubscription(currentUser);
-              setIsLoading(false);
             } else if (event === 'SIGNED_OUT') {
               setUser(null);
               setProfile(null);
               setIsFirstLogin(false);
               setIsAdmin(false);
-              setIsLoading(false);
             }
             // Ignore other events (INITIAL_SESSION, TOKEN_REFRESHED, etc.)
           }
@@ -411,10 +398,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           await evaluateSubscription();
           // Do not process pending subscription here, only on SIGNED_IN
         }
-        setIsLoading(false);
       } catch (error) {
         console.error("[AuthContext] Error in initAuth:", error);
-        setIsLoading(false);
       }
     };
 
@@ -602,23 +587,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Debug log to see what is blocking render
   console.log('AuthProvider render:', { isLoading, subscriptionState, user, profile });
-
-  // TEMP: Force loading state to false after 2 seconds for diagnosis
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIsLoading(false);
-      setSubscriptionState('active');
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  if (isLoading || subscriptionState === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#9b9b6f]"></div>
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider

@@ -18,14 +18,49 @@ export default defineConfig(({ mode }) => {
     ],
     optimizeDeps: {
       exclude: ['lucide-react'],
+      include: ['react', 'react-dom', '@supabase/supabase-js'],
     },
     build: {
       outDir: 'dist',
-      sourcemap: true,
+      sourcemap: mode === 'development',
+      minify: 'terser',
+      target: 'es2020',
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            supabase: ['@supabase/supabase-js'],
+            ui: ['lucide-react'],
+          },
+        },
+      },
+      terserOptions: {
+        compress: {
+          drop_console: mode === 'production',
+          drop_debugger: mode === 'production',
+        },
+      },
     },
     // Add resolve configuration for TypeScript extensions
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    },
+    // Performance optimizations
+    server: {
+      headers: {
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+      },
+    },
+    // Preview server headers for security
+    preview: {
+      headers: {
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://r.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://r.stripe.com; frame-src https://js.stripe.com; font-src 'self' data:;",
+      },
     },
     // Make all environment variables available to the client
     define: {

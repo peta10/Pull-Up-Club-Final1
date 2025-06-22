@@ -5,19 +5,19 @@ const testimonials = [
     quote: "Battle Bunker's Pull-Up Challenge pushed me to my limits. I went from 15 to 25 pull-ups in just two months!",
     author: "Mike Johnson",
     role: "CrossFit Athlete",
-    imageSrc: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=400"
+    imageSrc: "/optimized-avatars/mike-johnson.svg"
   },
   {
     quote: "The leaderboard keeps me motivated. Seeing my name climb each week is incredibly satisfying.",
     author: "Sarah Williams",
     role: "Battle Bunker Elite Member",
-    imageSrc: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400"
+    imageSrc: "/optimized-avatars/sarah-williams.svg"
   },
   {
     quote: "This platform created friendly competition among my members. Everyone's training harder!",
     author: "Dave Rodriguez",
     role: "Owner, Iron Warriors Gym",
-    imageSrc: "https://images.pexels.com/photos/5088188/pexels-photo-5088188.jpeg?auto=compress&cs=tinysrgb&w=400"
+    imageSrc: "/optimized-avatars/dave-rodriguez.svg"
   }
 ];
 
@@ -46,6 +46,7 @@ const TestimonialSection: React.FC = memo(() => {
                     height="40"
                     className="h-10 w-10 rounded-full mr-4 object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div>
                     <p className="text-white font-medium">{testimonial.author}</p>

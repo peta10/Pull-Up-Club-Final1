@@ -20,17 +20,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true,
   redirectTo = '/login'
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#9b9b6f]"></div>
-      </div>
-    );
-  }
 
   // Handle auth protection
   if (requireAuth && !user) {

@@ -4,7 +4,7 @@ import { Link } from '../../components/ui/Link';
 import { Zap } from 'lucide-react';
 
 // Use the same color and font conventions as Hero.tsx
-const FALLBACK_ACTIVE_USERS = 1230
+// const FALLBACK_ACTIVE_USERS = 1230
 
 // Lazy load non-critical features
 const LazyActivityTicker = memo(() => {
@@ -57,34 +57,29 @@ const LazyActivityTicker = memo(() => {
 const Hero1: React.FC = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(false);
-  const [currentStats, setCurrentStats] = useState({
-    totalPullUps: 0,
-    activeUsers: FALLBACK_ACTIVE_USERS
-  });
   const [displayedActiveUsers, setDisplayedActiveUsers] = useState(0);
-  const [currentPullUps, setCurrentPullUps] = useState(368);
+  const [currentPullUps] = useState(368);
   
   const heroRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [headlineVisible, setHeadlineVisible] = useState(false);
   const [subtitleVisible, setSubtitleVisible] = useState(false);
 
-  // Map of cities to typical names
-  const cityNameMap: Record<string, string[]> = {
-    "Chicago": ["Marcus", "Emily", "James", "Ashley"],
-    "London": ["Sarah", "Oliver", "Amelia", "Jack"],
-    "São Paulo": ["Carlos", "Ana", "Lucas", "Beatriz"],
-    "Tokyo": ["Yuki", "Haruto", "Sakura", "Ren"],
-    "Berlin": ["Lukas", "Mia", "Leon", "Hannah"],
-    "Sydney": ["Oliver", "Charlotte", "Jack", "Isla"],
-    "Toronto": ["Liam", "Emma", "Noah", "Olivia"],
-    "Mumbai": ["Aarav", "Priya", "Vivaan", "Ananya"],
-    "Lagos": ["Chinedu", "Ngozi", "Emeka", "Amina"],
-    "Paris": ["Louis", "Camille", "Lucas", "Chloé"],
-    "Madrid": ["Mateo", "Lucía", "Sofía", "Hugo"],
-    "New York": ["Michael", "Jessica", "David", "Ashley"],
-  };
-  const cities = Object.keys(cityNameMap);
+  // Map of cities to typical names (for future use)
+  // const cityNameMap: Record<string, string[]> = {
+  //   "Chicago": ["Marcus", "Emily", "James", "Ashley"],
+  //   "London": ["Sarah", "Oliver", "Amelia", "Jack"],
+  //   "São Paulo": ["Carlos", "Ana", "Lucas", "Beatriz"],
+  //   "Tokyo": ["Yuki", "Haruto", "Sakura", "Ren"],
+  //   "Berlin": ["Lukas", "Mia", "Leon", "Hannah"],
+  //   "Sydney": ["Oliver", "Charlotte", "Jack", "Isla"],
+  //   "Toronto": ["Liam", "Emma", "Noah", "Olivia"],
+  //   "Mumbai": ["Aarav", "Priya", "Vivaan", "Ananya"],
+  //   "Lagos": ["Chinedu", "Ngozi", "Emeka", "Amina"],
+  //   "Paris": ["Louis", "Camille", "Lucas", "Chloé"],
+  //   "Madrid": ["Mateo", "Lucía", "Sofía", "Hugo"],
+  //   "New York": ["Michael", "Jessica", "David", "Ashley"],
+  // };
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -134,16 +129,8 @@ const Hero1: React.FC = () => {
   // Animated counter for pull-ups and active users
   useEffect(() => {
     if (animationsEnabled) {
-      // Animate pull-ups
-      const interval = setInterval(() => {
-        setCurrentStats(prev => ({
-          ...prev,
-          totalPullUps: Math.min(prev.totalPullUps + Math.floor(Math.random() * 50), 2847293),
-          activeUsers: prev.activeUsers // keep static for now
-        }));
-      }, 100);
-      setTimeout(() => clearInterval(interval), 3000);
-      return () => clearInterval(interval);
+      // Animation effect for visual feedback (stats animation removed for now)
+      // Could be used for future stat animations
     }
   }, [animationsEnabled]);
 
