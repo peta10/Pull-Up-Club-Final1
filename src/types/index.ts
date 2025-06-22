@@ -20,6 +20,7 @@ export interface Submission {
 }
 
 export interface LeaderboardFilters {
+  pullUpCount?: string;
   gender?: string;
   region?: string;
   club?: string;

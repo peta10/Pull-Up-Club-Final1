@@ -10,8 +10,8 @@ import { trackEvent } from "../../utils/analytics";
 
 // Payment links - NOTE: Update these in Stripe Dashboard to point to /signup-access?session_id={CHECKOUT_SESSION_ID}
 const STRIPE_PAYMENT_LINKS = {
-  monthly: "https://buy.stripe.com/test_dRmdR9dos2kmaQcdHGejK00",
-  annual: "https://buy.stripe.com/test_28EcN5dosf784rO0UUejK01"
+  monthly: "https://buy.stripe.com/test_dRmdR9dos2kmaQcdHGejK00?success_url=http%3A%2F%2Flocalhost%3A5173%2Fsignup-access%3Fsession_id%3D{CHECKOUT_SESSION_ID}",
+  annual: "https://buy.stripe.com/test_28EcN5dosf784rO0UUejK01?success_url=http%3A%2F%2Flocalhost%3A5173%2Fsignup-access%3Fsession_id%3D{CHECKOUT_SESSION_ID}"
 };
 
 const SubscriptionPlans: React.FC = () => {

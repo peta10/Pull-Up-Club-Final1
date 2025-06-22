@@ -19,9 +19,11 @@ export const regions = [
   'Europe',
   'Asia',
   'Africa',
-  'Australia',
+  'Australia/Oceania',
   'Middle East'
-];
+] as const;
+
+export type Region = typeof regions[number];
 
 export const getAgeGroups = () => [
   '18-24',

@@ -32,16 +32,23 @@ interface ProfileSettings {
   };
 }
 
-interface Profile extends ProfileSettings {
-  isProfileCompleted: boolean;
-  socialMedia: string | null;
-  region: string;
+interface Profile {
+  id: string;
+  email: string;
+  full_name: string;
+  social_media: string | null;
+  age: number | null;
+  gender: string | null;
+  organization: string | null;
+  region: string | null;
+  phone: string | null;
+  stripe_customer_id: string | null;
+  is_paid: boolean;
+  is_profile_completed: boolean;
   role: "user" | "admin";
-  fullName?: string;
-  age?: number;
-  gender?: string;
-  organization?: string;
-  phone?: string;
+  updated_at: string;
+  user_settings: Record<string, any>;
+  notification_preferences: Record<string, boolean>;
 }
 
 interface AuthContextType {
@@ -57,7 +64,7 @@ interface AuthContextType {
   isFirstLogin: boolean;
   isLoading: boolean;
   isAdmin: boolean;
-  updateProfileSettings: (settingType: keyof ProfileSettings, newValues: any) => Promise<void>;
+  updateProfileSettings: (settingType: keyof ProfileSettings, newValues: any) => Promise<{ success: boolean; error?: unknown }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -73,7 +80,7 @@ const AuthContext = createContext<AuthContextType>({
   isFirstLogin: false,
   isLoading: false,
   isAdmin: false,
-  updateProfileSettings: async () => {},
+  updateProfileSettings: async () => ({ success: false, error: 'No profile found' }),
 });
 
 const defaultSettings: ProfileSettings = {
@@ -206,16 +213,22 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           // After retries, create a fallback profile object
           console.log("[AuthContext] Creating fallback profile after retries");
           const fallbackProfile: Profile = {
-            isProfileCompleted: false,
-            socialMedia: null,
-            region: '',
+            id: '',
+            email: '',
+            full_name: '',
+            social_media: null,
+            age: null,
+            gender: null,
+            organization: null,
+            region: null,
+            phone: null,
+            stripe_customer_id: null,
+            is_paid: false,
+            is_profile_completed: false,
             role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
-            fullName: '',
-            age: 0,
-            gender: '',
-            organization: '',
-            phone: '',
-            ...defaultSettings
+            updated_at: '',
+            user_settings: {},
+            notification_preferences: {},
           };
           
           console.log("[AuthContext] Setting fallback profile:", fallbackProfile);
@@ -232,19 +245,22 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("[AuthContext] Profile data received:", profileData);
 
       const profileObject: Profile = {
-        isProfileCompleted: profileData.is_profile_completed || false,
-        socialMedia: profileData.social_media,
-        region: profileData.region || '',
-        role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
-        fullName: profileData.full_name,
+        id: profileData.id,
+        email: profileData.email,
+        full_name: profileData.full_name,
+        social_media: profileData.social_media,
         age: profileData.age,
         gender: profileData.gender,
         organization: profileData.organization,
+        region: profileData.region,
         phone: profileData.phone,
+        stripe_customer_id: profileData.stripe_customer_id,
+        is_paid: profileData.is_paid,
+        is_profile_completed: profileData.is_profile_completed,
+        role: (isUserAdmin ? "admin" : "user") as "user" | "admin",
+        updated_at: profileData.updated_at,
         user_settings: profileData.user_settings || defaultSettings.user_settings,
         notification_preferences: profileData.notification_preferences || defaultSettings.notification_preferences,
-        theme_preferences: profileData.theme_preferences || defaultSettings.theme_preferences,
-        privacy_settings: profileData.privacy_settings || defaultSettings.privacy_settings
       };
 
       console.log("[AuthContext] Setting profile object:", profileObject);
@@ -311,23 +327,38 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateProfileSettings = async (settingType: keyof ProfileSettings, newValues: any) => {
-    if (!user) return;
+  const updateProfileSettings = async (
+    settingType: keyof ProfileSettings,
+    newValues: any
+  ): Promise<{ success: boolean; error?: unknown }> => {
+    if (!profile) return { success: false, error: 'No profile found' };
+
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ [settingType]: newValues, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
+        .update({
+          user_settings: {
+            ...profile.user_settings,
+            [settingType]: newValues
+          }
+        })
+        .eq('id', profile.id);
+
       if (error) throw error;
-      if (profile) {
-        setProfile({
-          ...profile,
-          [settingType]: { ...profile[settingType], ...newValues }
-        });
-      }
+
+      // Update local profile state
+      setProfile(prev => prev ? {
+        ...prev,
+        user_settings: {
+          ...prev.user_settings,
+          [settingType]: newValues
+        }
+      } : null);
+
+      return { success: true };
     } catch (error) {
-      console.error(`Error updating ${settingType}:`, error);
-      throw error;
+      console.error('Error updating profile settings:', error);
+      return { success: false, error };
     }
   };
 
@@ -415,16 +446,22 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const devUser = { id: "dev-user-id", email: "dev@example.com" };
       setUser(devUser);
       setProfile({
-        isProfileCompleted: false,
-        socialMedia: null,
-        region: '',
+        id: '',
+        email: '',
+        full_name: '',
+        social_media: null,
+        age: null,
+        gender: null,
+        organization: null,
+        region: null,
+        phone: null,
+        stripe_customer_id: null,
+        is_paid: false,
+        is_profile_completed: false,
         role: "user" as "user" | "admin",
-        fullName: '',
-        age: 0,
-        gender: '',
-        organization: '',
-        phone: '',
-        ...defaultSettings
+        updated_at: '',
+        user_settings: {},
+        notification_preferences: {},
       });
       setIsFirstLogin(true);
       console.log("[AuthContext] Dev signIn, processing pending subscription.");
@@ -496,16 +533,22 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const devUser = { id: "dev-user-id", email: "dev@example.com" };
       setUser(devUser);
       setProfile({
-        isProfileCompleted: false,
-        socialMedia: null,
-        region: '',
+        id: '',
+        email: '',
+        full_name: '',
+        social_media: null,
+        age: null,
+        gender: null,
+        organization: null,
+        region: null,
+        phone: null,
+        stripe_customer_id: null,
+        is_paid: false,
+        is_profile_completed: false,
         role: "user" as "user" | "admin",
-        fullName: '',
-        age: 0,
-        gender: '',
-        organization: '',
-        phone: '',
-        ...defaultSettings
+        updated_at: '',
+        user_settings: {},
+        notification_preferences: {},
       });
       setIsFirstLogin(true);
       console.log("[AuthContext] Dev signUp, processing pending subscription.");

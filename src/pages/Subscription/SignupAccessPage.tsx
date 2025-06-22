@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import Layout from '../../components/Layout/Layout';
 import { Button } from '../../components/ui/Button';
+import { regions } from '../../data/mockData';
 
 interface VerificationResult {
   isValid: boolean;
@@ -14,16 +15,6 @@ interface VerificationResult {
   customerId?: string;
   error?: string;
 }
-
-const REGION_OPTIONS = [
-  "North America",
-  "South America",
-  "Europe",
-  "Asia",
-  "Africa",
-  "Australia/Oceania",
-  "Middle East"
-];
 
 const SignupAccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -41,31 +32,52 @@ const SignupAccessPage: React.FC = () => {
     age: '',
     gender: '',
     organization: '',
+    socialMedia: '',
     region: ''
   });
 
   const sessionId = searchParams.get('session_id');
+  const debugMode = searchParams.get('debug') === 'true';
 
   useEffect(() => {
-    // If user is already logged in, redirect to dashboard
-    if (user) {
+    console.log('[SignupAccessPage] Debug Info:', {
+      user: user ? 'Logged in' : 'Not logged in',
+      sessionId: sessionId || 'No session ID',
+      currentUrl: window.location.href
+    });
+
+    // If user is already logged in, redirect to dashboard (unless in debug mode)
+    if (user && !debugMode) {
+      console.log('[SignupAccessPage] User already logged in, redirecting to profile');
       navigate('/profile');
       return;
     }
 
-    // If no session ID, redirect to subscription page
-    if (!sessionId) {
+    // If no session ID, redirect to subscription page (unless in debug mode)
+    if (!sessionId && !debugMode) {
+      console.log('[SignupAccessPage] No session ID found, redirecting to subscription');
       navigate('/subscription');
       return;
     }
 
-    verifyStripeSession();
+    if (debugMode && !sessionId) {
+      console.log('[SignupAccessPage] Debug mode enabled, skipping session verification');
+      setVerificationStatus('valid');
+      setVerificationResult({ isValid: true, customerEmail: 'debug@test.com' });
+      setFormData(prev => ({ ...prev, email: 'debug@test.com' }));
+    } else {
+      console.log('[SignupAccessPage] Valid conditions met, verifying Stripe session');
+      verifyStripeSession();
+    }
   }, [sessionId, user, navigate]);
 
   const verifyStripeSession = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('verify-stripe-session', {
-        body: { sessionId }
+        body: { sessionId },
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
       });
 
       if (error) {
@@ -98,6 +110,46 @@ const SignupAccessPage: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Helper function to create profile directly if auth trigger doesn't fire
+  const createProfileDirectly = async (userId: string, profileData: any) => {
+    try {
+      console.log('Creating profile directly for user:', userId, profileData);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: profileData.email,
+          full_name: profileData.full_name,
+          phone: profileData.phone,
+          age: profileData.age,
+          gender: profileData.gender,
+          organization: profileData.organization,
+          region: profileData.region,
+          social_media: profileData.social_media || '',
+          stripe_customer_id: profileData.stripe_customer_id,
+          is_paid: profileData.is_paid,
+          role: 'user',
+          is_profile_completed: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+
+      if (error) {
+        console.error('Error creating profile directly:', error);
+        throw error;
+      }
+
+      console.log('Profile created directly:', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to create profile directly:', error);
+      throw error;
+    }
+  };
+
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreatingAccount(true);
@@ -114,18 +166,27 @@ const SignupAccessPage: React.FC = () => {
         return;
       }
 
-      // Create account with Supabase Auth
-      const { error: authError } = await supabase.auth.signUp({
+      // Validate required fields
+      if (!formData.fullName || !formData.age || !formData.gender || !formData.region) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      console.log('Creating account with data:', formData);
+
+      // Create account with Supabase Auth - PASSING ALL METADATA
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
             full_name: formData.fullName,
             phone: formData.phone,
-            age: formData.age ? parseInt(formData.age) : null,
+            age: formData.age,
             gender: formData.gender,
             organization: formData.organization,
             region: formData.region,
+            social_media: formData.socialMedia || '', // Empty for now, can be filled later
             stripe_customer_id: verificationResult?.customerId,
             is_paid: true
           }
@@ -138,13 +199,35 @@ const SignupAccessPage: React.FC = () => {
         return;
       }
 
-      // Account created successfully
+      console.log('Auth signup successful:', authData);
+
+      // If signup was successful but no confirmation needed, manually create profile
+      if (authData.user && !authData.user.email_confirmed_at) {
+        console.log('Email confirmation required - auth trigger should handle profile creation');
+      } else if (authData.user) {
+        console.log('User confirmed immediately - manually creating profile');
+        
+        // Manually create profile if auth trigger doesn't fire
+        await createProfileDirectly(authData.user.id, {
+          email: formData.email,
+          full_name: formData.fullName,
+          phone: formData.phone,
+          age: parseInt(formData.age),
+          gender: formData.gender,
+          organization: formData.organization,
+          region: formData.region,
+          social_media: formData.socialMedia || '',
+          stripe_customer_id: verificationResult?.customerId,
+          is_paid: true
+        });
+      }
+
       toast.success('Account created successfully! Redirecting...');
       
-      // Wait a moment for the trigger to create the profile, then redirect
+      // Wait for profile creation, then redirect
       setTimeout(() => {
         navigate('/profile');
-      }, 1500);
+      }, 2000);
 
     } catch (error) {
       console.error('Error creating account:', error);
@@ -237,6 +320,14 @@ const SignupAccessPage: React.FC = () => {
                 className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
                 placeholder="Full Name"
               />
+              <input
+                type="text"
+                name="socialMedia"
+                value={formData.socialMedia}
+                onChange={handleInputChange}
+                className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
+                placeholder="Social Media Handle (Optional)"
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <input
@@ -293,11 +384,11 @@ const SignupAccessPage: React.FC = () => {
                   value={formData.region}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f] appearance-none"
+                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#9b9b6f]"
                   style={{ backgroundColor: '#232323', color: '#fff' }}
                 >
                   <option value="">Region</option>
-                  {REGION_OPTIONS.map(option => (
+                  {regions.map(option => (
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>

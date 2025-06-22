@@ -2,16 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User, Hash, Calendar, Users, Building, MapPin, Phone, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { regions } from '../../data/mockData';
 import toast from 'react-hot-toast';
-
-const REGION_OPTIONS = [
-  'North America',
-  'South America',
-  'Europe',
-  'Asia',
-  'Africa',
-  'Australia/Oceania',
-];
 
 const ProfileSettings: React.FC = () => {
   const { user, profile, setProfile } = useAuth();
@@ -30,8 +22,8 @@ const ProfileSettings: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        fullName: profile.fullName || '',
-        socialMedia: profile.socialMedia || '',
+        fullName: profile.full_name || '',
+        socialMedia: profile.social_media || '',
         age: profile.age ? String(profile.age) : '',
         gender: profile.gender || '',
         organization: profile.organization || '',
@@ -44,8 +36,8 @@ const ProfileSettings: React.FC = () => {
   useEffect(() => {
     if (!profile) return;
     const initial = {
-      fullName: profile.fullName || '',
-      socialMedia: profile.socialMedia || '',
+      fullName: profile.full_name || '',
+      socialMedia: profile.social_media || '',
       age: profile.age ? String(profile.age) : '',
       gender: profile.gender || '',
       organization: profile.organization || '',
@@ -55,60 +47,54 @@ const ProfileSettings: React.FC = () => {
     setDirty(JSON.stringify(formData) !== JSON.stringify(initial));
   }, [formData, profile]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setDirty(true);
-  };
-
-  const handleSavePersonalInfo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user?.id) return;
+  const handleSave = async () => {
+    if (!user) return;
     setIsSaving(true);
+
     try {
-      const updateData = {
-        full_name: formData.fullName,
-        social_media: formData.socialMedia,
-        age: parseInt(formData.age) || null,
-        gender: formData.gender,
-        organization: formData.organization,
-        region: formData.region,
-        phone: formData.phone,
-        updated_at: new Date().toISOString(),
-      };
       const { error } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update({
+          full_name: formData.fullName,
+          social_media: formData.socialMedia,
+          age: formData.age ? parseInt(formData.age) : null,
+          gender: formData.gender,
+          organization: formData.organization,
+          region: formData.region,
+          phone: formData.phone,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', user.id);
+
       if (error) throw error;
-      // Fetch updated profile and update context
-      const { data: updated, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      if (fetchError) throw fetchError;
-      if (setProfile) {
-        setProfile((prev) => prev ? {
-          ...prev,
-          fullName: updated.full_name,
-          socialMedia: updated.social_media,
-          age: updated.age,
-          gender: updated.gender,
-          organization: updated.organization,
-          region: updated.region,
-          phone: updated.phone,
-          isProfileCompleted: updated.is_profile_completed,
-        } : prev);
+
+      // Update local profile state
+      if (setProfile && profile) {
+        setProfile({
+          ...profile,
+          full_name: formData.fullName,
+          social_media: formData.socialMedia,
+          age: formData.age ? parseInt(formData.age) : null,
+          gender: formData.gender,
+          organization: formData.organization,
+          region: formData.region,
+          phone: formData.phone,
+        });
       }
-      setDirty(false);
+
       toast.success('Profile updated successfully!');
+      setDirty(false);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile. Please try again.');
+      toast.error('Failed to update profile');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -123,7 +109,7 @@ const ProfileSettings: React.FC = () => {
             </p>
           </div>
         </div>
-        <form onSubmit={handleSavePersonalInfo} className="space-y-6">
+        <form onSubmit={handleSave} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="flex items-center text-sm font-medium mb-2 text-[#9b9b6f]">
@@ -224,7 +210,7 @@ const ProfileSettings: React.FC = () => {
                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-[#9b9b6f] focus:outline-none transition-colors"
               >
                 <option value="">Select Region</option>
-                {REGION_OPTIONS.map((region) => (
+                {regions.map((region) => (
                   <option key={region} value={region}>{region}</option>
                 ))}
               </select>

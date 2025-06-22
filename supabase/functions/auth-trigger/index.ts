@@ -1,72 +1,76 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.29.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-interface WebhookPayload {
-  type: 'INSERT' | 'UPDATE' | 'DELETE';
-  table: string;
+interface AuthTriggerPayload {
   record: {
     id: string;
     email: string;
-    [key: string]: any;
+    raw_app_meta_data: {
+      metadata?: {
+        full_name?: string;
+        phone?: string;
+        age?: string;
+        gender?: string;
+        organization?: string;
+        region?: string;
+        social_media?: string;
+        stripe_customer_id?: string;
+        is_paid?: boolean;
+      };
+    };
   };
-  schema: string;
-  old_record: any | null;
 }
 
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-);
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-serve(async (req) => {
-  const payload: WebhookPayload = await req.json();
-
-  // Only run this function for INSERT events on auth.users
-  if (payload.type !== 'INSERT' || payload.table !== 'users' || payload.schema !== 'auth') {
-    return new Response(JSON.stringify({ message: 'Not a relevant event' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Check if user already has a profile (should be extremely rare due to the trigger design)
-    const { data: existingProfile } = await supabaseAdmin
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const payload: AuthTriggerPayload = await req.json();
+    const { id, email, raw_app_meta_data } = payload.record;
+    const metadata = raw_app_meta_data?.metadata || {};
+
+    // Insert into profiles table with all metadata
+    const { error: profileError } = await supabaseClient
       .from('profiles')
-      .select('id')
-      .eq('id', payload.record.id)
-      .maybeSingle();
-
-    if (existingProfile) {
-      return new Response(JSON.stringify({ message: 'Profile already exists' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Create a new profile for this user
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .insert({
-        id: payload.record.id,
-        email: payload.record.email,
-        role: 'user', // Default role
-        is_paid: false, // Default payment status
+      .upsert({
+        id,
+        email,
+        full_name: metadata.full_name,
+        phone: metadata.phone,
+        age: metadata.age ? parseInt(metadata.age) : null,
+        gender: metadata.gender,
+        organization: metadata.organization,
+        region: metadata.region,
+        social_media: metadata.social_media,
+        stripe_customer_id: metadata.stripe_customer_id,
+        is_paid: metadata.is_paid || false,
+        is_profile_completed: true,
+        updated_at: new Date().toISOString(),
       });
 
-    if (error) throw error;
+    if (profileError) throw profileError;
 
-    console.log(`Profile created for user: ${payload.record.id}`);
-
-    return new Response(JSON.stringify({ message: 'Profile created successfully', data }), {
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error('Error creating profile:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    console.error('Error:', error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
     });
   }
 }); 

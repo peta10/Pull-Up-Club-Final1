@@ -3,6 +3,7 @@ import { Submission } from "../../types";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useState, useEffect } from "react";
+ import { useNavigate } from "react-router-dom";
 
 // Live countdown hook with seconds
 const useLiveCountdown = () => {
@@ -34,11 +35,13 @@ const useLiveCountdown = () => {
 
 const SubmissionDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const timeLeft = useLiveCountdown();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(false);
   const [bestPerformance, setBestPerformance] = useState(0);
   const [currentMonthSubmission, setCurrentMonthSubmission] = useState<Submission | null>(null);
+  const [canSubmitThisMonth, setCanSubmitThisMonth] = useState(false);
 
   const fetchUserSubmissions = async () => {
     if (!user) return;
@@ -81,14 +84,23 @@ const SubmissionDashboard = () => {
         }, 0);
         setBestPerformance(best);
 
-        // Find current month submission
+        // Find current month submission and determine if user can submit again
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
-        const thisMonthSub = formattedSubmissions.find(sub => {
+        
+        const submissionsThisMonth = formattedSubmissions.filter(sub => {
           const subDate = new Date(sub.submittedAt);
           return subDate.getMonth() === currentMonth && subDate.getFullYear() === currentYear;
-        }) || null;
-        setCurrentMonthSubmission(thisMonthSub);
+        });
+
+        const latestSubmissionThisMonth = submissionsThisMonth.length > 0 ? submissionsThisMonth[0] : null;
+        setCurrentMonthSubmission(latestSubmissionThisMonth);
+        
+        const hasActiveSubmission = submissionsThisMonth.some(sub => 
+            sub.status.toLowerCase() === 'approved' || sub.status.toLowerCase() === 'pending'
+        );
+        
+        setCanSubmitThisMonth(!hasActiveSubmission);
       }
     } catch (err) {
       console.error("Failed to load submission history");
@@ -103,7 +115,7 @@ const SubmissionDashboard = () => {
   }, [user]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'approved': return 'text-green-400';
       case 'rejected': return 'text-red-400';
       case 'featured': return 'text-yellow-400';
@@ -112,7 +124,7 @@ const SubmissionDashboard = () => {
   };
 
   const getStatusBadgeColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'approved': return 'bg-green-600';
       case 'rejected': return 'bg-red-600';
       case 'featured': return 'bg-yellow-600';
@@ -140,9 +152,22 @@ const SubmissionDashboard = () => {
           <Target size={48} className="text-[#9b9b6f]" />
         </div>
         <h3 className="text-xl font-bold text-white mb-2">
-          {currentMonthSubmission ? 'Submission Status' : 'Ready to Submit!'}
+          {currentMonthSubmission && !canSubmitThisMonth ? 'Submission Status' : 'Ready to Submit!'}
         </h3>
-        {currentMonthSubmission ? (
+        {canSubmitThisMonth ? (
+          <div>
+            <p className="text-gray-400 mb-4">Submit your pull-up video to compete this month</p>
+            {currentMonthSubmission?.status.toLowerCase() === 'rejected' && (
+              <p className="text-red-400 text-sm mb-4">Your last submission was rejected. Please try again.</p>
+            )}
+            <button 
+              onClick={() => navigate('/submit')}
+              className="bg-[#9b9b6f] hover:bg-[#a5a575] text-black font-semibold px-6 py-2 rounded-lg transition-colors"
+            >
+              Submit Video
+            </button>
+          </div>
+        ) : currentMonthSubmission ? (
           <div>
             <p className="text-gray-400 mb-2">This month's submission</p>
             <p className={`font-semibold mb-2 capitalize ${getStatusColor(currentMonthSubmission.status)}`}> 
@@ -155,11 +180,12 @@ const SubmissionDashboard = () => {
         ) : (
           <div>
             <p className="text-gray-400 mb-4">Submit your pull-up video to compete this month</p>
-            <a href="/submit">
-              <button className="bg-[#9b9b6f] hover:bg-[#a5a575] text-black font-semibold px-6 py-2 rounded-lg transition-colors">
-                Submit Video
-              </button>
-            </a>
+            <button 
+              onClick={() => navigate('/submit')}
+              className="bg-[#9b9b6f] hover:bg-[#a5a575] text-black font-semibold px-6 py-2 rounded-lg transition-colors"
+            >
+              Submit Video
+            </button>
           </div>
         )}
       </div>
@@ -258,11 +284,12 @@ const SubmissionDashboard = () => {
             <p className="text-gray-500 text-sm mb-4">
               Your submission history will appear here once you submit your first video.
             </p>
-            <a href="/submit">
-              <button className="bg-[#9b9b6f] hover:bg-[#a5a575] text-black font-semibold py-2 px-4 rounded-lg transition-colors">
-                Submit Your First Video
-              </button>
-            </a>
+            <button 
+              onClick={() => navigate('/submit')}
+              className="bg-[#9b9b6f] hover:bg-[#a5a575] text-black font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              Submit Your First Video
+            </button>
           </div>
         )}
       </div>
